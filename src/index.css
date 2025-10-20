@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Custom Select Dropdown Styling */
+.custom-select {
+  /* Modern button appearance */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(to bottom, #ffffff, #fafafa);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  border-radius: 10px;
+}
+
+.custom-select:hover {
+  background: linear-gradient(to bottom, #ffffff, #f7f7f7);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  border-color: #9ca3af;
+}
+
+.custom-select:focus {
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.custom-select:active {
+  transform: translateY(0.5px);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Modern Dropdown Menu with rounded corners */
+.custom-select option {
+  padding: 10px 14px;
+  margin: 2px 6px;
+  background-color: #ffffff;
+  color: #374151;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-select option:first-child {
+  margin-top: 6px;
+}
+
+.custom-select option:last-child {
+  margin-bottom: 6px;
+}
+
+/* Modern hover effect with vibrant colors */
+.custom-select option:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+  color: #1e40af;
+  font-weight: 600;
+  transform: translateX(4px);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+}
+
+/* Selected/Active state with accent color */
+.custom-select option:checked {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.custom-select option:focus {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  color: #ffffff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Checkmark for selected option */
+.custom-select option:checked::before {
+  content: '✓ ';
+  color: #ffffff;
+  font-weight: bold;
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* Firefox specific styling */
+@-moz-document url-prefix() {
+  .custom-select {
+    border-radius: 10px;
+  }
+
+  .custom-select option {
+    padding: 10px 14px;
+    border-radius: 6px;
+  }
+}
+
+/* Webkit scrollbar for dropdown - modern styled */
+.custom-select::-webkit-scrollbar {
+  width: 10px;
+}
+
+.custom-select::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+  margin: 6px 0;
+}
+
+.custom-select::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+  border-radius: 10px;
+  border: 2px solid #f1f5f9;
+}
+
+.custom-select::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+}
+
+/* Mobile Sidebar - Dynamic Viewport Height Support */
+/* Fallback for browsers that don't support dvh */
+@supports not (height: 100dvh) {
+  .mobile-sidebar-fallback {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+}

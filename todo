@@ -1,0 +1,44 @@
+todo list for app-admin : 
+
+- add filters to books and users --- done
+- make the dashboard design better --- done
+- profile page --- done --- i manque le routage ines kan
+- improve filters section in all pages (style) and global styling of the whole app --- done
+- categories section in books or in a separate page --- done
+- packs page + main page sections --- done
+- sidebar styling (height fixed (vh) with only the rest of the pages being scrollable) / log out button at the bottom of the side menu --- done
+- add export function to the three pages --- only buttons/ no backend --- done
+- add a popup confirmation for removing something from the tables --- done
+- add language options (french and english) to books and author and categories and in marketing + their editing and adding new ones --- done
+- pop up menus : stop the scrolling of whats behind them when visible (dashboard view order/books- add and edit a book/orders- view an order/users-view a user/marketing - add an dedit a section or a pack) --- done
+- side menu : on mobile version i want the side menu to only take 100vh, right now i can scroll through it to see the logout button, desktop version works tho --- done
+
+---------------------------------------------------------------------------
+
+TODO list :
+
+
+login : ---- done
+dashboard : --- done
+- statcards layout on desktop (2 by 2) --- done
+- the time filters buttons logic is to be updated + french --- done
+- recent orders responsiveness on mobile (header, description and button) + popup menu for view order (add scroll to the table in the middle) + french + placement on desktop -- mzl placement on desktop --- done
+profile : 
+- edit profile section : french --- done
+books :
+- add book popup : french + update design --- done
+- all books section : french + popup for editing (french + design) --- done
+- category section : french + add button responsiveness on mobile (AJOUTER ONLY) + edit and add popup french and design --- done 
+orders :
+- french --- done
+users : 
+- view user popup : french + remove role section + text responsiveness --- done  
+- also remove the admin from them --- done
+
+
+marketing :
+- global design and responsiveness on mobile and desktop + french ---- done
+
+
+----------------------------------
+
