@@ -224,15 +224,17 @@ const CategoriesSection = () => {
               <div className="p-3 sm:p-6">
                 {categories.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
                       {paginatedCategories.map((category, index) => (
-                        <CategoryCard
-                          key={category.id}
-                          category={category}
-                          onDelete={handleDeleteCategory}
-                          onEdit={handleEditCategory}
-                          index={index}
-                        />
+                        <div className="max-w-xs sm:max-w-none mx-auto sm:mx-0 w-full">
+                          <CategoryCard
+                            key={category.id}
+                            category={category}
+                            onDelete={handleDeleteCategory}
+                            onEdit={handleEditCategory}
+                            index={index}
+                          />
+                        </div>
                       ))}
                     </div>
 
