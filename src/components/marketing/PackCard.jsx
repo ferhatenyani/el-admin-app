@@ -4,8 +4,8 @@ const PackCard = ({ pack, onEdit, onDelete }) => {
   return (
     <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-200 flex flex-col h-[480px] sm:h-[520px] md:h-[580px]">
       {/* Pack Image Container with Padding */}
-      <div className="p-2 sm:p-3 md:p-5">
-        <div className="relative h-32 sm:h-40 md:h-48 overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl shadow-md">
+      <div >
+        <div className="relative h-32 sm:h-40 md:h-48 overflow-hidden shadow-md">
           <img
             src={pack.image}
             alt={pack.name}
@@ -27,14 +27,14 @@ const PackCard = ({ pack, onEdit, onDelete }) => {
       </div>
 
       {/* Pack Content - Controlled Height */}
-      <div className="px-3 sm:px-4 md:px-6 pb-1 sm:pb-2 flex flex-col flex-1 min-h-0">
+      <div className="px-3 sm:px-4 md:px-6 pb-1 mb-1 flex flex-col flex-1 min-h-0">
         {/* Pack Name */}
-        <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1 sm:mb-1.5 md:mb-2 line-clamp-1 flex-shrink-0">
+        <h3 className="text-sm sm:text-base mt-2 md:text-lg font-bold text-gray-900 line-clamp-1 flex-shrink-0">
           {pack.name}
         </h3>
 
         {/* Description */}
-        <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 mb-2 sm:mb-2.5 md:mb-3 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] md:min-h-[3rem] flex-shrink-0">
+        <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 mb-0 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] md:min-h-[3rem] flex-shrink-0">
           {pack.description}
         </p>
 
