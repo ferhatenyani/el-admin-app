@@ -129,8 +129,51 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
 // Section Card Component with Carousel Preview
 const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
-  const cardWidth = 160; // Width of each book card (responsive)
-  const visibleCards = typeof window !== 'undefined' && window.innerWidth < 640 ? 2 : 4; // 2 on mobile, 4 on larger screens
+
+  // Baseline reference: 700px viewport = 170px width, 250px height
+  const getCardDimensions = () => {
+    if (typeof window === 'undefined') return {
+      width: 170,
+      height: 250,
+      visible: 4,
+      scale: 1,
+      imageHeight: 180,
+      gap: 12
+    };
+
+    const viewportWidth = window.innerWidth;
+    const baselineViewport = 700;
+    const baselineCardWidth = 170;
+    const baselineCardHeight = 250;
+    const baselineImageHeight = 180; // h-45 = 11.25rem = 180px
+    const baselineGap = 12; // gap-3 = 0.75rem = 12px
+
+    // Calculate scale factor based on viewport
+    const scale = viewportWidth / baselineViewport;
+
+    // Calculate scaled dimensions maintaining exact ratios
+    const cardWidth = Math.round(baselineCardWidth * scale);
+    const cardHeight = Math.round(baselineCardHeight * scale);
+    const imageHeight = Math.round(baselineImageHeight * scale);
+    const gap = Math.round(baselineGap * scale);
+
+    // Determine visible cards based on viewport
+    let visible = 4;
+    if (viewportWidth < 640) visible = 2;
+    else if (viewportWidth < 1024) visible = 3;
+    else visible = 4;
+
+    return {
+      width: cardWidth,
+      height: cardHeight,
+      visible,
+      scale,
+      imageHeight,
+      gap
+    };
+  };
+
+  const { width: cardWidth, height: cardHeight, visible: visibleCards, scale, imageHeight, gap } = getCardDimensions();
 
   const handleScrollLeft = () => {
     setScrollPosition(Math.max(0, scrollPosition - 1));
@@ -181,71 +224,132 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
           </button>
         </div>
       ) : (
-        <div className="relative px-4 sm:px-6 md:px-8">
+        <div className="relative" style={{ padding: `0 ${Math.round(24 * scale)}px` }}>
           {/* Left Arrow */}
           {canScrollLeft && (
             <button
               onClick={handleScrollLeft}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-1.5 sm:p-2 md:p-2.5 shadow-md hover:bg-blue-50 hover:shadow-lg transition-all duration-200 border border-gray-200"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full shadow-md hover:bg-blue-50 hover:shadow-lg transition-all duration-200 border border-gray-200"
+              style={{ padding: `${Math.round(8 * scale)}px` }}
             >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700" />
+              <ChevronLeft className="text-gray-700" style={{ width: `${Math.round(20 * scale)}px`, height: `${Math.round(20 * scale)}px` }} />
             </button>
           )}
 
           {/* Books Container */}
-          <div className="overflow-hidden py-2 sm:py-3 md:py-4">
+          <div className="overflow-hidden" style={{ padding: `${Math.round(8 * scale)}px 0` }}>
             <div
-              className="flex gap-2 sm:gap-3 md:gap-5 transition-transform duration-300 ease-in-out"
-              style={{ transform: `translateX(-${scrollPosition * (cardWidth + (window.innerWidth < 640 ? 8 : 20))}px)` }}
+              className="flex transition-transform duration-300 ease-in-out"
+              style={{
+                gap: `${gap}px`,
+                transform: `translateX(-${scrollPosition * (cardWidth + gap)}px)`
+              }}
             >
-              {section.books.map((book) => (
-                <div
-                  key={book.id}
-                  className="flex-shrink-0 bg-white rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-200 flex flex-col"
-                  style={{ width: `${cardWidth}px` }}
-                >
-                  {/* Book Image Container with Padding */}
-                  <div className="p-2 sm:p-3 md:p-4">
-                    <div className="relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg sm:rounded-xl shadow-sm">
-                      <img
-                        src={book.image}
-                        alt={book.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+              {section.books.map((book) => {
+                // Calculate scaled values based on baseline (700px viewport)
+                const borderRadius = Math.round(12 * scale); // baseline: rounded-xl = 12px
+                const badgePadding = Math.round(12 * scale); // baseline: px-3 py-1.5 = 12px 6px
+                const badgePaddingY = Math.round(6 * scale);
+                const badgeFontSize = Math.round(12 * scale); // baseline: text-xs = 12px
+                const badgePosition = Math.round(8 * scale); // baseline: top-2 right-2 = 8px
+                const buttonPadding = Math.round(8 * scale); // baseline: p-2 = 8px
+                const iconSize = Math.round(16 * scale); // baseline: w-4 h-4 = 16px
+                const contentPaddingX = Math.round(12 * scale); // baseline: px-3 = 12px
+                const contentPaddingY = Math.round(8 * scale); // baseline: py-2 = 8px
+                const titleFontSize = Math.round(14 * scale); // baseline: text-sm = 14px
+                const authorFontSize = Math.round(12 * scale); // baseline: text-xs = 12px
+                const contentMarginBottom = Math.round(4 * scale); // baseline: mb-1 = 4px
 
-                      {/* Price Badge */}
-                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-gradient-to-r from-green-600 to-green-500 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold text-[10px] sm:text-xs shadow-md backdrop-blur-sm">
-                        {book.price} DZD
+                return (
+                  <div
+                    key={book.id}
+                    className="flex-shrink-0 bg-white shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-200 flex flex-col"
+                    style={{
+                      width: `${cardWidth}px`,
+                      height: `${cardHeight}px`,
+                      borderRadius: `${borderRadius}px`
+                    }}
+                  >
+                    {/* Book Image Container */}
+                    <div>
+                      <div className="relative overflow-hidden shadow-sm" style={{ height: `${imageHeight}px` }}>
+                        <img
+                          src={book.image}
+                          alt={book.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+                        {/* Price Badge */}
+                        <div
+                          className="absolute bg-gradient-to-r from-green-600 to-green-500 text-white rounded-full font-bold shadow-md backdrop-blur-sm"
+                          style={{
+                            top: `${badgePosition}px`,
+                            right: `${badgePosition}px`,
+                            padding: `${badgePaddingY}px ${badgePadding}px`,
+                            fontSize: `${badgeFontSize}px`
+                          }}
+                        >
+                          {book.price} DZD
+                        </div>
+
+                        {/* Language Badge */}
+                        <div
+                          className="absolute bg-white/95 backdrop-blur-md rounded-full font-semibold text-gray-800 shadow-sm border border-blue-200"
+                          style={{
+                            bottom: `${badgePosition}px`,
+                            left: `${badgePosition}px`,
+                            padding: `${badgePaddingY}px ${badgePadding}px`,
+                            fontSize: `${badgeFontSize}px`
+                          }}
+                        >
+                          {book.language || 'N/A'}
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => onRemoveBook(book)}
+                          className="absolute bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-600 shadow-md"
+                          title="Retirer de la section"
+                          style={{
+                            top: `${badgePosition}px`,
+                            left: `${badgePosition}px`,
+                            padding: `${buttonPadding}px`
+                          }}
+                        >
+                          <Trash2 style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />
+                        </button>
                       </div>
+                    </div>
 
-                      {/* Language Badge */}
-                      <div className="absolute bottom-1.5 left-1.5 sm:bottom-2 sm:left-2 bg-white/95 backdrop-blur-md px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold text-gray-800 shadow-sm border border-blue-200">
-                        {book.language || 'N/A'}
-                      </div>
-
-                      {/* Remove Button */}
-                      <button
-                        onClick={() => onRemoveBook(book)}
-                        className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 bg-red-500 text-white rounded-full p-1.5 sm:p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-600 shadow-md"
-                        title="Retirer de la section"
+                    {/* Book Content */}
+                    <div
+                      className="flex flex-col"
+                      style={{
+                        padding: `${contentPaddingY}px ${contentPaddingX}px ${contentPaddingY}px`
+                      }}
+                    >
+                      <h4
+                        className="font-bold text-gray-900 line-clamp-2"
+                        title={book.title}
+                        style={{
+                          fontSize: `${titleFontSize}px`,
+                          marginBottom: `${contentMarginBottom}px`
+                        }}
                       >
-                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </button>
+                        {book.title}
+                      </h4>
+                      <p
+                        className="text-gray-600 truncate"
+                        title={book.author}
+                        style={{ fontSize: `${authorFontSize}px` }}
+                      >
+                        {book.author}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Book Content */}
-                  <div className="px-2 pb-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 flex flex-col flex-1">
-                    <h4 className="font-bold text-xs sm:text-sm text-gray-900 line-clamp-2 mb-1 min-h-[2rem] sm:min-h-[2.5rem]" title={book.title}>
-                      {book.title}
-                    </h4>
-                    <p className="text-[10px] sm:text-xs text-gray-600 truncate mb-1 sm:mb-2" title={book.author}>
-                      {book.author}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -253,9 +357,10 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
           {canScrollRight && (
             <button
               onClick={handleScrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-1.5 sm:p-2 md:p-2.5 shadow-md hover:bg-blue-50 hover:shadow-lg transition-all duration-200 border border-gray-200"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full shadow-md hover:bg-blue-50 hover:shadow-lg transition-all duration-200 border border-gray-200"
+              style={{ padding: `${Math.round(8 * scale)}px` }}
             >
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700" />
+              <ChevronRight className="text-gray-700" style={{ width: `${Math.round(20 * scale)}px`, height: `${Math.round(20 * scale)}px` }} />
             </button>
           )}
         </div>
