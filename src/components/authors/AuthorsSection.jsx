@@ -1,133 +1,133 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, ChevronDown, ChevronUp, FolderOpen, BookOpen, Download } from 'lucide-react';
-import CategoryCard from './CategoryCard';
-import AddCategoryModal from './AddCategoryModal';
+import { Plus, ChevronDown, ChevronUp, Users, UserCircle, Download } from 'lucide-react';
+import AuthorCard from './AuthorCard';
+import AddAuthorModal from './AddAuthorModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
 
 /**
- * CategoriesSection Component
- * Section principale pour gérer les catégories de livres
+ * AuthorsSection Component
+ * Section principale pour gérer les auteurs de livres
  * Fonctionnalités :
  * - Panneau pliable pour économiser de l'espace
- * - Mise en page en grille pour les cartes de catégories
- * - Fonctionnalité d'ajout/suppression de catégories
+ * - Mise en page en grille pour les cartes d'auteurs
+ * - Fonctionnalité d'ajout/suppression d'auteurs
  * - Données mock avec gestion d'état local
  */
-const CategoriesSection = () => {
-  // Données de catégories initiales (mock)
-  const [categories, setCategories] = useState([
+const AuthorsSection = () => {
+  // Données d'auteurs initiales (mock)
+  const [authors, setAuthors] = useState([
     {
       id: 1,
-      nameEn: 'Science Fiction',
-      nameFr: 'Science-Fiction',
-      imageUrl: 'https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?w=500',
+      name: 'Victor Hugo',
+      bio: 'Écrivain français du XIXe siècle, auteur des Misérables et de Notre-Dame de Paris',
+      imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500',
     },
     {
       id: 2,
-      nameEn: 'Mystery & Thriller',
-      nameFr: 'Mystère et Thriller',
-      imageUrl: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500',
+      name: 'J.K. Rowling',
+      bio: 'Auteure britannique de la série Harry Potter',
+      imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500',
     },
     {
       id: 3,
-      nameEn: 'Romance',
-      nameFr: 'Romance',
-      imageUrl: 'https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=500',
+      name: 'Stephen King',
+      bio: 'Auteur américain de romans d\'horreur et de suspense',
+      imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500',
     },
     {
       id: 4,
-      nameEn: 'Biography',
-      nameFr: 'Biographie',
-      imageUrl: 'https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=500',
+      name: 'Agatha Christie',
+      bio: 'Romancière britannique, reine du roman policier',
+      imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500',
     },
     {
       id: 5,
-      nameEn: 'Self-Help',
-      nameFr: 'Développement Personnel',
-      imageUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500',
+      name: 'Gabriel García Márquez',
+      bio: 'Écrivain colombien, prix Nobel de littérature',
+      imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=500',
     },
     {
       id: 6,
-      nameEn: 'Technology',
-      nameFr: 'Technologie',
-      imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=500',
+      name: 'Jane Austen',
+      bio: 'Romancière anglaise, auteure d\'Orgueil et Préjugés',
+      imageUrl: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=500',
     },
   ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
-  const [editingCategory, setEditingCategory] = useState(null);
+  const [editingAuthor, setEditingAuthor] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [authorToDelete, setAuthorToDelete] = useState(null);
 
   const {
     currentPage,
     itemsPerPage,
     totalPages,
-    paginatedItems: paginatedCategories,
+    paginatedItems: paginatedAuthors,
     handlePageChange,
     handleItemsPerPageChange,
     totalItems
-  } = usePagination(categories, 5);
+  } = usePagination(authors, 5);
 
-  // Générer un ID unique pour les nouvelles catégories
+  // Générer un ID unique pour les nouveaux auteurs
   const generateId = () => {
-    return categories.length > 0 ? Math.max(...categories.map((c) => c.id)) + 1 : 1;
+    return authors.length > 0 ? Math.max(...authors.map((a) => a.id)) + 1 : 1;
   };
 
-  // Gérer l'ajout d'une nouvelle catégorie
-  const handleAddCategory = () => {
-    setEditingCategory(null);
+  // Gérer l'ajout d'un nouvel auteur
+  const handleAddAuthor = () => {
+    setEditingAuthor(null);
     setIsModalOpen(true);
   };
 
-  // Gérer la modification d'une catégorie existante
-  const handleEditCategory = (category) => {
-    setEditingCategory(category);
+  // Gérer la modification d'un auteur existant
+  const handleEditAuthor = (author) => {
+    setEditingAuthor(author);
     setIsModalOpen(true);
   };
 
-  // Gérer la soumission de catégorie (ajout ou mise à jour)
-  const handleSubmitCategory = (categoryData) => {
-    if (editingCategory) {
-      // Mettre à jour la catégorie existante
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === editingCategory.id ? { ...cat, ...categoryData } : cat
+  // Gérer la soumission d'auteur (ajout ou mise à jour)
+  const handleSubmitAuthor = (authorData) => {
+    if (editingAuthor) {
+      // Mettre à jour l'auteur existant
+      setAuthors((prev) =>
+        prev.map((auth) =>
+          auth.id === editingAuthor.id ? { ...auth, ...authorData } : auth
         )
       );
     } else {
-      // Ajouter une nouvelle catégorie
-      const newCategory = {
+      // Ajouter un nouvel auteur
+      const newAuthor = {
         id: generateId(),
-        ...categoryData,
+        ...authorData,
       };
-      setCategories((prev) => [...prev, newCategory]);
+      setAuthors((prev) => [...prev, newAuthor]);
     }
     setIsModalOpen(false);
-    setEditingCategory(null);
+    setEditingAuthor(null);
   };
 
-  // Gérer la suppression d'une catégorie
-  const handleDeleteCategory = (category) => {
-    setCategoryToDelete(category);
+  // Gérer la suppression d'un auteur
+  const handleDeleteAuthor = (author) => {
+    setAuthorToDelete(author);
     setDeleteConfirmOpen(true);
   };
 
-  const confirmDeleteCategory = () => {
-    if (categoryToDelete) {
-      setCategories((prev) => prev.filter((cat) => cat.id !== categoryToDelete.id));
+  const confirmDeleteAuthor = () => {
+    if (authorToDelete) {
+      setAuthors((prev) => prev.filter((auth) => auth.id !== authorToDelete.id));
       setDeleteConfirmOpen(false);
-      setCategoryToDelete(null);
+      setAuthorToDelete(null);
     }
   };
 
-  const cancelDeleteCategory = () => {
+  const cancelDeleteAuthor = () => {
     setDeleteConfirmOpen(false);
-    setCategoryToDelete(null);
+    setAuthorToDelete(null);
   };
 
   // Basculer entre développer/réduire
@@ -137,7 +137,7 @@ const CategoriesSection = () => {
 
   // Gérer l'export
   const handleExport = () => {
-    console.log('Export déclenché pour les catégories');
+    console.log('Export déclenché pour les auteurs');
     // TODO: Implémenter la logique d'export
   };
 
@@ -150,23 +150,23 @@ const CategoriesSection = () => {
         className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
       >
         {/* Barre d'en-tête */}
-        <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 border-b border-gray-200">
+        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-6">
             <div className="flex items-center gap-2 sm:gap-4 flex-1 w-full sm:w-auto">
               {/* Icône et Titre */}
               <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
-                  <FolderOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 flex-wrap">
-                    <span className="truncate">Catégories de livres</span>
+                    <span className="truncate">Auteurs</span>
                     <span className="text-xs sm:text-sm font-normal text-gray-500 flex-shrink-0">
-                      ({categories.length})
+                      ({authors.length})
                     </span>
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-600 mt-0.5 hidden xs:block">
-                    Organisez vos livres en catégories
+                    Gérez les auteurs de vos livres
                   </p>
                 </div>
               </div>
@@ -187,8 +187,8 @@ const CategoriesSection = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={handleAddCategory}
-                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/30 font-medium transition-all text-xs sm:text-sm"
+                onClick={handleAddAuthor}
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/30 font-medium transition-all text-xs sm:text-sm"
               >
                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="hidden xs:inline">Ajouter</span>
@@ -211,7 +211,7 @@ const CategoriesSection = () => {
           </div>
         </div>
 
-        {/* Grille de catégories - Pliable */}
+        {/* Grille d'auteurs - Pliable */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -222,22 +222,22 @@ const CategoriesSection = () => {
               className="overflow-hidden"
             >
               <div className="p-3 sm:p-6">
-                {categories.length > 0 ? (
+                {authors.length > 0 ? (
                   <>
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
-                      {paginatedCategories.map((category, index) => (
-                        <CategoryCard
-                          key={category.id}
-                          category={category}
-                          onDelete={handleDeleteCategory}
-                          onEdit={handleEditCategory}
+                      {paginatedAuthors.map((author, index) => (
+                        <AuthorCard
+                          key={author.id}
+                          author={author}
+                          onDelete={handleDeleteAuthor}
+                          onEdit={handleEditAuthor}
                           index={index}
                         />
                       ))}
                     </div>
 
                     {/* Pagination */}
-                    {categories.length > 0 && (
+                    {authors.length > 0 && (
                       <div className="mt-4 sm:mt-6">
                         <Pagination
                           currentPage={currentPage}
@@ -258,23 +258,23 @@ const CategoriesSection = () => {
                   >
                     <div className="flex flex-col items-center gap-3 sm:gap-4">
                       <div className="p-3 sm:p-4 bg-gray-100 rounded-full">
-                        <BookOpen className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
+                        <UserCircle className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
                       </div>
                       <div className="max-w-sm">
                         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
-                          Aucune catégorie pour le moment
+                          Aucun auteur pour le moment
                         </h3>
                         <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
-                          Créez votre première catégorie pour organiser vos livres
+                          Créez votre premier auteur pour organiser vos livres
                         </p>
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={handleAddCategory}
-                          className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-lg shadow-blue-500/30 text-sm"
+                          onClick={handleAddAuthor}
+                          className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium shadow-lg shadow-emerald-500/30 text-sm"
                         >
                           <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                          Ajouter votre première catégorie
+                          Ajouter votre premier auteur
                         </motion.button>
                       </div>
                     </div>
@@ -286,26 +286,26 @@ const CategoriesSection = () => {
         </AnimatePresence>
       </motion.div>
 
-      {/* Modal d'ajout/modification de catégorie */}
-      <AddCategoryModal
+      {/* Modal d'ajout/modification d'auteur */}
+      <AddAuthorModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setEditingCategory(null);
+          setEditingAuthor(null);
         }}
-        onSubmit={handleSubmitCategory}
-        initialData={editingCategory}
+        onSubmit={handleSubmitAuthor}
+        initialData={editingAuthor}
       />
 
       {/* Modal de confirmation de suppression */}
       <ConfirmDeleteModal
         isOpen={deleteConfirmOpen}
-        onConfirm={confirmDeleteCategory}
-        onCancel={cancelDeleteCategory}
-        itemName={categoryToDelete?.nameEn || "cette catégorie"}
+        onConfirm={confirmDeleteAuthor}
+        onCancel={cancelDeleteAuthor}
+        itemName={authorToDelete?.name || "cet auteur"}
       />
     </div>
   );
 };
 
-export default CategoriesSection;
+export default AuthorsSection;

@@ -1,178 +1,172 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, ChevronDown, ChevronUp, FolderOpen, BookOpen, Download } from 'lucide-react';
-import CategoryCard from './CategoryCard';
-import AddCategoryModal from './AddCategoryModal';
+import { Plus, ChevronDown, ChevronUp, Tag, Tags, Download } from 'lucide-react';
+import EtiquetteCard from './EtiquetteCard';
+import AddEtiquetteModal from './AddEtiquetteModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
 
 /**
- * CategoriesSection Component
- * Section principale pour gérer les catégories de livres
- * Fonctionnalités :
- * - Panneau pliable pour économiser de l'espace
- * - Mise en page en grille pour les cartes de catégories
- * - Fonctionnalité d'ajout/suppression de catégories
- * - Données mock avec gestion d'état local
+ * EtiquettesSection Component
+ * Main section for managing book labels/tags (etiquettes)
+ * Features:
+ * - Collapsible panel to save space
+ * - Grid layout for etiquette cards
+ * - Add/edit/delete functionality
+ * - Mock data with local state management
  */
-const CategoriesSection = () => {
-  // Données de catégories initiales (mock)
-  const [categories, setCategories] = useState([
+const EtiquettesSection = () => {
+  // Initial etiquettes data (mock)
+  const [etiquettes, setEtiquettes] = useState([
     {
       id: 1,
-      nameEn: 'Science Fiction',
-      nameFr: 'Science-Fiction',
-      imageUrl: 'https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?w=500',
+      nameFr: 'Nouveau',
+      nameEn: 'New',
+      color: '#3B82F6',
     },
     {
       id: 2,
-      nameEn: 'Mystery & Thriller',
-      nameFr: 'Mystère et Thriller',
-      imageUrl: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500',
+      nameFr: 'Bestseller',
+      nameEn: 'Bestseller',
+      color: '#EAB308',
     },
     {
       id: 3,
-      nameEn: 'Romance',
-      nameFr: 'Romance',
-      imageUrl: 'https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=500',
+      nameFr: 'Promotion',
+      nameEn: 'Promotion',
+      color: '#EF4444',
     },
     {
       id: 4,
-      nameEn: 'Biography',
-      nameFr: 'Biographie',
-      imageUrl: 'https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=500',
+      nameFr: 'Recommandé',
+      nameEn: 'Recommended',
+      color: '#22C55E',
     },
     {
       id: 5,
-      nameEn: 'Self-Help',
-      nameFr: 'Développement Personnel',
-      imageUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500',
-    },
-    {
-      id: 6,
-      nameEn: 'Technology',
-      nameFr: 'Technologie',
-      imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=500',
+      nameFr: 'Édition limitée',
+      nameEn: 'Limited Edition',
+      color: '#A855F7',
     },
   ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
-  const [editingCategory, setEditingCategory] = useState(null);
+  const [editingEtiquette, setEditingEtiquette] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [etiquetteToDelete, setEtiquetteToDelete] = useState(null);
 
   const {
     currentPage,
     itemsPerPage,
     totalPages,
-    paginatedItems: paginatedCategories,
+    paginatedItems: paginatedEtiquettes,
     handlePageChange,
     handleItemsPerPageChange,
     totalItems
-  } = usePagination(categories, 5);
+  } = usePagination(etiquettes, 5);
 
-  // Générer un ID unique pour les nouvelles catégories
+  // Generate unique ID for new etiquettes
   const generateId = () => {
-    return categories.length > 0 ? Math.max(...categories.map((c) => c.id)) + 1 : 1;
+    return etiquettes.length > 0 ? Math.max(...etiquettes.map((e) => e.id)) + 1 : 1;
   };
 
-  // Gérer l'ajout d'une nouvelle catégorie
-  const handleAddCategory = () => {
-    setEditingCategory(null);
+  // Handle adding a new etiquette
+  const handleAddEtiquette = () => {
+    setEditingEtiquette(null);
     setIsModalOpen(true);
   };
 
-  // Gérer la modification d'une catégorie existante
-  const handleEditCategory = (category) => {
-    setEditingCategory(category);
+  // Handle editing an existing etiquette
+  const handleEditEtiquette = (etiquette) => {
+    setEditingEtiquette(etiquette);
     setIsModalOpen(true);
   };
 
-  // Gérer la soumission de catégorie (ajout ou mise à jour)
-  const handleSubmitCategory = (categoryData) => {
-    if (editingCategory) {
-      // Mettre à jour la catégorie existante
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === editingCategory.id ? { ...cat, ...categoryData } : cat
+  // Handle etiquette submission (add or update)
+  const handleSubmitEtiquette = (etiquetteData) => {
+    if (editingEtiquette) {
+      // Update existing etiquette
+      setEtiquettes((prev) =>
+        prev.map((etiq) =>
+          etiq.id === editingEtiquette.id ? { ...etiq, ...etiquetteData } : etiq
         )
       );
     } else {
-      // Ajouter une nouvelle catégorie
-      const newCategory = {
+      // Add new etiquette
+      const newEtiquette = {
         id: generateId(),
-        ...categoryData,
+        ...etiquetteData,
       };
-      setCategories((prev) => [...prev, newCategory]);
+      setEtiquettes((prev) => [...prev, newEtiquette]);
     }
     setIsModalOpen(false);
-    setEditingCategory(null);
+    setEditingEtiquette(null);
   };
 
-  // Gérer la suppression d'une catégorie
-  const handleDeleteCategory = (category) => {
-    setCategoryToDelete(category);
+  // Handle deleting an etiquette
+  const handleDeleteEtiquette = (etiquette) => {
+    setEtiquetteToDelete(etiquette);
     setDeleteConfirmOpen(true);
   };
 
-  const confirmDeleteCategory = () => {
-    if (categoryToDelete) {
-      setCategories((prev) => prev.filter((cat) => cat.id !== categoryToDelete.id));
+  const confirmDeleteEtiquette = () => {
+    if (etiquetteToDelete) {
+      setEtiquettes((prev) => prev.filter((etiq) => etiq.id !== etiquetteToDelete.id));
       setDeleteConfirmOpen(false);
-      setCategoryToDelete(null);
+      setEtiquetteToDelete(null);
     }
   };
 
-  const cancelDeleteCategory = () => {
+  const cancelDeleteEtiquette = () => {
     setDeleteConfirmOpen(false);
-    setCategoryToDelete(null);
+    setEtiquetteToDelete(null);
   };
 
-  // Basculer entre développer/réduire
+  // Toggle expand/collapse
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
 
-  // Gérer l'export
+  // Handle export
   const handleExport = () => {
-    console.log('Export déclenché pour les catégories');
-    // TODO: Implémenter la logique d'export
+    console.log('Export triggered for etiquettes');
+    // TODO: Implement export logic
   };
 
   return (
     <div className="space-y-4">
-      {/* En-tête de section avec bouton de réduction */}
+      {/* Section header with collapse button */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
       >
-        {/* Barre d'en-tête */}
-        <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 border-b border-gray-200">
+        {/* Header bar */}
+        <div className="bg-gradient-to-r from-pink-50 via-orange-50 to-yellow-50 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-6">
             <div className="flex items-center gap-2 sm:gap-4 flex-1 w-full sm:w-auto">
-              {/* Icône et Titre */}
+              {/* Icon and Title */}
               <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
-                  <FolderOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-pink-500 to-orange-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
+                  <Tags className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 flex-wrap">
-                    <span className="truncate">Catégories de livres</span>
+                    <span className="truncate">Étiquettes</span>
                     <span className="text-xs sm:text-sm font-normal text-gray-500 flex-shrink-0">
-                      ({categories.length})
+                      ({etiquettes.length})
                     </span>
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-600 mt-0.5 hidden xs:block">
-                    Organisez vos livres en catégories
+                    Organisez vos livres avec des étiquettes colorées
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Boutons d'action */}
+            {/* Action buttons */}
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -187,8 +181,8 @@ const CategoriesSection = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={handleAddCategory}
-                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/30 font-medium transition-all text-xs sm:text-sm"
+                onClick={handleAddEtiquette}
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-pink-600 to-orange-600 text-white rounded-lg hover:from-pink-700 hover:to-orange-700 shadow-lg shadow-pink-500/30 font-medium transition-all text-xs sm:text-sm"
               >
                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="hidden xs:inline">Ajouter</span>
@@ -211,7 +205,7 @@ const CategoriesSection = () => {
           </div>
         </div>
 
-        {/* Grille de catégories - Pliable */}
+        {/* Etiquettes grid - Collapsible */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -222,22 +216,22 @@ const CategoriesSection = () => {
               className="overflow-hidden"
             >
               <div className="p-3 sm:p-6">
-                {categories.length > 0 ? (
+                {etiquettes.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
-                      {paginatedCategories.map((category, index) => (
-                        <CategoryCard
-                          key={category.id}
-                          category={category}
-                          onDelete={handleDeleteCategory}
-                          onEdit={handleEditCategory}
+                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
+                      {paginatedEtiquettes.map((etiquette, index) => (
+                        <EtiquetteCard
+                          key={etiquette.id}
+                          etiquette={etiquette}
+                          onDelete={handleDeleteEtiquette}
+                          onEdit={handleEditEtiquette}
                           index={index}
                         />
                       ))}
                     </div>
 
                     {/* Pagination */}
-                    {categories.length > 0 && (
+                    {etiquettes.length > 0 && (
                       <div className="mt-4 sm:mt-6">
                         <Pagination
                           currentPage={currentPage}
@@ -258,23 +252,23 @@ const CategoriesSection = () => {
                   >
                     <div className="flex flex-col items-center gap-3 sm:gap-4">
                       <div className="p-3 sm:p-4 bg-gray-100 rounded-full">
-                        <BookOpen className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
+                        <Tag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
                       </div>
                       <div className="max-w-sm">
                         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
-                          Aucune catégorie pour le moment
+                          Aucune étiquette pour le moment
                         </h3>
                         <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
-                          Créez votre première catégorie pour organiser vos livres
+                          Créez votre première étiquette pour organiser vos livres
                         </p>
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={handleAddCategory}
-                          className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-lg shadow-blue-500/30 text-sm"
+                          onClick={handleAddEtiquette}
+                          className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 font-medium shadow-lg shadow-pink-500/30 text-sm"
                         >
                           <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                          Ajouter votre première catégorie
+                          Ajouter votre première étiquette
                         </motion.button>
                       </div>
                     </div>
@@ -286,26 +280,26 @@ const CategoriesSection = () => {
         </AnimatePresence>
       </motion.div>
 
-      {/* Modal d'ajout/modification de catégorie */}
-      <AddCategoryModal
+      {/* Add/Edit etiquette modal */}
+      <AddEtiquetteModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setEditingCategory(null);
+          setEditingEtiquette(null);
         }}
-        onSubmit={handleSubmitCategory}
-        initialData={editingCategory}
+        onSubmit={handleSubmitEtiquette}
+        initialData={editingEtiquette}
       />
 
-      {/* Modal de confirmation de suppression */}
+      {/* Delete confirmation modal */}
       <ConfirmDeleteModal
         isOpen={deleteConfirmOpen}
-        onConfirm={confirmDeleteCategory}
-        onCancel={cancelDeleteCategory}
-        itemName={categoryToDelete?.nameEn || "cette catégorie"}
+        onConfirm={confirmDeleteEtiquette}
+        onCancel={cancelDeleteEtiquette}
+        itemName={etiquetteToDelete?.nameFr || "cette étiquette"}
       />
     </div>
   );
 };
 
-export default CategoriesSection;
+export default EtiquettesSection;

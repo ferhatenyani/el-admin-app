@@ -33,6 +33,33 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     { value: 'Business', label: 'Business' }
   ];
 
+  const authorOptions = [
+    { value: '', label: 'Sélectionnez un auteur' },
+    { value: 'Victor Hugo', label: 'Victor Hugo' },
+    { value: 'J.K. Rowling', label: 'J.K. Rowling' },
+    { value: 'Stephen King', label: 'Stephen King' },
+    { value: 'Agatha Christie', label: 'Agatha Christie' },
+    { value: 'Gabriel García Márquez', label: 'Gabriel García Márquez' },
+    { value: 'Jane Austen', label: 'Jane Austen' },
+    { value: 'Antoine de Saint-Exupéry', label: 'Antoine de Saint-Exupéry' },
+    { value: 'George Orwell', label: 'George Orwell' },
+    { value: 'Yuval Noah Harari', label: 'Yuval Noah Harari' },
+    { value: 'Robert C. Martin', label: 'Robert C. Martin' },
+    { value: 'Albert Camus', label: 'Albert Camus' },
+    { value: 'Daniel Kahneman', label: 'Daniel Kahneman' },
+    { value: 'F. Scott Fitzgerald', label: 'F. Scott Fitzgerald' },
+    { value: 'James Clear', label: 'James Clear' },
+    { value: 'Paulo Coelho', label: 'Paulo Coelho' },
+    { value: 'Tara Westover', label: 'Tara Westover' },
+    { value: 'Harper Lee', label: 'Harper Lee' },
+    { value: 'Eric Ries', label: 'Eric Ries' },
+    { value: 'Eckhart Tolle', label: 'Eckhart Tolle' },
+    { value: 'Walter Isaacson', label: 'Walter Isaacson' },
+    { value: 'Stephen Covey', label: 'Stephen Covey' },
+    { value: 'Aldous Huxley', label: 'Aldous Huxley' },
+    { value: 'Émile Zola', label: 'Émile Zola' }
+  ];
+
   const languageOptions = [
     { value: '', label: 'Sélectionnez une langue' },
     { value: 'Français', label: 'Français' },
@@ -150,14 +177,12 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       <label className="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">
                         Auteur *
                       </label>
-                      <input
-                        type="text"
-                        name="author"
+                      <CustomSelect
                         value={formData.author}
-                        onChange={handleChange}
+                        onChange={(value) => setFormData((prev) => ({ ...prev, author: value }))}
+                        options={authorOptions}
+                        placeholder="Sélectionnez un auteur"
                         required
-                        placeholder="Nom de l'auteur"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
 

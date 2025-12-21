@@ -2,6 +2,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Edit, Trash2, Search, ChevronDown, ChevronUp, Plus, Download, BookOpen } from 'lucide-react';
 import { formatCurrency } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
+import Pagination from '../common/Pagination';
+import usePagination from '../../hooks/usePagination';
 import { useState } from 'react';
 
 const statusColors = {
@@ -11,6 +13,17 @@ const statusColors = {
 
 const BooksTable = ({ books, onEdit, onDelete, searchQuery, onSearchChange, sortBy, onSortChange, statusFilter, onStatusFilterChange, onAddBook, onExport }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    paginatedItems: paginatedBooks,
+    handlePageChange,
+    handleItemsPerPageChange,
+    totalItems
+  } = usePagination(books, 5);
+
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
     { value: 'active', label: 'Actif' },
@@ -31,21 +44,21 @@ const BooksTable = ({ books, onEdit, onDelete, searchQuery, onSearchChange, sort
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Barre d'en-tête avec gradient */}
       <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 border-b border-gray-200">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6">
-          <div className="flex items-center gap-4 flex-1">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-6">
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 w-full sm:w-auto">
             {/* Icône et Titre */}
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-lg">
-                <BookOpen className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  Tous les livres
-                  <span className="text-sm font-normal text-gray-500">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 flex-wrap">
+                  <span className="truncate">Tous les livres</span>
+                  <span className="text-xs sm:text-sm font-normal text-gray-500 flex-shrink-0">
                     ({books.length})
                   </span>
                 </h2>
-                <p className="text-sm text-gray-600 mt-0.5">
+                <p className="text-xs sm:text-sm text-gray-600 mt-0.5 hidden xs:block">
                   Gérez votre inventaire de livres
                 </p>
               </div>
@@ -53,38 +66,38 @@ const BooksTable = ({ books, onEdit, onDelete, searchQuery, onSearchChange, sort
           </div>
 
           {/* Boutons d'action */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onExport}
-              className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-lg shadow-green-500/30 font-medium transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-lg shadow-green-500/30 font-medium transition-all text-xs sm:text-sm"
             >
-              <Download className="w-5 h-5" />
-              Exporter
+              <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden xs:inline">Exporter</span>
             </motion.button>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onAddBook}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/30 font-medium transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/30 font-medium transition-all text-xs sm:text-sm"
             >
-              <Plus className="w-5 h-5" />
-              Ajouter
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden xs:inline">Ajouter</span>
             </motion.button>
 
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleExpand}
-              className="p-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="p-2 sm:p-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
               title={isExpanded ? 'Réduire' : 'Développer'}
             >
               {isExpanded ? (
-                <ChevronUp className="w-5 h-5" />
+                <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
               ) : (
-                <ChevronDown className="w-5 h-5" />
+                <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
               )}
             </motion.button>
           </div>
@@ -92,35 +105,35 @@ const BooksTable = ({ books, onEdit, onDelete, searchQuery, onSearchChange, sort
       </div>
 
       {/* Section de filtres et recherche */}
-      <div className="p-6 border-b border-gray-200 bg-white">
-        <div className="flex flex-col sm:flex-row justify-between gap-3 items-stretch sm:items-center">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <div className="p-3 sm:p-6 border-b border-gray-200 bg-white">
+        <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-3 items-stretch sm:items-center">
+          <div className="relative flex-1 sm:max-w-md">
+            <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher des livres..."
+              placeholder="Rechercher..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
           </div>
 
-          <div className="flex gap-3 sm:ml-auto">
-            <div className="min-w-[140px]">
+          <div className="flex gap-2 sm:gap-3 sm:ml-auto">
+            <div className="flex-1 sm:flex-none sm:min-w-[140px]">
               <CustomSelect
                 value={statusFilter}
                 onChange={onStatusFilterChange}
                 options={statusOptions}
-                placeholder="Tous les statuts"
+                placeholder="Statuts"
               />
             </div>
 
-            <div className="min-w-[150px]">
+            <div className="flex-1 sm:flex-none sm:min-w-[150px]">
               <CustomSelect
                 value={sortBy}
                 onChange={onSortChange}
                 options={sortOptions}
-                placeholder="Trier par date"
+                placeholder="Trier"
               />
             </div>
           </div>
@@ -139,154 +152,169 @@ const BooksTable = ({ books, onEdit, onDelete, searchQuery, onSearchChange, sort
           >
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Couverture
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Titre
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Auteur
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Catégorie
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Langue
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Prix
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stock
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Statut
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {books.map((book) => (
-              <motion.tr
-                key={book.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                whileHover={{ backgroundColor: '#f9fafb' }}
-              >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <img
-                    src={book.coverUrl}
-                    alt={book.title}
-                    className="w-12 h-16 object-cover rounded"
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{book.title}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {book.author}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {book.category}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                    {book.language || 'Langue inconnue'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {formatCurrency(book.price)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {book.stock}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[book.status]}`}>
-                    {book.status === 'active' ? 'Actif' : 'Rupture de stock'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onEdit(book)}
-                      className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(book)}
-                      className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+              <div className="min-w-[800px]">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Couverture
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Titre
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Auteur
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Catégorie
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Langue
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Prix
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Stock
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Statut
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {paginatedBooks.map((book) => (
+                      <motion.tr
+                        key={book.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        whileHover={{ backgroundColor: '#f9fafb' }}
+                      >
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                          <img
+                            src={book.coverUrl}
+                            alt={book.title}
+                            className="w-10 h-14 lg:w-12 lg:h-16 object-cover rounded"
+                          />
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{book.title}</div>
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {book.author}
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {book.category}
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                            {book.language || 'Langue inconnue'}
+                          </span>
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {formatCurrency(book.price)}
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {book.stock}
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[book.status]}`}>
+                            {book.status === 'active' ? 'Actif' : 'Rupture de stock'}
+                          </span>
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => onEdit(book)}
+                              className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => onDelete(book)}
+                              className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Mobile cards */}
-            <div className="md:hidden p-4 space-y-4">
-        {books.map((book) => (
-          <motion.div
-            key={book.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gray-50 rounded-lg p-4 space-y-3"
-          >
-            <div className="flex gap-4">
-              <img
-                src={book.coverUrl}
-                alt={book.title}
-                className="w-16 h-20 object-cover rounded"
+            <div className="md:hidden p-3 sm:p-4 space-y-3 sm:space-y-4">
+              {paginatedBooks.map((book) => (
+                <motion.div
+                  key={book.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-3"
+                >
+                  <div className="flex gap-3 sm:gap-4">
+                    <img
+                      src={book.coverUrl}
+                      alt={book.title}
+                      className="w-14 h-18 sm:w-16 sm:h-20 object-cover rounded flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm sm:text-base text-gray-900 truncate">{book.title}</h3>
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">{book.author}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">{book.category}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                        {book.language || 'Langue inconnue'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <p className="text-sm font-medium text-gray-900">{formatCurrency(book.price)}</p>
+                      <p className="text-xs text-gray-600">Stock: {book.stock}</p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[book.status]}`}>
+                      {book.status === 'active' ? 'Actif' : 'Rupture'}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-gray-200">
+                    <button
+                      onClick={() => onEdit(book)}
+                      className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs sm:text-sm"
+                    >
+                      <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span className="hidden xs:inline">Modifier</span>
+                      <span className="xs:hidden">Éditer</span>
+                    </button>
+                    <button
+                      onClick={() => onDelete(book)}
+                      className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-xs sm:text-sm"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Supprimer</span>
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {books.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                itemsPerPage={itemsPerPage}
+                totalItems={totalItems}
+                onItemsPerPageChange={handleItemsPerPageChange}
               />
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 truncate">{book.title}</h3>
-                <p className="text-sm text-gray-600">{book.author}</p>
-                <p className="text-sm text-gray-500">{book.category}</p>
-                <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                  {book.language || 'Langue inconnue'}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-gray-900">{formatCurrency(book.price)}</p>
-                <p className="text-xs text-gray-600">Stock: {book.stock}</p>
-              </div>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[book.status]}`}>
-                {book.status === 'active' ? 'Actif' : 'Rupture de stock'}
-              </span>
-            </div>
-
-            <div className="flex gap-2 pt-2 border-t border-gray-200">
-              <button
-                onClick={() => onEdit(book)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                <Edit className="w-4 h-4" />
-                Modifier
-              </button>
-              <button
-                onClick={() => onDelete(book)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                <Trash2 className="w-4 h-4" />
-                Supprimer
-              </button>
-            </div>
-          </motion.div>
-        ))}
-            </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -2,10 +2,22 @@ import { useState } from 'react';
 import { Plus, Package } from 'lucide-react';
 import PackCard from './PackCard';
 import PackModal from './PackModal';
+import Pagination from '../common/Pagination';
+import usePagination from '../../hooks/usePagination';
 
 const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPack, setEditingPack] = useState(null);
+
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    paginatedItems: paginatedPacks,
+    handlePageChange,
+    handleItemsPerPageChange,
+    totalItems
+  } = usePagination(packs, 5);
 
   const handleAddPack = () => {
     setEditingPack(null);
@@ -63,16 +75,32 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest }) => {
           <p className="text-gray-400 text-xs sm:text-sm px-2">Cliquez sur "Ajouter un Pack" pour créer votre premier pack de livres</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          {packs.map((pack) => (
-            <PackCard
-              key={pack.id}
-              pack={pack}
-              onEdit={() => handleEditPack(pack)}
-              onDelete={() => handleDeletePack(pack)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+            {paginatedPacks.map((pack) => (
+              <PackCard
+                key={pack.id}
+                pack={pack}
+                onEdit={() => handleEditPack(pack)}
+                onDelete={() => handleDeletePack(pack)}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {packs.length > 0 && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                itemsPerPage={itemsPerPage}
+                totalItems={totalItems}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal */}

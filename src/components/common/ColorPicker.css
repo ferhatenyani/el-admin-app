@@ -1,0 +1,33 @@
+/* Custom styles for react-colorful */
+.react-colorful {
+  width: 100% !important;
+  height: 200px !important;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.react-colorful__saturation {
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+}
+
+.react-colorful__hue {
+  height: 20px;
+  border-radius: 0 0 12px 12px;
+  margin-top: 12px;
+}
+
+.react-colorful__saturation-pointer,
+.react-colorful__hue-pointer {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease;
+}
+
+.react-colorful__saturation-pointer:hover,
+.react-colorful__hue-pointer:hover {
+  transform: scale(1.1);
+}

@@ -3,8 +3,19 @@ import { Eye, Search } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import OrderStatusBadge from './OrderStatusBadge';
 import CustomSelect from '../common/CustomSelect';
+import Pagination from '../common/Pagination';
+import usePagination from '../../hooks/usePagination';
 
 const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, onStatusFilterChange, searchQuery, onSearchChange }) => {
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    paginatedItems: paginatedOrders,
+    handlePageChange,
+    handleItemsPerPageChange,
+    totalItems
+  } = usePagination(orders, 5);
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
     { value: 'pending', label: 'En attente' },
@@ -83,7 +94,7 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {orders.map((order) => (
+            {paginatedOrders.map((order) => (
               <motion.tr
                 key={order.id}
                 initial={{ opacity: 0 }}
@@ -123,7 +134,7 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
 
       {/* Mobile cards */}
       <div className="md:hidden p-4 space-y-4">
-        {orders.map((order) => (
+        {paginatedOrders.map((order) => (
           <motion.div
             key={order.id}
             initial={{ opacity: 0, y: 10 }}
@@ -165,6 +176,18 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
         <div className="p-12 text-center">
           <p className="text-gray-500">Aucune commande trouvée</p>
         </div>
+      )}
+
+      {/* Pagination */}
+      {orders.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          itemsPerPage={itemsPerPage}
+          totalItems={totalItems}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
       )}
     </div>
   );

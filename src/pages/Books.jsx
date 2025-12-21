@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import BooksTable from '../components/books/BooksTable';
 import BookForm from '../components/books/BookForm';
 import CategoriesSection from '../components/categories/CategoriesSection';
+import EtiquettesSection from '../components/etiquettes/EtiquettesSection';
+import AuthorsSection from '../components/authors/AuthorsSection';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
 import { getBooks, createBook, updateBook, deleteBook } from '../mock/mockApi';
 
@@ -148,6 +150,12 @@ const Books = () => {
 
       {/* Categories Management Section */}
       <CategoriesSection />
+
+      {/* Authors Management Section */}
+      <AuthorsSection />
+
+      {/* Etiquettes Management Section */}
+      <EtiquettesSection />
 
       <BookForm
         isOpen={isFormOpen}

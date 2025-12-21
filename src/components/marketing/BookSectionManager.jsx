@@ -1,10 +1,22 @@
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import BookSectionModal from './BookSectionModal';
+import Pagination from '../common/Pagination';
+import usePagination from '../../hooks/usePagination';
 
 const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
+
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    paginatedItems: paginatedSections,
+    handlePageChange,
+    handleItemsPerPageChange,
+    totalItems
+  } = usePagination(sections, 5);
 
   const handleAddSection = () => {
     setEditingSection(null);
@@ -70,17 +82,33 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
           <p className="text-gray-400 text-xs sm:text-sm px-2">Cliquez sur "Ajouter une Section" pour créer votre premier carrousel</p>
         </div>
       ) : (
-        <div className="space-y-3 sm:space-y-4 md:space-y-6">
-          {sections.map((section) => (
-            <SectionCard
-              key={section.id}
-              section={section}
-              onEdit={() => handleEditSection(section)}
-              onDelete={() => handleDeleteSection(section)}
-              onRemoveBook={(book) => handleRemoveBookFromSection(section.id, book)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
+            {paginatedSections.map((section) => (
+              <SectionCard
+                key={section.id}
+                section={section}
+                onEdit={() => handleEditSection(section)}
+                onDelete={() => handleDeleteSection(section)}
+                onRemoveBook={(book) => handleRemoveBookFromSection(section.id, book)}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {sections.length > 0 && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                itemsPerPage={itemsPerPage}
+                totalItems={totalItems}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal */}

@@ -2,8 +2,19 @@ import { motion } from 'framer-motion';
 import { Eye, Search } from 'lucide-react';
 import { formatDate } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
+import Pagination from '../common/Pagination';
+import usePagination from '../../hooks/usePagination';
 
 const UsersTable = ({ users, onViewUser, onToggleActive, searchQuery, onSearchChange, sortBy, onSortChange, statusFilter, onStatusFilterChange }) => {
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    paginatedItems: paginatedUsers,
+    handlePageChange,
+    handleItemsPerPageChange,
+    totalItems
+  } = usePagination(users, 5);
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
     { value: 'active', label: 'Actif' },
@@ -77,7 +88,7 @@ const UsersTable = ({ users, onViewUser, onToggleActive, searchQuery, onSearchCh
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {users.map((user) => (
+            {paginatedUsers.map((user) => (
               <motion.tr
                 key={user.id}
                 initial={{ opacity: 0 }}
@@ -123,7 +134,7 @@ const UsersTable = ({ users, onViewUser, onToggleActive, searchQuery, onSearchCh
 
       {/* Mobile cards */}
       <div className="md:hidden p-4 space-y-4">
-        {users.map((user) => (
+        {paginatedUsers.map((user) => (
           <motion.div
             key={user.id}
             initial={{ opacity: 0, y: 10 }}
@@ -171,6 +182,18 @@ const UsersTable = ({ users, onViewUser, onToggleActive, searchQuery, onSearchCh
         <div className="p-12 text-center">
           <p className="text-gray-500">Aucun utilisateur trouvé</p>
         </div>
+      )}
+
+      {/* Pagination */}
+      {users.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          itemsPerPage={itemsPerPage}
+          totalItems={totalItems}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
       )}
     </div>
   );
