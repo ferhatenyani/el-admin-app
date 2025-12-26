@@ -1,34 +1,32 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, ChevronDown, Check, Info } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { TrendingUp, TrendingDown, ChevronDown, Check, Info, AlertCircle } from 'lucide-react';
+import { useState, useRef, useEffect, memo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import useScrollLock from '../../hooks/useScrollLock';
+import { getStats } from '../../mock/mockApi';
+import { formatCurrency } from '../../utils/format';
 
 /**
- * Modern StatsCard component with enhanced visual design
+ * Modern StatsCard component with isolated data fetching
  * Features:
- * - Gradient backgrounds for visual interest
- * - Smooth hover animations with scale effect
- * - Improved typography hierarchy
- * - Enhanced iconography with gradient backgrounds
- * - Subtle shadow effects for depth
- * - Growth percentage indicators with trend icons
- * - Custom styled dropdown (no browser defaults)
- * - Interactive popup with detailed stats on hover/click
- * - Smart positioning to prevent viewport overflow
+ * - Self-contained time filter state (no parent coupling)
+ * - Independent React Query data fetching with unique query key
+ * - Only this card re-renders when its filter changes
+ * - Automatic caching via React Query
+ * - Loading and error states
+ * - Interactive popup with detailed stats
  */
-const StatsCard = ({
+const StatsCard = memo(({
   title,
-  value,
   icon: Icon,
   color = 'blue',
   delay = 0,
-  growth = null, // e.g., { value: 10, isPositive: true }
-  detailsData = null, // New prop for popup details
-  onTimeRangeChange = null, // Callback when time range changes
+  metricKey, // 'books' | 'users' | 'orders' | 'sales' - determines which data to extract
   showTimeSelector = true,
-  currentTimeRange = 'Ce mois-ci' // New prop to receive time range from parent
+  detailsDataBuilder = null, // Function to build details data: (stats, recentOrders) => detailsData
 }) => {
-  const [timeRange, setTimeRange] = useState(currentTimeRange);
+  // Local state - completely isolated from parent and siblings
+  const [timeRange, setTimeRange] = useState('Ce mois-ci');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const dropdownRef = useRef(null);
@@ -40,10 +38,42 @@ const StatsCard = ({
 
   const timeRangeOptions = ['Aujourd\'hui', 'Cette semaine', 'Ce mois-ci'];
 
-  // Update local timeRange when prop changes
-  useEffect(() => {
-    setTimeRange(currentTimeRange);
-  }, [currentTimeRange]);
+  // Isolated data fetching - unique query key per card + timeRange
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['stats', metricKey, timeRange],
+    queryFn: () => getStats(timeRange),
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  // Extract metric-specific data
+  const getMetricData = () => {
+    if (!data) return { value: 0, growth: { value: 0, isPositive: true } };
+
+    const metricMap = {
+      books: {
+        value: data.totalBooks,
+        growth: data.growth.books,
+      },
+      users: {
+        value: data.totalUsers,
+        growth: data.growth.users,
+      },
+      orders: {
+        value: data.totalOrders,
+        growth: data.growth.orders,
+      },
+      sales: {
+        value: formatCurrency(data.monthlySales),
+        growth: data.growth.sales,
+      },
+    };
+
+    return metricMap[metricKey] || { value: 0, growth: { value: 0, isPositive: true } };
+  };
+
+  const { value, growth } = getMetricData();
+  const detailsData = detailsDataBuilder && data ? detailsDataBuilder(data, timeRange) : null;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -106,15 +136,11 @@ const StatsCard = ({
     }
   };
 
-  // Handle time range change
+  // Handle time range change - purely local, no parent notification
   const handleTimeRangeChange = (newTimeRange) => {
     setTimeRange(newTimeRange);
     setIsDropdownOpen(false);
-
-    // Notify parent component if callback provided
-    if (onTimeRangeChange) {
-      onTimeRangeChange(newTimeRange);
-    }
+    // Query will automatically refetch with new timeRange
   };
   // Modern color schemes with gradients and enhanced contrast
   const colorClasses = {
@@ -145,6 +171,42 @@ const StatsCard = ({
   };
 
   const colors = colorClasses[color];
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay, duration: 0.4 }}
+        className="relative bg-white rounded-2xl border border-gray-100 p-6"
+      >
+        <div className="space-y-4 animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-10 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay, duration: 0.4 }}
+        className="relative bg-white rounded-2xl border border-red-200 p-6"
+      >
+        <div className="flex flex-col items-center justify-center space-y-2 text-center">
+          <AlertCircle className="w-8 h-8 text-red-500" />
+          <p className="text-sm text-red-600 font-medium">Erreur de chargement</p>
+          <p className="text-xs text-gray-500">{error?.message || 'Une erreur est survenue'}</p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -427,6 +489,8 @@ const StatsCard = ({
       </AnimatePresence>
     </motion.div>
   );
-};
+});
+
+StatsCard.displayName = 'StatsCard';
 
 export default StatsCard;

@@ -1,130 +1,30 @@
-import { useState, useEffect } from 'react';
 import { BookOpen, Users, TrendingUp, Sparkles, Calendar, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import StatsCard from '../components/common/StatsCard';
 import SalesChart from '../components/dashboard/SalesChart';
 import RecentOrdersTable from '../components/dashboard/RecentOrdersTable';
-import { getStats, getSalesChartData, getRecentOrders } from '../mock/mockApi';
+import { getRecentOrders } from '../mock/mockApi';
 import { formatCurrency } from '../utils/format';
 
 /**
- * Modern Dashboard Page with enhanced design
+ * Modern Dashboard Page - Stateless Container
  * Features:
- * - Elegant header with gradient background
- * - Improved visual hierarchy and spacing
- * - Smooth animations and transitions
- * - Better loading states
- * - Responsive grid layouts
- * - Consistent color palette and typography
+ * - No state management - each child manages its own data
+ * - Each StatsCard independently fetches and filters its data
+ * - SalesChart independently manages its time filter
+ * - Only RecentOrders fetched at dashboard level (static, no filter)
+ * - Minimal re-renders - only components that change data re-render
  */
 
 const Dashboard = () => {
-  // Individual state for each stat card
-  const [booksStats, setBooksStats] = useState({ value: 0, growth: { value: 0, isPositive: true } });
-  const [usersStats, setUsersStats] = useState({ value: 0, growth: { value: 0, isPositive: true } });
-  const [ordersStats, setOrdersStats] = useState({ value: 0, growth: { value: 0, isPositive: true } });
-  const [salesStats, setSalesStats] = useState({ value: 0, growth: { value: 0, isPositive: true } });
-
-  // Individual time filters for each component
-  const [booksTimeFilter, setBooksTimeFilter] = useState('Ce mois-ci');
-  const [usersTimeFilter, setUsersTimeFilter] = useState('Ce mois-ci');
-  const [ordersTimeFilter, setOrdersTimeFilter] = useState('Ce mois-ci');
-  const [salesTimeFilter, setSalesTimeFilter] = useState('Ce mois-ci');
-  const [chartTimeFilter, setChartTimeFilter] = useState('Ce mois-ci');
-
-  const [chartData, setChartData] = useState([]);
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Initial data fetch
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      setLoading(true);
-      try {
-        const ordersData = await getRecentOrders(6);
-        setRecentOrders(ordersData);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInitialData();
-  }, []);
-
-  // Fetch books stats when its time filter changes
-  useEffect(() => {
-    const fetchBooksStats = async () => {
-      try {
-        const statsData = await getStats(booksTimeFilter);
-        setBooksStats({ value: statsData.totalBooks, growth: statsData.growth.books });
-      } catch (error) {
-        console.error('Error fetching books stats:', error);
-      }
-    };
-    fetchBooksStats();
-  }, [booksTimeFilter]);
-
-  // Fetch users stats when its time filter changes
-  useEffect(() => {
-    const fetchUsersStats = async () => {
-      try {
-        const statsData = await getStats(usersTimeFilter);
-        setUsersStats({ value: statsData.totalUsers, growth: statsData.growth.users });
-      } catch (error) {
-        console.error('Error fetching users stats:', error);
-      }
-    };
-    fetchUsersStats();
-  }, [usersTimeFilter]);
-
-  // Fetch orders stats when its time filter changes
-  useEffect(() => {
-    const fetchOrdersStats = async () => {
-      try {
-        const statsData = await getStats(ordersTimeFilter);
-        setOrdersStats({ value: statsData.totalOrders, growth: statsData.growth.orders });
-      } catch (error) {
-        console.error('Error fetching orders stats:', error);
-      }
-    };
-    fetchOrdersStats();
-  }, [ordersTimeFilter]);
-
-  // Fetch sales stats when its time filter changes
-  useEffect(() => {
-    const fetchSalesStats = async () => {
-      try {
-        const statsData = await getStats(salesTimeFilter);
-        setSalesStats({ value: statsData.monthlySales, growth: statsData.growth.sales });
-      } catch (error) {
-        console.error('Error fetching sales stats:', error);
-      }
-    };
-    fetchSalesStats();
-  }, [salesTimeFilter]);
-
-  // Fetch chart data when its time filter changes
-  useEffect(() => {
-    const fetchChartData = async () => {
-      try {
-        const salesData = await getSalesChartData(chartTimeFilter);
-        setChartData(salesData);
-      } catch (error) {
-        console.error('Error fetching chart data:', error);
-      }
-    };
-    fetchChartData();
-  }, [chartTimeFilter]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  // Only fetch recent orders (no time filter, static data)
+  const { data: recentOrders = [], isLoading } = useQuery({
+    queryKey: ['recentOrders'],
+    queryFn: () => getRecentOrders(6),
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
 
   // Get current date for header
   const currentDate = new Date().toLocaleDateString('fr-FR', {
@@ -134,65 +34,66 @@ const Dashboard = () => {
     day: 'numeric'
   });
 
-  // Detailed information for each stat card popup
-  const statsDetails = {
-    totalBooks: {
-      description: "Nombre total de livres disponibles dans votre catalogue",
-      breakdown: [
-        { label: "Disponibles", value: booksStats.value - 45, color: "text-green-600" },
-        { label: "En rupture de stock", value: 45, color: "text-red-600" },
-        { label: "Nouveaux ce mois-ci", value: 23, color: "text-blue-600" }
-      ],
-      lastUpdated: "Mis à jour il y a 2 heures",
-      comparison: {
-        period: "vs mois dernier",
-        change: "+12%",
-        isPositive: true
-      }
-    },
-    totalUsers: {
-      description: "Utilisateurs inscrits sur votre plateforme",
-      breakdown: [
-        { label: "Utilisateurs actifs", value: Math.floor(usersStats.value * 0.68), color: "text-green-600" },
-        { label: "Utilisateurs inactifs", value: Math.floor(usersStats.value * 0.32), color: "text-gray-600" },
-        { label: "Nouveaux cette semaine", value: 156, color: "text-blue-600" }
-      ],
-      lastUpdated: "Mis à jour il y a 1 heure",
-      comparison: {
-        period: "vs mois dernier",
-        change: "+8%",
-        isPositive: true
-      }
-    },
-    totalOrders: {
-      description: "Total des commandes reçues depuis toujours",
-      breakdown: [
-        { label: "Terminées", value: Math.floor(recentOrders.length * 13), color: "text-green-600" },
-        { label: "En attente", value: recentOrders.length * 2, color: "text-yellow-600" },
-        { label: "Cette semaine", value: 47, color: "text-blue-600" }
-      ],
-      lastUpdated: "Mis à jour il y a 30 minutes",
-      comparison: {
-        period: "vs mois dernier",
-        change: "+15%",
-        isPositive: true
-      }
-    },
-    monthlySales: {
-      description: "Revenu généré ce mois-ci",
-      breakdown: [
-        { label: "Ventes en ligne", value: formatCurrency(salesStats.value * 0.72), color: "text-green-600" },
-        { label: "Ventes en magasin", value: formatCurrency(salesStats.value * 0.28), color: "text-blue-600" },
-        { label: "Commande moyenne", value: formatCurrency(salesStats.value / (recentOrders.length * 15)), color: "text-purple-600" }
-      ],
-      lastUpdated: "Mis à jour il y a 10 minutes",
-      comparison: {
-        period: "vs mois dernier",
-        change: "+10%",
-        isPositive: true
-      }
+  // Detail builders for each stat card - pure functions, no state
+  const buildBooksDetails = (data, timeRange) => ({
+    description: "Nombre total de livres disponibles dans votre catalogue",
+    breakdown: [
+      { label: "Disponibles", value: data.totalBooks - 45, color: "text-green-600" },
+      { label: "En rupture de stock", value: 45, color: "text-red-600" },
+      { label: "Nouveaux ce mois-ci", value: 23, color: "text-blue-600" }
+    ],
+    lastUpdated: "Mis à jour il y a 2 heures",
+    comparison: {
+      period: "vs mois dernier",
+      change: `${data.growth.books.isPositive ? '+' : '-'}${data.growth.books.value}%`,
+      isPositive: data.growth.books.isPositive
     }
-  };
+  });
+
+  const buildUsersDetails = (data, timeRange) => ({
+    description: "Utilisateurs inscrits sur votre plateforme",
+    breakdown: [
+      { label: "Utilisateurs actifs", value: Math.floor(data.totalUsers * 0.68), color: "text-green-600" },
+      { label: "Utilisateurs inactifs", value: Math.floor(data.totalUsers * 0.32), color: "text-gray-600" },
+      { label: "Nouveaux cette semaine", value: 156, color: "text-blue-600" }
+    ],
+    lastUpdated: "Mis à jour il y a 1 heure",
+    comparison: {
+      period: "vs mois dernier",
+      change: `${data.growth.users.isPositive ? '+' : '-'}${data.growth.users.value}%`,
+      isPositive: data.growth.users.isPositive
+    }
+  });
+
+  const buildOrdersDetails = (data, timeRange) => ({
+    description: "Total des commandes reçues depuis toujours",
+    breakdown: [
+      { label: "Terminées", value: Math.floor(data.totalOrders * 0.65), color: "text-green-600" },
+      { label: "En attente", value: Math.floor(data.totalOrders * 0.25), color: "text-yellow-600" },
+      { label: "Cette semaine", value: 47, color: "text-blue-600" }
+    ],
+    lastUpdated: "Mis à jour il y a 30 minutes",
+    comparison: {
+      period: "vs mois dernier",
+      change: `${data.growth.orders.isPositive ? '+' : '-'}${data.growth.orders.value}%`,
+      isPositive: data.growth.orders.isPositive
+    }
+  });
+
+  const buildSalesDetails = (data, timeRange) => ({
+    description: "Revenu généré ce mois-ci",
+    breakdown: [
+      { label: "Ventes en ligne", value: formatCurrency(data.monthlySales * 0.72), color: "text-green-600" },
+      { label: "Ventes en magasin", value: formatCurrency(data.monthlySales * 0.28), color: "text-blue-600" },
+      { label: "Commande moyenne", value: formatCurrency(data.monthlySales / Math.max(data.totalOrders, 1)), color: "text-purple-600" }
+    ],
+    lastUpdated: "Mis à jour il y a 10 minutes",
+    comparison: {
+      period: "vs mois dernier",
+      change: `${data.growth.sales.isPositive ? '+' : '-'}${data.growth.sales.value}%`,
+      isPositive: data.growth.sales.isPositive
+    }
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -249,75 +150,60 @@ const Dashboard = () => {
 
       {/* Main Content Area with improved spacing */}
       <div className="space-y-8 pb-8">
-        {/* Stats Cards Grid - 2x2 layout on desktop */}
+        {/* Stats Cards Grid - Each card is independent and self-managing */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10" style={{ overflow: 'visible' }}>
           <StatsCard
             title="Total des livres"
-            value={booksStats.value}
             icon={BookOpen}
             color="blue"
             delay={0}
-            growth={booksStats.growth}
-            detailsData={statsDetails.totalBooks}
+            metricKey="books"
             showTimeSelector={true}
-            currentTimeRange={booksTimeFilter}
-            onTimeRangeChange={setBooksTimeFilter}
+            detailsDataBuilder={buildBooksDetails}
           />
           <StatsCard
             title="Total des utilisateurs"
-            value={usersStats.value}
             icon={Users}
             color="green"
             delay={0.1}
-            growth={usersStats.growth}
-            detailsData={statsDetails.totalUsers}
+            metricKey="users"
             showTimeSelector={true}
-            currentTimeRange={usersTimeFilter}
-            onTimeRangeChange={setUsersTimeFilter}
+            detailsDataBuilder={buildUsersDetails}
           />
           <StatsCard
             title="Total des commandes"
-            value={ordersStats.value}
             icon={ShoppingCart}
             color="purple"
             delay={0.15}
-            growth={ordersStats.growth}
-            detailsData={statsDetails.totalOrders}
+            metricKey="orders"
             showTimeSelector={true}
-            currentTimeRange={ordersTimeFilter}
-            onTimeRangeChange={setOrdersTimeFilter}
+            detailsDataBuilder={buildOrdersDetails}
           />
           <StatsCard
             title="Ventes mensuelles"
-            value={formatCurrency(salesStats.value)}
             icon={TrendingUp}
             color="red"
             delay={0.2}
-            growth={salesStats.growth}
-            detailsData={statsDetails.monthlySales}
+            metricKey="sales"
             showTimeSelector={true}
-            currentTimeRange={salesTimeFilter}
-            onTimeRangeChange={setSalesTimeFilter}
+            detailsDataBuilder={buildSalesDetails}
           />
         </div>
 
-        {/* Sales Chart Section */}
+        {/* Sales Chart Section - Independent time filter */}
         <div className="relative z-0">
-          <SalesChart
-            data={chartData}
-            timeRange={chartTimeFilter}
-            onTimeRangeChange={setChartTimeFilter}
-          />
+          <SalesChart />
         </div>
 
         {/* Recent Orders Section */}
-        <div className="relative z-0">
-          <RecentOrdersTable orders={recentOrders} />
-        </div>
+        {!isLoading && (
+          <div className="relative z-0">
+            <RecentOrdersTable orders={recentOrders} />
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
 
 export default Dashboard;

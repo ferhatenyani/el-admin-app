@@ -370,3 +370,130 @@ export const updateUserRole = async (id, role) => {
   }
   throw new Error('User not found');
 };
+
+// Batched Dashboard API - Single request for all dashboard data
+// This eliminates the waterfall of 5 separate API calls
+export const getDashboardData = async (timeRange = 'Ce mois-ci', recentOrdersLimit = 6) => {
+  await delay(); // Single network delay instead of 5
+
+  const filteredOrders = filterByTimeRange(orders, timeRange);
+  const activeOrders = filteredOrders.filter(o => o.status !== 'cancelled');
+
+  // Calculate current period stats
+  const totalBooks = books.length;
+  const totalUsers = users.filter(u => u.role === 'USER').length;
+  const monthlySales = activeOrders.reduce((sum, order) => sum + order.total, 0);
+  const totalOrders = activeOrders.length;
+
+  // Calculate previous period for comparison
+  let previousPeriodOrders;
+  const now = new Date();
+
+  switch(timeRange) {
+    case 'Aujourd\'hui': {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStart = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      previousPeriodOrders = orders.filter(o => {
+        const orderDate = new Date(o.date);
+        return orderDate >= yesterdayStart && orderDate < todayStart && o.status !== 'cancelled';
+      });
+      break;
+    }
+    case 'Cette semaine': {
+      const twoWeeksAgo = new Date(now);
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      const oneWeekAgo = new Date(now);
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      previousPeriodOrders = orders.filter(o => {
+        const orderDate = new Date(o.date);
+        return orderDate >= twoWeeksAgo && orderDate < oneWeekAgo && o.status !== 'cancelled';
+      });
+      break;
+    }
+    case 'Ce mois-ci':
+    default: {
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+      previousPeriodOrders = orders.filter(o => {
+        const orderDate = new Date(o.date);
+        return orderDate >= lastMonthStart && orderDate <= lastMonthEnd && o.status !== 'cancelled';
+      });
+      break;
+    }
+  }
+
+  // Calculate previous period totals
+  const previousSales = previousPeriodOrders.reduce((sum, order) => sum + order.total, 0);
+  const previousOrders = previousPeriodOrders.length;
+
+  // Mock growth for books and users
+  const booksGrowth = timeRange === 'Aujourd\'hui' ? { value: 1.2, isPositive: false } :
+                      timeRange === 'Cette semaine' ? { value: 3.5, isPositive: true } :
+                      { value: 12, isPositive: true };
+
+  const usersGrowth = timeRange === 'Aujourd\'hui' ? { value: 2.1, isPositive: true } :
+                      timeRange === 'Cette semaine' ? { value: 0.8, isPositive: false } :
+                      { value: 8, isPositive: true };
+
+  // Get chart data
+  let chartData;
+  switch(timeRange) {
+    case 'Aujourd\'hui': {
+      chartData = [
+        { name: '6h', sales: 120 },
+        { name: '9h', sales: 450 },
+        { name: '12h', sales: 890 },
+        { name: '15h', sales: 1200 },
+        { name: '18h', sales: 980 },
+        { name: '21h', sales: 560 },
+        { name: '23h', sales: 320 },
+      ];
+      break;
+    }
+    case 'Cette semaine': {
+      const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+      chartData = daysOfWeek.map(day => ({
+        name: day,
+        sales: Math.floor(Math.random() * 2000) + 1000
+      }));
+      break;
+    }
+    case 'Ce mois-ci':
+    default: {
+      chartData = [
+        { name: 'Sem 1', sales: 4200 },
+        { name: 'Sem 2', sales: 5900 },
+        { name: 'Sem 3', sales: 4500 },
+        { name: 'Sem 4', sales: 6200 },
+      ];
+      break;
+    }
+  }
+
+  // Get recent orders
+  const recentOrders = [...orders]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, recentOrdersLimit);
+
+  return {
+    stats: {
+      totalBooks,
+      totalUsers,
+      monthlySales,
+      totalOrders,
+      growth: {
+        books: booksGrowth,
+        users: usersGrowth,
+        sales: calculateGrowth(monthlySales, previousSales),
+        orders: calculateGrowth(totalOrders, previousOrders)
+      }
+    },
+    chartData,
+    recentOrders
+  };
+};

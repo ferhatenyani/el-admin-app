@@ -1,27 +1,36 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { useState, useRef, useEffect, memo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ChevronDown, Check, AlertCircle } from 'lucide-react';
+import { getSalesChartData } from '../../mock/mockApi';
 
 /**
- * Modern minimalist SalesChart component
+ * Modern minimalist SalesChart component with isolated data fetching
  * Features:
+ * - Self-contained time filter state (no parent coupling)
+ * - Independent React Query data fetching
+ * - Only this chart re-renders when its filter changes
  * - Clean line chart design matching modern UI standards
- * - Receives data and time range from parent component
- * - Individual time filter dropdown in top-right corner
- * - Simplified header with clear title
- * - Minimal grid lines for cleaner look
  * - Custom dots on data points
  * - Refined tooltip styling
- * - Smooth blue color scheme
  * - Responsive design with proper spacing
  */
-const SalesChart = ({ data = [], timeRange = 'Ce mois-ci', onTimeRangeChange = null }) => {
-  const [loading, setLoading] = useState(false);
+const SalesChart = memo(() => {
+  // Local state - completely isolated
+  const [timeRange, setTimeRange] = useState('Ce mois-ci');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   const timeRangeOptions = ['Aujourd\'hui', 'Cette semaine', 'Ce mois-ci'];
+
+  // Isolated data fetching - unique query key
+  const { data = [], isLoading, isError, error } = useQuery({
+    queryKey: ['chartData', timeRange],
+    queryFn: () => getSalesChartData(timeRange),
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -35,12 +44,11 @@ const SalesChart = ({ data = [], timeRange = 'Ce mois-ci', onTimeRangeChange = n
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Handle time range change
+  // Handle time range change - purely local
   const handleTimeRangeChange = (newTimeRange) => {
+    setTimeRange(newTimeRange);
     setIsDropdownOpen(false);
-    if (onTimeRangeChange) {
-      onTimeRangeChange(newTimeRange);
-    }
+    // Query will automatically refetch with new timeRange
   };
 
   // Custom dot component for data points
@@ -180,11 +188,19 @@ const SalesChart = ({ data = [], timeRange = 'Ce mois-ci', onTimeRangeChange = n
 
       {/* Chart Container with minimal padding */}
       <div className="px-6 pb-6">
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center h-[350px]">
             <div className="text-center">
               <div className="w-8 h-8 border-3 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
               <p className="text-sm text-gray-500">Chargement du graphique...</p>
+            </div>
+          </div>
+        ) : isError ? (
+          <div className="flex items-center justify-center h-[350px]">
+            <div className="text-center max-w-md">
+              <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+              <p className="text-sm text-red-600 font-medium">Erreur de chargement</p>
+              <p className="text-xs text-gray-500 mt-1">{error?.message || 'Une erreur est survenue'}</p>
             </div>
           </div>
         ) : (
@@ -277,6 +293,8 @@ const SalesChart = ({ data = [], timeRange = 'Ce mois-ci', onTimeRangeChange = n
       </div>
     </motion.div>
   );
-};
+});
+
+SalesChart.displayName = 'SalesChart';
 
 export default SalesChart;
