@@ -1,17 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import BooksTable from '../components/books/BooksTable';
 import BookForm from '../components/books/BookForm';
 import CategoriesSection from '../components/categories/CategoriesSection';
 import EtiquettesSection from '../components/etiquettes/EtiquettesSection';
 import AuthorsSection from '../components/authors/AuthorsSection';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
-import { getBooks, createBook, updateBook, deleteBook } from '../mock/mockApi';
+import { useDebounce } from '../hooks/useDebounce';
+import * as booksApi from '../services/booksApi';
 
 const Books = () => {
+  // State management
   const [books, setBooks] = useState([]);
-  const [filteredBooks, setFilteredBooks] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 20,
+    totalElements: 0,
+    totalPages: 0,
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [sortBy, setSortBy] = useState('date');
@@ -19,110 +28,303 @@ const Books = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState(null);
 
-  useEffect(() => {
-    fetchBooks();
-  }, []);
+  // Refs for request cancellation
+  const abortControllerRef = useRef(null);
 
-  useEffect(() => {
-    let result = [...books];
+  // Debounce search query to reduce API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      result = result.filter((book) => book.status === statusFilter);
-    }
-
-    // Apply search query
-    if (searchQuery) {
-      result = result.filter(
-        (book) =>
-          book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          book.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Apply sorting
-    if (sortBy === 'date') {
-      result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    } else if (sortBy === 'title') {
-      result.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sortBy === 'price') {
-      result.sort((a, b) => b.price - a.price);
-    }
-
-    setFilteredBooks(result);
-  }, [searchQuery, books, sortBy, statusFilter]);
-
-  const fetchBooks = async () => {
-    setLoading(true);
+  /**
+   * Fetch books with current filters and pagination
+   * Uses AbortController to cancel in-flight requests
+   */
+  const fetchBooks = useCallback(async (showFilterLoading = false) => {
     try {
-      const result = await getBooks(1, '', 100);
-      setBooks(result.data);
-      setFilteredBooks(result.data);
-    } catch (error) {
-      console.error('Error fetching books:', error);
+      // Cancel any pending request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+
+      // Show appropriate loading state
+      if (showFilterLoading) {
+        setFilterLoading(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+
+      // Build query parameters
+      const params = {
+        page: pagination.page,
+        size: pagination.size,
+      };
+
+      // Add search query if present
+      if (debouncedSearchQuery) {
+        params.search = debouncedSearchQuery;
+      }
+
+      // Note: Backend handles sorting by default (newest first)
+      // If you need different sorting, add it to the API params
+      // For now, we'll rely on backend's default sorting
+
+      const response = await booksApi.getBooks(params, abortControllerRef.current.signal);
+
+      // Update state with response data
+      setBooks(response.content || response.data || []);
+      setPagination({
+        page: response.number || response.page || 0,
+        size: response.size || 20,
+        totalElements: response.totalElements || response.total || 0,
+        totalPages: response.totalPages || 1,
+      });
+    } catch (err) {
+      // Ignore cancelled requests
+      if (err.message === 'REQUEST_CANCELLED') {
+        return;
+      }
+
+      console.error('Error fetching books:', err);
+      setError(err.response?.data?.message || 'Failed to load books. Please try again.');
+      setBooks([]);
     } finally {
       setLoading(false);
+      setFilterLoading(false);
+    }
+  }, [pagination.page, pagination.size, debouncedSearchQuery]);
+
+  /**
+   * Initial load and refetch when dependencies change
+   */
+  useEffect(() => {
+    fetchBooks(pagination.page > 0); // Show filter loading for page changes
+  }, [fetchBooks]);
+
+  /**
+   * Clean up abort controller on unmount
+   */
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  /**
+   * Handle search query changes
+   * Reset to page 0 when searching
+   */
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+    if (pagination.page !== 0) {
+      setPagination(prev => ({ ...prev, page: 0 }));
     }
   };
 
+  /**
+   * Handle sort changes
+   * Note: Current backend may not support all sort options
+   * This is kept for UI consistency, but may need backend support
+   */
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    // If backend supports sorting, add it to fetchBooks params
+    // For now, this is client-side only for UI state
+  };
+
+  /**
+   * Handle status filter changes
+   * Note: Current backend doesn't have status filter in books endpoint
+   * This is kept for UI consistency
+   */
+  const handleStatusFilterChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    // If backend supports status filtering, add it to fetchBooks params
+  };
+
+  /**
+   * Handle page changes
+   */
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  /**
+   * Handle page size changes
+   */
+  const handlePageSizeChange = (newSize) => {
+    setPagination(prev => ({ ...prev, size: newSize, page: 0 }));
+  };
+
+  /**
+   * Open form for adding new book
+   */
   const handleAddBook = () => {
     setEditingBook(null);
     setIsFormOpen(true);
   };
 
+  /**
+   * Open form for editing book
+   */
   const handleEditBook = (book) => {
     setEditingBook(book);
     setIsFormOpen(true);
   };
 
+  /**
+   * Open delete confirmation modal
+   */
   const handleDeleteBook = (book) => {
     setBookToDelete(book);
     setDeleteConfirmOpen(true);
   };
 
+  /**
+   * Confirm and execute book deletion
+   * Uses optimistic update pattern - updates UI immediately
+   */
   const confirmDeleteBook = async () => {
-    if (bookToDelete) {
-      try {
-        await deleteBook(bookToDelete.id);
-        setDeleteConfirmOpen(false);
-        setBookToDelete(null);
+    if (!bookToDelete) return;
+
+    const bookId = bookToDelete.id;
+
+    try {
+      // Optimistic update - remove from UI immediately
+      setBooks(books.filter(b => b.id !== bookId));
+      setDeleteConfirmOpen(false);
+      setBookToDelete(null);
+
+      // Execute deletion
+      await booksApi.deleteBook(bookId);
+
+      // Update pagination count
+      setPagination(prev => ({
+        ...prev,
+        totalElements: prev.totalElements - 1,
+      }));
+
+      // If current page is now empty and not the first page, go back one page
+      if (books.length === 1 && pagination.page > 0) {
+        setPagination(prev => ({ ...prev, page: prev.page - 1 }));
+      } else if (books.length <= 1) {
+        // If last item on first page, refetch to get accurate count
         fetchBooks();
-      } catch (error) {
-        console.error('Error deleting book:', error);
       }
+    } catch (err) {
+      console.error('Error deleting book:', err);
+      setError(err.response?.data?.message || 'Failed to delete book. Please try again.');
+      // Revert optimistic update by refetching
+      fetchBooks();
     }
   };
 
+  /**
+   * Cancel deletion
+   */
   const cancelDeleteBook = () => {
     setDeleteConfirmOpen(false);
     setBookToDelete(null);
   };
 
-  const handleSubmitForm = async (bookData) => {
+  /**
+   * Handle book form submission (create or update)
+   * Uses differential update - only updates the changed item
+   */
+  const handleSubmitForm = async (bookData, coverImage = null) => {
     try {
       if (editingBook) {
-        await updateBook(editingBook.id, bookData);
+        // Update existing book
+        const updatedBook = await booksApi.updateBook(editingBook.id, bookData, coverImage);
+
+        // Differential update - replace only the updated book
+        setBooks(books.map(b => b.id === editingBook.id ? updatedBook : b));
       } else {
-        await createBook(bookData);
+        // Create new book
+        const newBook = await booksApi.createBook(bookData, coverImage);
+
+        // Add new book to the list (prepend to show at top)
+        setBooks([newBook, ...books]);
+
+        // Update total count
+        setPagination(prev => ({
+          ...prev,
+          totalElements: prev.totalElements + 1,
+        }));
       }
+
       setIsFormOpen(false);
       setEditingBook(null);
-      fetchBooks();
-    } catch (error) {
-      console.error('Error saving book:', error);
+    } catch (err) {
+      console.error('Error saving book:', err);
+      throw err; // Let form handle error display
     }
   };
 
+  /**
+   * Handle export functionality
+   * TODO: Implement actual export logic
+   */
   const handleExport = () => {
     console.log('Export triggered for books');
     // TODO: Implement export logic
   };
 
+  // Apply client-side filters for UI consistency
+  // Note: This is temporary until backend supports all filters
+  const filteredBooks = books.filter(book => {
+    // Status filter (if backend doesn't support it)
+    if (statusFilter !== 'all') {
+      // Map status filter to book properties
+      // This is UI-only until backend supports status
+      if (statusFilter === 'active' && book.stockQuantity === 0) return false;
+      if (statusFilter === 'out_of_stock' && book.stockQuantity > 0) return false;
+    }
+    return true;
+  });
+
+  // Apply client-side sorting for UI consistency
+  // Note: This is temporary until backend supports all sorting options
+  const sortedBooks = [...filteredBooks].sort((a, b) => {
+    if (sortBy === 'title') {
+      return a.title.localeCompare(b.title);
+    } else if (sortBy === 'price') {
+      return (b.price || 0) - (a.price || 0);
+    }
+    // Default: date (already sorted by backend)
+    return 0;
+  });
+
+  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Error state with retry
+  if (error && books.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <div className="text-red-600 text-center">
+          <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-lg font-semibold">Error Loading Books</p>
+          <p className="text-sm text-gray-600 mt-2">{error}</p>
+        </div>
+        <button
+          onClick={() => fetchBooks()}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -134,18 +336,37 @@ const Books = () => {
         <p className="text-gray-600 mt-1">Gérez votre inventaire de livres</p>
       </div>
 
+      {/* Error banner (non-blocking) */}
+      {error && books.length > 0 && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+          >
+            <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+            </svg>
+          </button>
+        </div>
+      )}
+
       <BooksTable
-        books={filteredBooks}
+        books={sortedBooks}
         onEdit={handleEditBook}
         onDelete={handleDeleteBook}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
         sortBy={sortBy}
-        onSortChange={setSortBy}
+        onSortChange={handleSortChange}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        onStatusFilterChange={handleStatusFilterChange}
         onAddBook={handleAddBook}
         onExport={handleExport}
+        loading={filterLoading}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
 
       {/* Categories Management Section */}
