@@ -8,14 +8,7 @@ import Profile from '../pages/Profile';
 import Marketing from '../pages/Marketing';
 import Login from '../pages/Login';
 import NotFound from '../pages/NotFound';
-
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('esprit_livre_admin_token');
-  if (!token) {
-    return <Navigate to="/admin/login" replace />;
-  }
-  return children;
-};
+import ProtectedRoute from '../components/ProtectedRoute';
 
 const AdminRoutes = () => {
   return (
