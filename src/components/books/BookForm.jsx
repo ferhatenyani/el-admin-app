@@ -5,93 +5,122 @@ import { X } from 'lucide-react';
 import UploadImageInput from '../common/UploadImageInput';
 import CustomSelect from '../common/CustomSelect';
 import useScrollLock from '../../hooks/useScrollLock';
+import * as authorsApi from '../../services/authorsApi';
+import * as tagsApi from '../../services/tagsApi';
+import { getBookCoverUrl } from '../../services/booksApi';
+
+// Language code mapping: Backend codes ↔ Form values
+const LANGUAGE_CODE_TO_FORM = {
+  'FR': 'FRENCH',
+  'EN': 'ENGLISH',
+  'AR': 'ARABIC'
+};
+
+const LANGUAGE_FORM_TO_CODE = {
+  'FRENCH': 'FR',
+  'ENGLISH': 'EN',
+  'ARABIC': 'AR'
+};
 
 const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
   const [formData, setFormData] = useState({
     title: '',
-    author: '',
-    category: '',
+    authorId: null,
+    categoryId: null,
     language: '',
     price: '',
-    stock: '',
-    status: 'active',
-    coverUrl: '',
+    stockQuantity: '',
+    description: '',
+    active: true,
+    coverImage: null,
   });
+
+  const [authors, setAuthors] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
 
-  const categoryOptions = [
-    { value: '', label: 'Sélectionnez une catégorie' },
-    { value: 'Fiction', label: 'Fiction' },
-    { value: 'Non-Fiction', label: 'Non-Fiction' },
-    { value: 'Technologie', label: 'Technologie' },
-    { value: 'Science', label: 'Science' },
-    { value: 'Biographie', label: 'Biographie' },
-    { value: 'Développement personnel', label: 'Développement personnel' },
-    { value: 'Psychologie', label: 'Psychologie' },
-    { value: 'Business', label: 'Business' }
-  ];
+  // Fetch authors and categories when modal opens
+  useEffect(() => {
+    const fetchFormData = async () => {
+      if (!isOpen) return;
 
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [authorsRes, categoriesRes] = await Promise.all([
+          authorsApi.getAuthors({ page: 0, size: 100 }),
+          tagsApi.getTagsByType('CATEGORY', { page: 0, size: 100 })
+        ]);
+
+        setAuthors(authorsRes.content || authorsRes);
+        setCategories(categoriesRes.content || categoriesRes);
+      } catch (err) {
+        console.error('Error fetching form data:', err);
+        setError('Failed to load authors and categories');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFormData();
+  }, [isOpen]);
+
+  // Build dropdown options from API data
   const authorOptions = [
     { value: '', label: 'Sélectionnez un auteur' },
-    { value: 'Victor Hugo', label: 'Victor Hugo' },
-    { value: 'J.K. Rowling', label: 'J.K. Rowling' },
-    { value: 'Stephen King', label: 'Stephen King' },
-    { value: 'Agatha Christie', label: 'Agatha Christie' },
-    { value: 'Gabriel García Márquez', label: 'Gabriel García Márquez' },
-    { value: 'Jane Austen', label: 'Jane Austen' },
-    { value: 'Antoine de Saint-Exupéry', label: 'Antoine de Saint-Exupéry' },
-    { value: 'George Orwell', label: 'George Orwell' },
-    { value: 'Yuval Noah Harari', label: 'Yuval Noah Harari' },
-    { value: 'Robert C. Martin', label: 'Robert C. Martin' },
-    { value: 'Albert Camus', label: 'Albert Camus' },
-    { value: 'Daniel Kahneman', label: 'Daniel Kahneman' },
-    { value: 'F. Scott Fitzgerald', label: 'F. Scott Fitzgerald' },
-    { value: 'James Clear', label: 'James Clear' },
-    { value: 'Paulo Coelho', label: 'Paulo Coelho' },
-    { value: 'Tara Westover', label: 'Tara Westover' },
-    { value: 'Harper Lee', label: 'Harper Lee' },
-    { value: 'Eric Ries', label: 'Eric Ries' },
-    { value: 'Eckhart Tolle', label: 'Eckhart Tolle' },
-    { value: 'Walter Isaacson', label: 'Walter Isaacson' },
-    { value: 'Stephen Covey', label: 'Stephen Covey' },
-    { value: 'Aldous Huxley', label: 'Aldous Huxley' },
-    { value: 'Émile Zola', label: 'Émile Zola' }
+    ...authors.map(author => ({
+      value: author.id,
+      label: author.name
+    }))
+  ];
+
+  const categoryOptions = [
+    { value: '', label: 'Sélectionnez une catégorie' },
+    ...categories.map(category => ({
+      value: category.id,
+      label: category.nameFr
+    }))
   ];
 
   const languageOptions = [
     { value: '', label: 'Sélectionnez une langue' },
-    { value: 'Français', label: 'Français' },
-    { value: 'Anglais', label: 'Anglais' },
-    { value: 'Arabe', label: 'Arabe' },
-    { value: 'Espagnol', label: 'Espagnol' },
-    { value: 'Allemand', label: 'Allemand' },
-    { value: 'Italien', label: 'Italien' },
-    { value: 'Portugais', label: 'Portugais' },
-    { value: 'Chinois', label: 'Chinois' },
-    { value: 'Japonais', label: 'Japonais' },
-    { value: 'Russe', label: 'Russe' }
+    { value: 'FRENCH', label: 'Français' },
+    { value: 'ENGLISH', label: 'Anglais' },
+    { value: 'ARABIC', label: 'Arabe' }
   ];
 
   const statusOptions = [
-    { value: 'active', label: 'Actif' },
-    { value: 'out_of_stock', label: 'Rupture de stock' }
+    { value: true, label: 'Actif' },
+    { value: false, label: 'Inactif' }
   ];
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      // Convert backend language code to form value
+      const backendLang = initialData.language || '';
+      const formLang = LANGUAGE_CODE_TO_FORM[backendLang] || backendLang;
+
+      const normalizedData = {
+        ...initialData,
+        language: formLang
+      };
+      setFormData(normalizedData);
     } else {
       setFormData({
         title: '',
-        author: '',
-        category: '',
+        authorId: null,
+        categoryId: null,
         language: '',
         price: '',
-        stock: '',
-        status: 'active',
-        coverUrl: '',
+        stockQuantity: '',
+        description: '',
+        active: true,
+        coverImage: null,
       });
     }
   }, [initialData, isOpen]);
@@ -103,11 +132,27 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
+
+    // Convert form language value back to backend code
+    const backendLanguage = LANGUAGE_FORM_TO_CODE[formData.language] || formData.language;
+
+    // Build book data object matching backend structure
+    const bookData = {
+      title: formData.title,
       price: parseFloat(formData.price),
-      stock: parseInt(formData.stock, 10),
-    });
+      stockQuantity: parseInt(formData.stockQuantity, 10),
+      language: backendLanguage,
+      active: formData.active,
+      description: formData.description || '',
+    };
+
+    // Add author reference if selected
+    if (formData.authorId) {
+      bookData.author = { id: formData.authorId };
+    }
+
+    // Pass book data, cover image, and categoryId separately
+    onSubmit(bookData, formData.coverImage, formData.categoryId);
   };
 
   const modalContent = (
@@ -178,8 +223,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         Auteur *
                       </label>
                       <CustomSelect
-                        value={formData.author}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, author: value }))}
+                        value={formData.authorId}
+                        onChange={(value) => setFormData((prev) => ({ ...prev, authorId: value }))}
                         options={authorOptions}
                         placeholder="Sélectionnez un auteur"
                         required
@@ -192,8 +237,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         Catégorie *
                       </label>
                       <CustomSelect
-                        value={formData.category}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
+                        value={formData.categoryId}
+                        onChange={(value) => setFormData((prev) => ({ ...prev, categoryId: value }))}
                         options={categoryOptions}
                         placeholder="Sélectionnez une catégorie"
                         required
@@ -238,8 +283,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       </label>
                       <input
                         type="number"
-                        name="stock"
-                        value={formData.stock}
+                        name="stockQuantity"
+                        value={formData.stockQuantity}
                         onChange={handleChange}
                         required
                         placeholder="0"
@@ -253,10 +298,25 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         Statut *
                       </label>
                       <CustomSelect
-                        value={formData.status}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
+                        value={formData.active}
+                        onChange={(value) => setFormData((prev) => ({ ...prev, active: value }))}
                         options={statusOptions}
                         placeholder="Sélectionnez un statut"
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">
+                        Description
+                      </label>
+                      <textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        placeholder="Entrez une description du livre"
+                        rows="3"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
 
@@ -266,8 +326,9 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         Image de couverture
                       </label>
                       <UploadImageInput
-                        value={formData.coverUrl}
-                        onChange={(url) => setFormData((prev) => ({ ...prev, coverUrl: url }))}
+                        value={formData.coverImage}
+                        onChange={(file) => setFormData((prev) => ({ ...prev, coverImage: file }))}
+                        existingImageUrl={initialData?.id ? getBookCoverUrl(initialData.id) : null}
                       />
                     </div>
                   </div>

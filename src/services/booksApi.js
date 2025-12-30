@@ -4,13 +4,10 @@ import { getCookie } from '../utils/cookies';
 // API base URL - should be configured in environment variables
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// Create axios instance with default config
+// Create axios instance WITHOUT default Content-Type
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // CRITICAL: Enable session cookie transmission
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor to add Bearer token and CSRF token
@@ -19,6 +16,11 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Set Content-Type ONLY for non-FormData requests
+  if (!(config.data instanceof FormData)) {
+    config.headers['Content-Type'] = 'application/json';
   }
 
   // Add CSRF token for POST, PUT, DELETE, PATCH requests
@@ -183,19 +185,19 @@ export const getBookById = async (id) => {
 export const createBook = async (bookData, coverImage) => {
   const formData = new FormData();
 
-  // Add book data as JSON
-  formData.append('book', JSON.stringify(bookData));
+  // Add book data as JSON blob with proper content type
+  const bookBlob = new Blob([JSON.stringify(bookData)], {
+    type: 'application/json'
+  });
+  formData.append('book', bookBlob);
 
   // Add cover image if provided
   if (coverImage) {
     formData.append('coverImage', coverImage);
   }
 
-  const response = await api.post('/api/books', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  // Interceptor will auto-detect FormData and remove Content-Type header
+  const response = await api.post('/api/books', formData);
 
   return processBookData(response.data);
 };
@@ -210,19 +212,19 @@ export const createBook = async (bookData, coverImage) => {
 export const updateBook = async (id, bookData, coverImage = null) => {
   const formData = new FormData();
 
-  // Add book data as JSON
-  formData.append('book', JSON.stringify({ ...bookData, id }));
+  // Add book data as JSON blob with proper content type
+  const bookBlob = new Blob([JSON.stringify({ ...bookData, id })], {
+    type: 'application/json'
+  });
+  formData.append('book', bookBlob);
 
-  // Add cover image if provided
+  // Add cover image only if provided
   if (coverImage) {
     formData.append('coverImage', coverImage);
   }
 
-  const response = await api.put(`/api/books/${id}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  // Interceptor will auto-detect FormData and remove Content-Type header
+  const response = await api.put(`/api/books/${id}`, formData);
 
   return processBookData(response.data);
 };
@@ -269,6 +271,16 @@ export const removeTagsFromBook = async (bookId, tagIds) => {
   return response.data;
 };
 
+/**
+ * Get book cover image URL
+ * @param {number} id - The book ID
+ * @param {boolean} placeholder - Return placeholder if cover not found (default: false)
+ * @returns {string} Cover image URL
+ */
+export const getBookCoverUrl = (id, placeholder = false) => {
+  return `${API_BASE_URL}/api/books/${id}/cover${placeholder ? '?placeholder=true' : ''}`;
+};
+
 export default {
   getBooks,
   getBookSuggestions,
@@ -279,4 +291,5 @@ export default {
   deleteBookPermanently,
   addTagsToBook,
   removeTagsFromBook,
+  getBookCoverUrl,
 };

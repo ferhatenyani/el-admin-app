@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ChevronDown, ChevronUp, Users, UserCircle, Download } from 'lucide-react';
 import AuthorCard from './AuthorCard';
@@ -6,6 +6,7 @@ import AddAuthorModal from './AddAuthorModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
+import * as authorsApi from '../../services/authorsApi';
 
 /**
  * AuthorsSection Component
@@ -17,46 +18,10 @@ import usePagination from '../../hooks/usePagination';
  * - Données mock avec gestion d'état local
  */
 const AuthorsSection = () => {
-  // Données d'auteurs initiales (mock)
-  const [authors, setAuthors] = useState([
-    {
-      id: 1,
-      name: 'Victor Hugo',
-      bio: 'Écrivain français du XIXe siècle, auteur des Misérables et de Notre-Dame de Paris',
-      imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500',
-    },
-    {
-      id: 2,
-      name: 'J.K. Rowling',
-      bio: 'Auteure britannique de la série Harry Potter',
-      imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500',
-    },
-    {
-      id: 3,
-      name: 'Stephen King',
-      bio: 'Auteur américain de romans d\'horreur et de suspense',
-      imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500',
-    },
-    {
-      id: 4,
-      name: 'Agatha Christie',
-      bio: 'Romancière britannique, reine du roman policier',
-      imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500',
-    },
-    {
-      id: 5,
-      name: 'Gabriel García Márquez',
-      bio: 'Écrivain colombien, prix Nobel de littérature',
-      imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=500',
-    },
-    {
-      id: 6,
-      name: 'Jane Austen',
-      bio: 'Romancière anglaise, auteure d\'Orgueil et Préjugés',
-      imageUrl: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=500',
-    },
-  ]);
-
+  // State management for authors
+  const [authors, setAuthors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [editingAuthor, setEditingAuthor] = useState(null);
@@ -73,10 +38,30 @@ const AuthorsSection = () => {
     totalItems
   } = usePagination(authors, 5);
 
-  // Générer un ID unique pour les nouveaux auteurs
-  const generateId = () => {
-    return authors.length > 0 ? Math.max(...authors.map((a) => a.id)) + 1 : 1;
+  // Fetch authors from API
+  const fetchAuthors = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = {
+        page: 0,
+        size: 100, // Fetch all authors for client-side pagination
+      };
+      const response = await authorsApi.getAuthors(params);
+      setAuthors(response.content || response);
+    } catch (err) {
+      console.error('Error fetching authors:', err);
+      setError('Failed to load authors. Please try again.');
+      setAuthors([]);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Fetch authors on component mount
+  useEffect(() => {
+    fetchAuthors();
+  }, []);
 
   // Gérer l'ajout d'un nouvel auteur
   const handleAddAuthor = () => {
@@ -86,29 +71,38 @@ const AuthorsSection = () => {
 
   // Gérer la modification d'un auteur existant
   const handleEditAuthor = (author) => {
-    setEditingAuthor(author);
+    // Map profilePictureUrl to imageUrl for the modal
+    setEditingAuthor({
+      ...author,
+      imageUrl: author.profilePictureUrl || author.imageUrl,
+    });
     setIsModalOpen(true);
   };
 
   // Gérer la soumission d'auteur (ajout ou mise à jour)
-  const handleSubmitAuthor = (authorData) => {
-    if (editingAuthor) {
-      // Mettre à jour l'auteur existant
-      setAuthors((prev) =>
-        prev.map((auth) =>
-          auth.id === editingAuthor.id ? { ...auth, ...authorData } : auth
-        )
-      );
-    } else {
-      // Ajouter un nouvel auteur
-      const newAuthor = {
-        id: generateId(),
-        ...authorData,
-      };
-      setAuthors((prev) => [...prev, newAuthor]);
+  const handleSubmitAuthor = async (authorData) => {
+    try {
+      if (editingAuthor) {
+        // Update existing author
+        await authorsApi.updateAuthor(
+          editingAuthor.id,
+          { name: authorData.name },
+          authorData.imageUrl // File object from UploadImageInput
+        );
+      } else {
+        // Create new author
+        await authorsApi.createAuthor(
+          { name: authorData.name },
+          authorData.imageUrl // File object from UploadImageInput
+        );
+      }
+      await fetchAuthors(); // Refresh list after operation
+      setIsModalOpen(false);
+      setEditingAuthor(null);
+    } catch (err) {
+      console.error('Error saving author:', err);
+      setError('Failed to save author. Please try again.');
     }
-    setIsModalOpen(false);
-    setEditingAuthor(null);
   };
 
   // Gérer la suppression d'un auteur
@@ -117,9 +111,16 @@ const AuthorsSection = () => {
     setDeleteConfirmOpen(true);
   };
 
-  const confirmDeleteAuthor = () => {
-    if (authorToDelete) {
-      setAuthors((prev) => prev.filter((auth) => auth.id !== authorToDelete.id));
+  const confirmDeleteAuthor = async () => {
+    if (!authorToDelete) return;
+    try {
+      await authorsApi.deleteAuthor(authorToDelete.id);
+      await fetchAuthors(); // Refresh list after deletion
+      setDeleteConfirmOpen(false);
+      setAuthorToDelete(null);
+    } catch (err) {
+      console.error('Error deleting author:', err);
+      setError('Failed to delete author. Please try again.');
       setDeleteConfirmOpen(false);
       setAuthorToDelete(null);
     }
@@ -222,7 +223,19 @@ const AuthorsSection = () => {
               className="overflow-hidden"
             >
               <div className="p-3 sm:p-6">
-                {authors.length > 0 ? (
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {loading && authors.length === 0 ? (
+                  <div className="flex justify-center items-center py-16">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+                  </div>
+                ) : authors.length > 0 ? (
                   <>
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
                       {paginatedAuthors.map((author, index) => (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ChevronDown, ChevronUp, Tag, Tags, Download } from 'lucide-react';
 import EtiquetteCard from './EtiquetteCard';
@@ -6,6 +6,7 @@ import AddEtiquetteModal from './AddEtiquetteModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
+import * as etiquettesApi from '../../services/etiquettesApi';
 
 /**
  * EtiquettesSection Component
@@ -17,40 +18,10 @@ import usePagination from '../../hooks/usePagination';
  * - Mock data with local state management
  */
 const EtiquettesSection = () => {
-  // Initial etiquettes data (mock)
-  const [etiquettes, setEtiquettes] = useState([
-    {
-      id: 1,
-      nameFr: 'Nouveau',
-      nameEn: 'New',
-      color: '#3B82F6',
-    },
-    {
-      id: 2,
-      nameFr: 'Bestseller',
-      nameEn: 'Bestseller',
-      color: '#EAB308',
-    },
-    {
-      id: 3,
-      nameFr: 'Promotion',
-      nameEn: 'Promotion',
-      color: '#EF4444',
-    },
-    {
-      id: 4,
-      nameFr: 'Recommandé',
-      nameEn: 'Recommended',
-      color: '#22C55E',
-    },
-    {
-      id: 5,
-      nameFr: 'Édition limitée',
-      nameEn: 'Limited Edition',
-      color: '#A855F7',
-    },
-  ]);
-
+  // State management for etiquettes
+  const [etiquettes, setEtiquettes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [editingEtiquette, setEditingEtiquette] = useState(null);
@@ -67,10 +38,30 @@ const EtiquettesSection = () => {
     totalItems
   } = usePagination(etiquettes, 5);
 
-  // Generate unique ID for new etiquettes
-  const generateId = () => {
-    return etiquettes.length > 0 ? Math.max(...etiquettes.map((e) => e.id)) + 1 : 1;
+  // Fetch etiquettes from API
+  const fetchEtiquettes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = {
+        page: 0,
+        size: 100, // Fetch all etiquettes for client-side pagination
+      };
+      const response = await etiquettesApi.getEtiquettes(params);
+      setEtiquettes(response.content || response);
+    } catch (err) {
+      console.error('Error fetching etiquettes:', err);
+      setError('Failed to load etiquettes. Please try again.');
+      setEtiquettes([]);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Fetch etiquettes on component mount
+  useEffect(() => {
+    fetchEtiquettes();
+  }, []);
 
   // Handle adding a new etiquette
   const handleAddEtiquette = () => {
@@ -85,24 +76,29 @@ const EtiquettesSection = () => {
   };
 
   // Handle etiquette submission (add or update)
-  const handleSubmitEtiquette = (etiquetteData) => {
-    if (editingEtiquette) {
-      // Update existing etiquette
-      setEtiquettes((prev) =>
-        prev.map((etiq) =>
-          etiq.id === editingEtiquette.id ? { ...etiq, ...etiquetteData } : etiq
-        )
-      );
-    } else {
-      // Add new etiquette
-      const newEtiquette = {
-        id: generateId(),
-        ...etiquetteData,
-      };
-      setEtiquettes((prev) => [...prev, newEtiquette]);
+  const handleSubmitEtiquette = async (etiquetteData) => {
+    try {
+      if (editingEtiquette) {
+        // Update existing etiquette
+        await etiquettesApi.updateEtiquette(
+          editingEtiquette.id,
+          { nameEn: etiquetteData.nameEn, nameFr: etiquetteData.nameFr, color: etiquetteData.color }
+        );
+      } else {
+        // Create new etiquette
+        await etiquettesApi.createEtiquette({
+          nameEn: etiquetteData.nameEn,
+          nameFr: etiquetteData.nameFr,
+          color: etiquetteData.color
+        });
+      }
+      await fetchEtiquettes(); // Refresh list after operation
+      setIsModalOpen(false);
+      setEditingEtiquette(null);
+    } catch (err) {
+      console.error('Error saving etiquette:', err);
+      setError('Failed to save etiquette. Please try again.');
     }
-    setIsModalOpen(false);
-    setEditingEtiquette(null);
   };
 
   // Handle deleting an etiquette
@@ -111,9 +107,16 @@ const EtiquettesSection = () => {
     setDeleteConfirmOpen(true);
   };
 
-  const confirmDeleteEtiquette = () => {
-    if (etiquetteToDelete) {
-      setEtiquettes((prev) => prev.filter((etiq) => etiq.id !== etiquetteToDelete.id));
+  const confirmDeleteEtiquette = async () => {
+    if (!etiquetteToDelete) return;
+    try {
+      await etiquettesApi.deleteEtiquette(etiquetteToDelete.id);
+      await fetchEtiquettes(); // Refresh list after deletion
+      setDeleteConfirmOpen(false);
+      setEtiquetteToDelete(null);
+    } catch (err) {
+      console.error('Error deleting etiquette:', err);
+      setError('Failed to delete etiquette. Please try again.');
       setDeleteConfirmOpen(false);
       setEtiquetteToDelete(null);
     }
@@ -216,7 +219,19 @@ const EtiquettesSection = () => {
               className="overflow-hidden"
             >
               <div className="p-3 sm:p-6">
-                {etiquettes.length > 0 ? (
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {loading && etiquettes.length === 0 ? (
+                  <div className="flex justify-center items-center py-16">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
+                  </div>
+                ) : etiquettes.length > 0 ? (
                   <>
                     <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
                       {paginatedEtiquettes.map((etiquette, index) => (

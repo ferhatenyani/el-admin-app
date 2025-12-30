@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ChevronDown, ChevronUp, FolderOpen, BookOpen, Download } from 'lucide-react';
 import CategoryCard from './CategoryCard';
@@ -6,6 +6,7 @@ import AddCategoryModal from './AddCategoryModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
+import * as categoriesApi from '../../services/categoriesApi';
 
 /**
  * CategoriesSection Component
@@ -17,46 +18,10 @@ import usePagination from '../../hooks/usePagination';
  * - Données mock avec gestion d'état local
  */
 const CategoriesSection = () => {
-  // Données de catégories initiales (mock)
-  const [categories, setCategories] = useState([
-    {
-      id: 1,
-      nameEn: 'Science Fiction',
-      nameFr: 'Science-Fiction',
-      imageUrl: 'https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?w=500',
-    },
-    {
-      id: 2,
-      nameEn: 'Mystery & Thriller',
-      nameFr: 'Mystère et Thriller',
-      imageUrl: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500',
-    },
-    {
-      id: 3,
-      nameEn: 'Romance',
-      nameFr: 'Romance',
-      imageUrl: 'https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=500',
-    },
-    {
-      id: 4,
-      nameEn: 'Biography',
-      nameFr: 'Biographie',
-      imageUrl: 'https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=500',
-    },
-    {
-      id: 5,
-      nameEn: 'Self-Help',
-      nameFr: 'Développement Personnel',
-      imageUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500',
-    },
-    {
-      id: 6,
-      nameEn: 'Technology',
-      nameFr: 'Technologie',
-      imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=500',
-    },
-  ]);
-
+  // State management for categories
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -73,10 +38,30 @@ const CategoriesSection = () => {
     totalItems
   } = usePagination(categories, 5);
 
-  // Générer un ID unique pour les nouvelles catégories
-  const generateId = () => {
-    return categories.length > 0 ? Math.max(...categories.map((c) => c.id)) + 1 : 1;
+  // Fetch categories from API
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = {
+        page: 0,
+        size: 100, // Fetch all categories for client-side pagination
+      };
+      const response = await categoriesApi.getCategories(params);
+      setCategories(response.content || response);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      setError('Failed to load categories. Please try again.');
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   // Gérer l'ajout d'une nouvelle catégorie
   const handleAddCategory = () => {
@@ -91,24 +76,29 @@ const CategoriesSection = () => {
   };
 
   // Gérer la soumission de catégorie (ajout ou mise à jour)
-  const handleSubmitCategory = (categoryData) => {
-    if (editingCategory) {
-      // Mettre à jour la catégorie existante
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === editingCategory.id ? { ...cat, ...categoryData } : cat
-        )
-      );
-    } else {
-      // Ajouter une nouvelle catégorie
-      const newCategory = {
-        id: generateId(),
-        ...categoryData,
-      };
-      setCategories((prev) => [...prev, newCategory]);
+  const handleSubmitCategory = async (categoryData) => {
+    try {
+      if (editingCategory) {
+        // Update existing category
+        await categoriesApi.updateCategory(
+          editingCategory.id,
+          { nameEn: categoryData.nameEn, nameFr: categoryData.nameFr },
+          categoryData.imageUrl // File object from UploadImageInput
+        );
+      } else {
+        // Create new category
+        await categoriesApi.createCategory(
+          { nameEn: categoryData.nameEn, nameFr: categoryData.nameFr },
+          categoryData.imageUrl // File object from UploadImageInput
+        );
+      }
+      await fetchCategories(); // Refresh list after operation
+      setIsModalOpen(false);
+      setEditingCategory(null);
+    } catch (err) {
+      console.error('Error saving category:', err);
+      setError('Failed to save category. Please try again.');
     }
-    setIsModalOpen(false);
-    setEditingCategory(null);
   };
 
   // Gérer la suppression d'une catégorie
@@ -117,9 +107,16 @@ const CategoriesSection = () => {
     setDeleteConfirmOpen(true);
   };
 
-  const confirmDeleteCategory = () => {
-    if (categoryToDelete) {
-      setCategories((prev) => prev.filter((cat) => cat.id !== categoryToDelete.id));
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    try {
+      await categoriesApi.deleteCategory(categoryToDelete.id);
+      await fetchCategories(); // Refresh list after deletion
+      setDeleteConfirmOpen(false);
+      setCategoryToDelete(null);
+    } catch (err) {
+      console.error('Error deleting category:', err);
+      setError('Failed to delete category. Please try again.');
       setDeleteConfirmOpen(false);
       setCategoryToDelete(null);
     }
@@ -222,13 +219,24 @@ const CategoriesSection = () => {
               className="overflow-hidden"
             >
               <div className="p-3 sm:p-6">
-                {categories.length > 0 ? (
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {loading && categories.length === 0 ? (
+                  <div className="flex justify-center items-center py-16">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : categories.length > 0 ? (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
                       {paginatedCategories.map((category, index) => (
-                        <div className="max-w-xs sm:max-w-none mx-auto sm:mx-0 w-full">
+                        <div key={category.id} className="max-w-xs sm:max-w-none mx-auto sm:mx-0 w-full">
                           <CategoryCard
-                            key={category.id}
                             category={category}
                             onDelete={handleDeleteCategory}
                             onEdit={handleEditCategory}

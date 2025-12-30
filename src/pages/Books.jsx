@@ -170,10 +170,33 @@ const Books = () => {
 
   /**
    * Open form for editing book
+   * Fetches latest book data from API to ensure accuracy
    */
-  const handleEditBook = (book) => {
-    setEditingBook(book);
-    setIsFormOpen(true);
+  const handleEditBook = async (book) => {
+    try {
+      // Fetch latest book data from API
+      const latestBook = await booksApi.getBookById(book.id);
+
+      // Transform backend data to form format
+      const formData = {
+        id: latestBook.id,
+        title: latestBook.title,
+        authorId: latestBook.author?.id || null,
+        categoryId: latestBook.tags?.find(t => t.type === 'CATEGORY')?.id || null,
+        language: latestBook.language || '',
+        price: latestBook.price || '',
+        stockQuantity: latestBook.stockQuantity || '',
+        description: latestBook.description || '',
+        active: latestBook.active !== false,
+        coverImage: null, // Don't prefill image (keep existing on backend)
+      };
+
+      setEditingBook(formData);
+      setIsFormOpen(true);
+    } catch (err) {
+      console.error('Error fetching book for edit:', err);
+      setError('Failed to load book details. Please try again.');
+    }
   };
 
   /**
@@ -187,6 +210,7 @@ const Books = () => {
   /**
    * Confirm and execute book deletion
    * Uses optimistic update pattern - updates UI immediately
+   * Performs SOFT DELETE (sets active=false)
    */
   const confirmDeleteBook = async () => {
     if (!bookToDelete) return;
@@ -199,7 +223,7 @@ const Books = () => {
       setDeleteConfirmOpen(false);
       setBookToDelete(null);
 
-      // Execute deletion
+      // Execute soft deletion (sets active=false)
       await booksApi.deleteBook(bookId);
 
       // Update pagination count
@@ -235,20 +259,36 @@ const Books = () => {
    * Handle book form submission (create or update)
    * Uses differential update - only updates the changed item
    */
-  const handleSubmitForm = async (bookData, coverImage = null) => {
+  const handleSubmitForm = async (bookData, coverImage = null, categoryId = null) => {
     try {
+      let savedBook;
+
       if (editingBook) {
         // Update existing book
-        const updatedBook = await booksApi.updateBook(editingBook.id, bookData, coverImage);
+        savedBook = await booksApi.updateBook(editingBook.id, bookData, coverImage);
+
+        // Update category tag if changed
+        if (categoryId) {
+          await booksApi.addTagsToBook(savedBook.id, [categoryId]);
+          // Refetch to get updated tags
+          savedBook = await booksApi.getBookById(savedBook.id);
+        }
 
         // Differential update - replace only the updated book
-        setBooks(books.map(b => b.id === editingBook.id ? updatedBook : b));
+        setBooks(books.map(b => b.id === savedBook.id ? savedBook : b));
       } else {
         // Create new book
-        const newBook = await booksApi.createBook(bookData, coverImage);
+        savedBook = await booksApi.createBook(bookData, coverImage);
+
+        // Assign category tag if selected
+        if (categoryId) {
+          await booksApi.addTagsToBook(savedBook.id, [categoryId]);
+          // Refetch to get updated tags
+          savedBook = await booksApi.getBookById(savedBook.id);
+        }
 
         // Add new book to the list (prepend to show at top)
-        setBooks([newBook, ...books]);
+        setBooks([savedBook, ...books]);
 
         // Update total count
         setPagination(prev => ({

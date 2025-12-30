@@ -4,10 +4,18 @@ import { formatCurrency } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
 import { useState } from 'react';
+import { getBookCoverUrl } from '../../services/booksApi';
 
 const statusColors = {
   active: 'bg-green-100 text-green-800',
   out_of_stock: 'bg-red-100 text-red-800',
+};
+
+// Language code to display name mapping
+const LANGUAGE_DISPLAY = {
+  'FR': 'Français',
+  'EN': 'English',
+  'AR': 'العربية'
 };
 
 const BooksTable = ({
@@ -28,6 +36,7 @@ const BooksTable = ({
   onPageSizeChange = null,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [failedImages, setFailedImages] = useState(new Set());
 
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
@@ -232,16 +241,26 @@ const BooksTable = ({
                             whileHover={{ backgroundColor: '#f9fafb' }}
                           >
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                              {book.coverImageUrl ? (
-                                <img
-                                  src={book.coverImageUrl}
-                                  alt={book.title}
-                                  className="w-10 h-14 lg:w-12 lg:h-16 object-cover rounded"
-                                />
-                              ) : (
+                              {failedImages.has(book.id) ? (
                                 <div className="w-10 h-14 lg:w-12 lg:h-16 bg-gray-200 rounded flex items-center justify-center">
                                   <BookOpen className="w-6 h-6 text-gray-400" />
                                 </div>
+                              ) : (
+                                <img
+                                  src={getBookCoverUrl(book.id, failedImages.has(`${book.id}-placeholder`))}
+                                  alt={book.title}
+                                  className="w-10 h-14 lg:w-12 lg:h-16 object-cover rounded"
+                                  onError={(e) => {
+                                    // Try placeholder if not already tried
+                                    if (!failedImages.has(`${book.id}-placeholder`)) {
+                                      setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
+                                      e.target.src = getBookCoverUrl(book.id, true);
+                                    } else {
+                                      // Both failed, show icon
+                                      setFailedImages(prev => new Set(prev).add(book.id));
+                                    }
+                                  }}
+                                />
                               )}
                             </td>
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
@@ -255,7 +274,7 @@ const BooksTable = ({
                             </td>
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                               <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                                {book.language || 'Inconnue'}
+                                {LANGUAGE_DISPLAY[book.language] || book.language || 'Inconnue'}
                               </span>
                             </td>
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -310,16 +329,26 @@ const BooksTable = ({
                       className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-3"
                     >
                       <div className="flex gap-3 sm:gap-4">
-                        {book.coverImageUrl ? (
-                          <img
-                            src={book.coverImageUrl}
-                            alt={book.title}
-                            className="w-14 h-18 sm:w-16 sm:h-20 object-cover rounded flex-shrink-0"
-                          />
-                        ) : (
+                        {failedImages.has(book.id) ? (
                           <div className="w-14 h-18 sm:w-16 sm:h-20 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
                             <BookOpen className="w-8 h-8 text-gray-400" />
                           </div>
+                        ) : (
+                          <img
+                            src={getBookCoverUrl(book.id, failedImages.has(`${book.id}-placeholder`))}
+                            alt={book.title}
+                            className="w-14 h-18 sm:w-16 sm:h-20 object-cover rounded flex-shrink-0"
+                            onError={(e) => {
+                              // Try placeholder if not already tried
+                              if (!failedImages.has(`${book.id}-placeholder`)) {
+                                setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
+                                e.target.src = getBookCoverUrl(book.id, true);
+                              } else {
+                                // Both failed, show icon
+                                setFailedImages(prev => new Set(prev).add(book.id));
+                              }
+                            }}
+                          />
                         )}
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium text-sm sm:text-base text-gray-900 truncate">{book.title}</h3>
@@ -328,7 +357,7 @@ const BooksTable = ({
                             {book.tags?.find(tag => tag.type === 'CATEGORY')?.nameFr || 'Non catégorisé'}
                           </p>
                           <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                            {book.language || 'Inconnue'}
+                            {LANGUAGE_DISPLAY[book.language] || book.language || 'Inconnue'}
                           </span>
                         </div>
                       </div>

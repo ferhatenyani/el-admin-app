@@ -1,25 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Upload, X } from 'lucide-react';
 
-const UploadImageInput = ({ value, onChange, label = 'Book Cover' }) => {
-  const [preview, setPreview] = useState(value || null);
+const UploadImageInput = ({ value, onChange, label = 'Book Cover', existingImageUrl = null }) => {
+  const [preview, setPreview] = useState(null);
+
+  // Initialize preview based on value or existingImageUrl
+  useEffect(() => {
+    if (value instanceof File) {
+      // New file selected - create object URL
+      const previewUrl = URL.createObjectURL(value);
+      setPreview(previewUrl);
+
+      // Cleanup function to revoke object URL
+      return () => URL.revokeObjectURL(previewUrl);
+    } else if (existingImageUrl) {
+      // Existing image from server
+      setPreview(existingImageUrl);
+    } else {
+      setPreview(null);
+    }
+  }, [value, existingImageUrl]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        setPreview(base64String);
-        onChange(base64String);
-      };
-      reader.readAsDataURL(file);
+      // Pass File object to parent
+      onChange(file);
     }
   };
 
   const handleRemove = () => {
     setPreview(null);
-    onChange('');
+    onChange(null);
   };
 
   return (
@@ -29,7 +41,7 @@ const UploadImageInput = ({ value, onChange, label = 'Book Cover' }) => {
       </label>
 
       {preview ? (
-        <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden group">
+        <div className="relative w-full max-w-[180px] mx-auto aspect-[2/3] bg-gray-100 rounded-lg overflow-hidden group">
           <img
             src={preview}
             alt="Preview"
@@ -46,7 +58,7 @@ const UploadImageInput = ({ value, onChange, label = 'Book Cover' }) => {
           </div>
         </div>
       ) : (
-        <label className="w-full h-48 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+        <label className="w-full max-w-[280px] mx-auto aspect-[2/3] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
           <Upload className="w-10 h-10 text-gray-400 mb-2" />
           <span className="text-sm text-gray-600">Click to upload image</span>
           <span className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</span>

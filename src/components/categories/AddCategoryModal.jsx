@@ -181,6 +181,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => 
                       value={formData.imageUrl}
                       onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
                       label="Télécharger l'image de la catégorie"
+                      existingImageUrl={initialData?.imageUrl}
                     />
                     <p className="mt-2 text-xs text-gray-500">
                       Téléchargez une image ou fournissez une URL pour cette catégorie
