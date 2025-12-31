@@ -105,6 +105,7 @@ const processBookData = (data) => {
  * @param {number} params.categoryId - Filter by category tag ID
  * @param {number} params.minPrice - Minimum price filter
  * @param {number} params.maxPrice - Maximum price filter
+ * @param {string} params.sort - Sort parameter (e.g., 'title,asc' or 'price,desc')
  * @param {AbortSignal} signal - Abort signal for cancellation
  * @returns {Promise} Response with books data and pagination info
  */
@@ -118,6 +119,7 @@ export const getBooks = async (params = {}, signal = null) => {
       ...(params.categoryId && { categoryId: params.categoryId }),
       ...(params.minPrice && { minPrice: params.minPrice }),
       ...(params.maxPrice && { maxPrice: params.maxPrice }),
+      ...(params.sort && { sort: params.sort }),
     };
 
     const response = await api.get('/api/books', {

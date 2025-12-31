@@ -45,7 +45,8 @@ const BooksTable = ({
   ];
 
   const sortOptions = [
-    { value: 'date', label: 'Trier par date' },
+    { value: 'date_desc', label: 'Plus récent' },
+    { value: 'date_asc', label: 'Plus ancien' },
     { value: 'title', label: 'Trier par titre' },
     { value: 'price', label: 'Trier par prix' }
   ];
@@ -109,7 +110,7 @@ const BooksTable = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleExpand}
-              className="p-2 sm:p-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
+              className="p-2 sm:p-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
               title={isExpanded ? 'Réduire' : 'Développer'}
             >
               {isExpanded ? (
@@ -238,7 +239,7 @@ const BooksTable = ({
                             key={book.id}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            whileHover={{ backgroundColor: '#f9fafb' }}
+                            className="hover:bg-gray-50 transition-colors duration-150"
                           >
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                               {failedImages.has(book.id) ? (

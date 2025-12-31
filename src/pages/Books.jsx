@@ -23,7 +23,7 @@ const Books = () => {
   const [error, setError] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
-  const [sortBy, setSortBy] = useState('date');
+  const [sortBy, setSortBy] = useState('date_desc');
   const [statusFilter, setStatusFilter] = useState('all');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState(null);
@@ -67,9 +67,16 @@ const Books = () => {
         params.search = debouncedSearchQuery;
       }
 
-      // Note: Backend handles sorting by default (newest first)
-      // If you need different sorting, add it to the API params
-      // For now, we'll rely on backend's default sorting
+      // Map frontend sortBy to backend sort format
+      if (sortBy === 'title') {
+        params.sort = 'title,asc';
+      } else if (sortBy === 'price') {
+        params.sort = 'price,desc';
+      } else if (sortBy === 'date_asc') {
+        params.sort = 'createdAt,asc';
+      } else if (sortBy === 'date_desc') {
+        params.sort = 'createdAt,desc';
+      }
 
       const response = await booksApi.getBooks(params, abortControllerRef.current.signal);
 
@@ -94,7 +101,7 @@ const Books = () => {
       setLoading(false);
       setFilterLoading(false);
     }
-  }, [pagination.page, pagination.size, debouncedSearchQuery]);
+  }, [pagination.page, pagination.size, debouncedSearchQuery, sortBy]);
 
   /**
    * Initial load and refetch when dependencies change
@@ -127,13 +134,13 @@ const Books = () => {
 
   /**
    * Handle sort changes
-   * Note: Current backend may not support all sort options
-   * This is kept for UI consistency, but may need backend support
+   * Reset to page 0 when sort changes to show first page of sorted results
    */
   const handleSortChange = (newSortBy) => {
     setSortBy(newSortBy);
-    // If backend supports sorting, add it to fetchBooks params
-    // For now, this is client-side only for UI state
+    if (pagination.page !== 0) {
+      setPagination(prev => ({ ...prev, page: 0 }));
+    }
   };
 
   /**
@@ -314,29 +321,14 @@ const Books = () => {
     // TODO: Implement export logic
   };
 
-  // Apply client-side filters for UI consistency
-  // Note: This is temporary until backend supports all filters
+  // Apply client-side status filter
+  // Note: Backend doesn't support status filtering, so we filter by stockQuantity on frontend
   const filteredBooks = books.filter(book => {
-    // Status filter (if backend doesn't support it)
     if (statusFilter !== 'all') {
-      // Map status filter to book properties
-      // This is UI-only until backend supports status
       if (statusFilter === 'active' && book.stockQuantity === 0) return false;
       if (statusFilter === 'out_of_stock' && book.stockQuantity > 0) return false;
     }
     return true;
-  });
-
-  // Apply client-side sorting for UI consistency
-  // Note: This is temporary until backend supports all sorting options
-  const sortedBooks = [...filteredBooks].sort((a, b) => {
-    if (sortBy === 'title') {
-      return a.title.localeCompare(b.title);
-    } else if (sortBy === 'price') {
-      return (b.price || 0) - (a.price || 0);
-    }
-    // Default: date (already sorted by backend)
-    return 0;
   });
 
   // Loading state
@@ -392,7 +384,7 @@ const Books = () => {
       )}
 
       <BooksTable
-        books={sortedBooks}
+        books={filteredBooks}
         onEdit={handleEditBook}
         onDelete={handleDeleteBook}
         searchQuery={searchQuery}
