@@ -7,6 +7,7 @@ import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
 import * as categoriesApi from '../../services/categoriesApi';
+import { getCategoryImageUrl } from '../../services/categoriesApi';
 
 /**
  * CategoriesSection Component
@@ -48,7 +49,8 @@ const CategoriesSection = () => {
         size: 100, // Fetch all categories for client-side pagination
       };
       const response = await categoriesApi.getCategories(params);
-      setCategories(response.content || response);
+      // API returns array directly (not wrapped in content)
+      setCategories(Array.isArray(response) ? response : []);
     } catch (err) {
       console.error('Error fetching categories:', err);
       setError('Failed to load categories. Please try again.');
@@ -241,6 +243,7 @@ const CategoriesSection = () => {
                             onDelete={handleDeleteCategory}
                             onEdit={handleEditCategory}
                             index={index}
+                            getCategoryImageUrl={getCategoryImageUrl}
                           />
                         </div>
                       ))}

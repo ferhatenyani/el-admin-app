@@ -3,7 +3,6 @@ import { Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import UsersTable from '../components/users/UsersTable';
 import UserDetailsModal from '../components/users/UserDetailsModal';
-import { getUsers, toggleUserActive } from '../mock/mockApi';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -53,7 +52,8 @@ const Users = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const data = await getUsers();
+      // TODO: Replace with real API call
+      const data = [];
       setUsers(data);
       setFilteredUsers(data);
     } catch (error) {
@@ -70,7 +70,7 @@ const Users = () => {
 
   const handleToggleActive = async (userId) => {
     try {
-      await toggleUserActive(userId);
+      // TODO: Replace with real API call
       fetchUsers();
     } catch (error) {
       console.error('Error toggling user status:', error);

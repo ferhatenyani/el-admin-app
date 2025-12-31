@@ -3,7 +3,6 @@ import { Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import OrdersTable from '../components/orders/OrdersTable';
 import OrderDetailsModal from '../components/common/OrderDetailsModal';
-import { getOrders, updateOrderStatus } from '../mock/mockApi';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -36,7 +35,8 @@ const Orders = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const data = await getOrders(statusFilter, sortBy);
+      // TODO: Replace with real API call
+      const data = [];
       setOrders(data);
       setFilteredOrders(data);
     } catch (error) {
@@ -53,7 +53,7 @@ const Orders = () => {
 
   const handleUpdateStatus = async (orderId, status) => {
     try {
-      await updateOrderStatus(orderId, status);
+      // TODO: Replace with real API call
       fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);

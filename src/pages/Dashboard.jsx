@@ -1,10 +1,8 @@
 import { BookOpen, Users, TrendingUp, Sparkles, Calendar, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
 import StatsCard from '../components/common/StatsCard';
 import SalesChart from '../components/dashboard/SalesChart';
 import RecentOrdersTable from '../components/dashboard/RecentOrdersTable';
-import { getRecentOrders } from '../mock/mockApi';
 import { formatCurrency } from '../utils/format';
 
 /**
@@ -18,13 +16,9 @@ import { formatCurrency } from '../utils/format';
  */
 
 const Dashboard = () => {
-  // Only fetch recent orders (no time filter, static data)
-  const { data: recentOrders = [], isLoading } = useQuery({
-    queryKey: ['recentOrders'],
-    queryFn: () => getRecentOrders(6),
-    staleTime: 5 * 60 * 1000,
-    retry: 2,
-  });
+  // Mock data - replace with real API call
+  const recentOrders = [];
+  const isLoading = false;
 
   // Get current date for header
   const currentDate = new Date().toLocaleDateString('fr-FR', {

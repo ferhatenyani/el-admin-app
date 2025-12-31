@@ -1,16 +1,20 @@
 import * as tagsApi from './tagsApi';
 
+// API base URL - should be configured in environment variables
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
 /**
  * Categories API - Thin wrapper around tagsApi for CATEGORY type tags
  * Provides type-safe category management operations
  */
 
 /**
- * Get all categories with optional pagination
+ * Get all categories with optional pagination and search
  * @param {Object} params - Query parameters
  * @param {number} params.page - Page number (0-indexed)
  * @param {number} params.size - Page size
- * @returns {Promise} Response with categories data
+ * @param {string} params.search - Search term for category names (optional)
+ * @returns {Promise} Response with categories data (array)
  */
 export const getCategories = async (params = {}) => {
   return tagsApi.getTagsByType('CATEGORY', params);
@@ -57,10 +61,21 @@ export const deleteCategory = async (id) => {
   return tagsApi.deleteTag(id);
 };
 
+/**
+ * Get category image URL
+ * @param {number} id - The category ID
+ * @param {boolean} placeholder - Return placeholder if image not found (default: false)
+ * @returns {string} Category image URL
+ */
+export const getCategoryImageUrl = (id, placeholder = false) => {
+  return `${API_BASE_URL}/api/tags/${id}/image${placeholder ? '?placeholder=true' : ''}`;
+};
+
 export default {
   getCategories,
   getCategoryById,
   createCategory,
   updateCategory,
   deleteCategory,
+  getCategoryImageUrl,
 };

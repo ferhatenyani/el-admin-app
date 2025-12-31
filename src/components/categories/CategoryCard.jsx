@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trash2, Edit2, Languages, MoreVertical } from 'lucide-react';
+import { Trash2, Edit2, Languages, MoreVertical, FolderOpen } from 'lucide-react';
 import { useState } from 'react';
 
 /**
@@ -7,8 +7,10 @@ import { useState } from 'react';
  * Displays a single category with image, names in both languages, and edit/delete actions
  * Modern, discreet, and user-friendly design
  */
-const CategoryCard = ({ category, onDelete, onEdit, index = 0 }) => {
+const CategoryCard = ({ category, onDelete, onEdit, index = 0, getCategoryImageUrl }) => {
   const [showActions, setShowActions] = useState(false);
+  const [failedImage, setFailedImage] = useState(false);
+  const [triedPlaceholder, setTriedPlaceholder] = useState(false);
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -31,18 +33,28 @@ const CategoryCard = ({ category, onDelete, onEdit, index = 0 }) => {
     >
       {/* Category Image Container - with padding and rounded corners */}
       <div className="relative h-24 sm:h-32 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 overflow-hidden">
-        {category.imageUrl ? (
-          <img
-            src={category.imageUrl}
-            alt={category.nameEn}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-          />
-        ) : (
+        {failedImage ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="p-2 sm:p-2.5 bg-white/80 backdrop-blur-sm rounded-full">
-              <Languages className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+              <FolderOpen className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
             </div>
           </div>
+        ) : (
+          <img
+            src={getCategoryImageUrl(category.id, triedPlaceholder)}
+            alt={category.nameEn}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+            onError={(e) => {
+              // Try placeholder if not already tried
+              if (!triedPlaceholder) {
+                setTriedPlaceholder(true);
+                e.target.src = getCategoryImageUrl(category.id, true);
+              } else {
+                // Both failed, show icon
+                setFailedImage(true);
+              }
+            }}
+          />
         )}
 
         {/* Subtle gradient overlay */}

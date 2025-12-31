@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, Check, AlertCircle } from 'lucide-react';
-import { getSalesChartData } from '../../mock/mockApi';
 
 /**
  * Modern minimalist SalesChart component with isolated data fetching
@@ -24,13 +23,11 @@ const SalesChart = memo(() => {
 
   const timeRangeOptions = ['Aujourd\'hui', 'Cette semaine', 'Ce mois-ci'];
 
-  // Isolated data fetching - unique query key
-  const { data = [], isLoading, isError, error } = useQuery({
-    queryKey: ['chartData', timeRange],
-    queryFn: () => getSalesChartData(timeRange),
-    staleTime: 5 * 60 * 1000,
-    retry: 2,
-  });
+  // Mock data - replace with real API call
+  const data = [];
+  const isLoading = false;
+  const isError = false;
+  const error = null;
 
   // Close dropdown when clicking outside
   useEffect(() => {

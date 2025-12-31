@@ -1,9 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, ChevronDown, Check, Info, AlertCircle } from 'lucide-react';
 import { useState, useRef, useEffect, memo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import useScrollLock from '../../hooks/useScrollLock';
-import { getStats } from '../../mock/mockApi';
 import { formatCurrency } from '../../utils/format';
 
 /**
@@ -38,13 +36,11 @@ const StatsCard = memo(({
 
   const timeRangeOptions = ['Aujourd\'hui', 'Cette semaine', 'Ce mois-ci'];
 
-  // Isolated data fetching - unique query key per card + timeRange
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['stats', metricKey, timeRange],
-    queryFn: () => getStats(timeRange),
-    staleTime: 5 * 60 * 1000,
-    retry: 2,
-  });
+  // Mock data - replace with real API call
+  const data = null;
+  const isLoading = false;
+  const isError = false;
+  const error = null;
 
   // Extract metric-specific data
   const getMetricData = () => {
