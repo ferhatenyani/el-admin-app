@@ -4,13 +4,10 @@ import { getCookie } from '../utils/cookies';
 // API base URL - should be configured in environment variables
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// Create axios instance with default config
+// Create axios instance WITHOUT default Content-Type
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // CRITICAL: Enable session cookie transmission
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor to add Bearer token and CSRF token
@@ -19,6 +16,11 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Set Content-Type ONLY for non-FormData requests
+  if (!(config.data instanceof FormData)) {
+    config.headers['Content-Type'] = 'application/json';
   }
 
   // Add CSRF token for POST, PUT, DELETE, PATCH requests
