@@ -24,7 +24,11 @@ const AddEtiquetteModal = ({ isOpen, onClose, onSubmit, initialData = null }) =>
   // Reset form when opening/closing modal or when initialData changes
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        nameFr: initialData.nameFr,
+        nameEn: initialData.nameEn,
+        color: initialData.colorHex || initialData.color || '#3B82F6',
+      });
     } else {
       setFormData({
         nameFr: '',

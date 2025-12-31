@@ -47,41 +47,29 @@ api.interceptors.response.use(
 );
 
 /**
- * Normalize image URL - convert relative URLs to absolute URLs
- * @param {string} imageUrl - Image URL from backend
- * @returns {string} Absolute image URL
- */
-const normalizeImageUrl = (imageUrl) => {
-  if (!imageUrl) return null;
-
-  // If already absolute URL, return as is
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-
-  // If relative URL, prepend API base URL
-  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-  const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-  return `${baseUrl}${path}`;
-};
-
-/**
- * Process author data to normalize image URLs
+ * Process author data to set proper image URLs using the picture endpoint
+ * Backend returns /api/authors/{id}/picture endpoint for fetching images
  * @param {Object|Array} data - Single author or array of authors
- * @returns {Object|Array} Processed data with normalized image URLs
+ * @returns {Object|Array} Processed data with proper image URLs
  */
 const processAuthorData = (data) => {
   if (Array.isArray(data)) {
-    return data.map(author => ({
-      ...author,
-      profilePictureUrl: normalizeImageUrl(author.profilePictureUrl)
-    }));
+    return data.map(author => {
+      const pictureUrl = author.id ? `${API_BASE_URL}/api/authors/${author.id}/picture` : null;
+      return {
+        ...author,
+        profilePictureUrl: pictureUrl,
+        imageUrl: pictureUrl // Add imageUrl alias for consistency with UI components
+      };
+    });
   }
 
   if (data && typeof data === 'object') {
+    const pictureUrl = data.id ? `${API_BASE_URL}/api/authors/${data.id}/picture` : null;
     return {
       ...data,
-      profilePictureUrl: normalizeImageUrl(data.profilePictureUrl)
+      profilePictureUrl: pictureUrl,
+      imageUrl: pictureUrl // Add imageUrl alias for consistency with UI components
     };
   }
 
@@ -199,6 +187,16 @@ export const deleteAuthor = async (id) => {
   return response.data;
 };
 
+/**
+ * Get author profile picture URL
+ * @param {number} id - The author ID
+ * @returns {string} Profile picture URL
+ */
+export const getAuthorPictureUrl = (id) => {
+  if (!id) return null;
+  return `${API_BASE_URL}/api/authors/${id}/picture`;
+};
+
 export default {
   getAuthors,
   getAuthorById,
@@ -206,4 +204,5 @@ export default {
   createAuthor,
   updateAuthor,
   deleteAuthor,
+  getAuthorPictureUrl,
 };

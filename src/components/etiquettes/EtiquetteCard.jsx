@@ -10,6 +10,9 @@ import { useState } from 'react';
 const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0 }) => {
   const [showActions, setShowActions] = useState(false);
 
+  // Ensure color is a valid hex value, fallback to default if not
+  const displayColor = etiquette.colorHex || '#FFFFFF';
+
   const handleDelete = (e) => {
     e.stopPropagation();
     onDelete(etiquette);
@@ -35,7 +38,7 @@ const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0 }) => {
         <div className="relative">
           <div
             className="w-16 h-16 rounded-full shadow-md group-hover:scale-110 transition-transform duration-300 border-2 border-white"
-            style={{ backgroundColor: etiquette.color }}
+            style={{ backgroundColor: displayColor }}
           />
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
         </div>
@@ -56,8 +59,8 @@ const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0 }) => {
               </h3>
             </div>
           </div>
-          <p className="text-xs font-mono text-gray-500 mt-2">
-            {etiquette.color}
+          <p className="text-xs font-mono text-gray-500 mt-2 uppercase">
+            {displayColor}
           </p>
         </div>
 
@@ -106,7 +109,7 @@ const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0 }) => {
       {/* Color-based bottom border indicator */}
       <div
         className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-b-xl"
-        style={{ backgroundColor: etiquette.color }}
+        style={{ backgroundColor: displayColor }}
       />
     </motion.div>
   );

@@ -71,11 +71,8 @@ const AuthorsSection = () => {
 
   // Gérer la modification d'un auteur existant
   const handleEditAuthor = (author) => {
-    // Map profilePictureUrl to imageUrl for the modal
-    setEditingAuthor({
-      ...author,
-      imageUrl: author.profilePictureUrl || author.imageUrl,
-    });
+    // imageUrl is already set by the API (alias of profilePictureUrl)
+    setEditingAuthor(author);
     setIsModalOpen(true);
   };
 

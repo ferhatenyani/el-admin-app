@@ -82,14 +82,14 @@ const EtiquettesSection = () => {
         // Update existing etiquette
         await etiquettesApi.updateEtiquette(
           editingEtiquette.id,
-          { nameEn: etiquetteData.nameEn, nameFr: etiquetteData.nameFr, color: etiquetteData.color }
+          { nameEn: etiquetteData.nameEn, nameFr: etiquetteData.nameFr, colorHex: etiquetteData.color }
         );
       } else {
         // Create new etiquette
         await etiquettesApi.createEtiquette({
           nameEn: etiquetteData.nameEn,
           nameFr: etiquetteData.nameFr,
-          color: etiquetteData.color
+          colorHex: etiquetteData.color
         });
       }
       await fetchEtiquettes(); // Refresh list after operation
