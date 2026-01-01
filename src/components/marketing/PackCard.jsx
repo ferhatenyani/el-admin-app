@@ -2,39 +2,33 @@ import { Edit2, Trash2, Package } from 'lucide-react';
 
 const PackCard = ({ pack, onEdit, onDelete }) => {
   return (
-    <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-200 flex flex-col h-[480px] sm:h-[520px] md:h-[580px]">
-      {/* Pack Image Container with Padding */}
-      <div >
-        <div className="relative h-32 sm:h-40 md:h-48 overflow-hidden shadow-md">
-          <img
-            src={pack.image}
-            alt={pack.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+    <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-100 hover:border-blue-200 flex flex-col h-[420px] sm:h-[460px] md:h-[500px]">
+      {/* Pack Header with Title and Badges */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 border-b border-gray-200">
+        {/* Pack Name */}
+        <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3 line-clamp-1">
+          {pack.name}
+        </h3>
 
+        {/* Badges Row */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Price Badge */}
-          <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 md:top-3 md:right-3 bg-gradient-to-r from-green-600 to-green-500 text-white px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-full font-bold text-[10px] sm:text-xs md:text-sm shadow-lg backdrop-blur-sm">
+          <div className="bg-gradient-to-r from-green-600 to-green-500 text-white px-2.5 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full font-bold text-xs sm:text-sm md:text-base shadow-md">
             {pack.price} DZD
           </div>
 
           {/* Book Count Badge */}
-          <div className="absolute bottom-1.5 left-1.5 sm:bottom-2 sm:left-2 md:bottom-3 md:left-3 bg-white/95 backdrop-blur-md px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-full text-[10px] sm:text-xs md:text-sm font-semibold text-gray-800 flex items-center gap-1 sm:gap-1.5 md:gap-2 shadow-md">
-            <Package className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-blue-600" />
+          <div className="bg-white px-2.5 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full text-xs sm:text-sm md:text-base font-semibold text-gray-800 flex items-center gap-1.5 sm:gap-2 shadow-md border border-gray-200">
+            <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-blue-600" />
             {pack.books.length} livres
           </div>
         </div>
       </div>
 
       {/* Pack Content - Controlled Height */}
-      <div className="px-3 sm:px-4 md:px-6 pb-1 mb-1 flex flex-col flex-1 min-h-0">
-        {/* Pack Name */}
-        <h3 className="text-sm sm:text-base mt-2 md:text-lg font-bold text-gray-900 line-clamp-1 flex-shrink-0">
-          {pack.name}
-        </h3>
-
+      <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex flex-col flex-1 min-h-0">
         {/* Description */}
-        <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 mb-0 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] md:min-h-[3rem] flex-shrink-0">
+        <p className="text-xs sm:text-sm md:text-base text-gray-600 mb-3 sm:mb-4 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] md:min-h-[3.5rem] flex-shrink-0">
           {pack.description}
         </p>
 

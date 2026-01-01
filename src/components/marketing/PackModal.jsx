@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Package, Upload, Search, Check } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
 
-const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks }) => {
+const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -14,9 +14,20 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [errors, setErrors] = useState({});
   const [imagePreview, setImagePreview] = useState('');
+  const [coverImageFile, setCoverImageFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
+
+  // Debug logging
+  useEffect(() => {
+    if (isOpen) {
+      console.log('PackModal opened');
+      console.log('Available books:', availableBooks);
+      console.log('Pack data:', pack);
+    }
+  }, [isOpen, availableBooks, pack]);
 
   // Initialize form data when editing
   useEffect(() => {
@@ -26,9 +37,11 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks }) => {
         description: pack.description || '',
         price: pack.price || '',
         image: pack.image || '',
+        coverUrl: pack.coverUrl || '', // Keep original coverUrl for updates
         books: pack.books || []
       });
       setImagePreview(pack.image || '');
+      setCoverImageFile(null);
     } else {
       setFormData({
         name: '',
@@ -38,16 +51,31 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks }) => {
         books: []
       });
       setImagePreview('');
+      setCoverImageFile(null);
     }
     setErrors({});
     setSearchQuery('');
+    setIsSubmitting(false);
   }, [pack, isOpen]);
 
   // Filter books based on search query
-  const filteredBooks = availableBooks.filter(book =>
-    book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book.author.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredBooks = React.useMemo(() => {
+    if (!Array.isArray(availableBooks)) {
+      console.warn('availableBooks is not an array:', availableBooks);
+      return [];
+    }
+
+    return availableBooks.filter(book => {
+      if (!book) return false;
+
+      const title = book.title || '';
+      const author = book.author?.name || book.author || '';
+      const searchLower = (searchQuery || '').toLowerCase();
+
+      return title.toLowerCase().includes(searchLower) ||
+             author.toLowerCase().includes(searchLower);
+    });
+  }, [availableBooks, searchQuery]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -60,21 +88,23 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks }) => {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        setErrors({ ...errors, image: 'Please select a valid image file' });
+        setErrors({ ...errors, image: 'Veuillez sélectionner un fichier image valide' });
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setErrors({ ...errors, image: 'Image size should be less than 5MB' });
+        setErrors({ ...errors, image: 'La taille de l\'image doit être inférieure à 5 MB' });
         return;
       }
+
+      // Store the file for upload
+      setCoverImageFile(file);
 
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
-        setFormData({ ...formData, image: reader.result });
         setErrors({ ...errors, image: '' });
       };
       reader.readAsDataURL(file);
@@ -105,40 +135,59 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks }) => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Pack name is required';
+      newErrors.name = 'Le nom du pack est requis';
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = 'La description est requise';
     }
 
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      newErrors.price = 'Please enter a valid price';
+      newErrors.price = 'Veuillez entrer un prix valide';
     }
 
-    if (!formData.image) {
-      newErrors.image = 'Pack image is required';
+    // For new packs, image is required. For updates, it's optional
+    if (!pack && !coverImageFile && !imagePreview) {
+      newErrors.image = 'L\'image du pack est requise';
     }
 
     if (formData.books.length === 0) {
-      newErrors.books = 'Please select at least one book';
+      newErrors.books = 'Veuillez sélectionner au moins un livre';
     } else if (formData.books.length < 2) {
-      newErrors.books = 'A pack must contain at least 2 books';
+      newErrors.books = 'Un pack doit contenir au moins 2 livres';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      onSave({
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Prepare pack data
+      const packData = {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
-        image: formData.image,
+        coverUrl: formData.coverUrl || '', // Keep original coverUrl for updates
         books: formData.books
+      };
+
+      // Call onSave with pack data and cover image file
+      await onSave(packData, coverImageFile);
+    } catch (error) {
+      console.error('Error saving pack:', error);
+      setErrors({
+        ...errors,
+        submit: 'Une erreur est survenue lors de l\'enregistrement. Veuillez réessayer.'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -366,17 +415,22 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks }) => {
                               )}
 
                               {/* Book Card */}
-                              <img
-                                src={book.image}
-                                alt={book.title}
-                                className="w-full h-32 object-cover rounded-t-lg"
-                              />
+                              {book.coverImageUrl && (
+                                <img
+                                  src={book.coverImageUrl}
+                                  alt={book.title}
+                                  className="w-full h-32 object-cover rounded-t-lg"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
+                              )}
                               <div className="p-3">
                                 <h4 className="font-semibold text-sm text-gray-800 truncate" title={book.title}>
                                   {book.title}
                                 </h4>
-                                <p className="text-xs text-gray-500 truncate" title={book.author}>
-                                  {book.author}
+                                <p className="text-xs text-gray-500 truncate" title={book.author?.name || book.author || 'Auteur inconnu'}>
+                                  {book.author?.name || book.author || 'Auteur inconnu'}
                                 </p>
                                 <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
                                   {book.language || 'Langue inconnue'}
@@ -430,19 +484,38 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks }) => {
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
-                <button
-                  onClick={onClose}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105"
-                >
-                  {pack ? 'Mettre à Jour le Pack' : 'Créer le Pack'}
-                </button>
+              <div className="flex flex-col gap-3 p-6 border-t bg-gray-50">
+                {/* Error Message */}
+                {errors.submit && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
+                  >
+                    {errors.submit}
+                  </motion.div>
+                )}
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={onClose}
+                    disabled={isSubmitting || saving}
+                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || saving}
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2"
+                  >
+                    {(isSubmitting || saving) && (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    )}
+                    {pack ? 'Mettre à Jour le Pack' : 'Créer le Pack'}
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>

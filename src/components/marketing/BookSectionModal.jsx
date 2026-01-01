@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, BookOpen, Search, Check, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, BookOpen, Search, Check, ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
 
-const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks }) => {
+const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, saving }) => {
   const [sectionName, setSectionName] = useState('');
   const [selectedBooks, setSelectedBooks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -323,15 +323,18 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks }) 
               <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
                 <button
                   onClick={onClose}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
+                  disabled={saving}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105"
+                  disabled={saving}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2"
                 >
-                  {section ? 'Mettre à Jour la Section' : 'Créer la Section'}
+                  {saving && <Loader className="w-5 h-5 animate-spin" />}
+                  {saving ? 'Enregistrement...' : (section ? 'Mettre à Jour la Section' : 'Créer la Section')}
                 </button>
               </div>
             </div>

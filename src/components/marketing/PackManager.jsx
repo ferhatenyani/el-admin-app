@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Plus, Package } from 'lucide-react';
+import { Plus, Package, Loader2 } from 'lucide-react';
 import PackCard from './PackCard';
 import PackModal from './PackModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
+import { createPack, updatePack } from '../../services/packsApi';
 
-const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest }) => {
+const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest, loading = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPack, setEditingPack] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const {
     currentPage,
@@ -33,24 +35,31 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest }) => {
     onDeleteRequest('pack', pack);
   };
 
-  const handleSavePack = (packData) => {
-    if (editingPack) {
-      // Update existing pack
-      setPacks(packs.map(p =>
-        p.id === editingPack.id
-          ? { ...packData, id: editingPack.id }
-          : p
-      ));
-    } else {
-      // Add new pack
-      const newPack = {
-        ...packData,
-        id: Date.now() // Simple ID generation
-      };
-      setPacks([...packs, newPack]);
+  const handleSavePack = async (packData, coverImage) => {
+    try {
+      setSaving(true);
+      let result;
+
+      if (editingPack) {
+        // Update existing pack
+        result = await updatePack(editingPack.id, packData, coverImage);
+        setPacks(packs.map(p =>
+          p.id === editingPack.id ? result : p
+        ));
+      } else {
+        // Create new pack
+        result = await createPack(packData, coverImage);
+        setPacks([...packs, result]);
+      }
+
+      setIsModalOpen(false);
+      setEditingPack(null);
+    } catch (error) {
+      console.error('Error saving pack:', error);
+      throw error; // Let the modal handle the error
+    } finally {
+      setSaving(false);
     }
-    setIsModalOpen(false);
-    setEditingPack(null);
   };
 
   return (
@@ -67,8 +76,13 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest }) => {
         </button>
       </div>
 
-      {/* Packs Grid */}
-      {packs.length === 0 ? (
+      {/* Loading State */}
+      {loading ? (
+        <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg sm:rounded-xl">
+          <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-blue-500 mb-2 sm:mb-3 animate-spin" />
+          <p className="text-gray-500 text-base sm:text-lg px-2">Chargement des packs...</p>
+        </div>
+      ) : packs.length === 0 ? (
         <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg sm:rounded-xl border-2 border-dashed border-gray-300">
           <Package className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-2 sm:mb-3" />
           <p className="text-gray-500 text-base sm:text-lg px-2">Aucun pack de livres pour le moment</p>
@@ -113,6 +127,7 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest }) => {
         onSave={handleSavePack}
         pack={editingPack}
         availableBooks={availableBooks}
+        saving={saving}
       />
     </div>
   );

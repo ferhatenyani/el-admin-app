@@ -1,34 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LayoutGrid, BookOpen } from 'lucide-react';
 import BookSectionManager from '../components/marketing/BookSectionManager';
 import PackManager from '../components/marketing/PackManager';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
+import { getPacks, deletePack } from '../services/packsApi';
+import { getBooks } from '../services/booksApi';
+import { getMainDisplays, deleteMainDisplay } from '../services/mainDisplayApi';
 
-// Mock book data for selection with actual images
-const mockBooks = [
-  { id: 1, title: "L'Étranger", author: "Albert Camus", price: 1500, language: "Français", image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400", isbn: "978-2070360024" },
-  { id: 2, title: "Le Petit Prince", author: "Antoine de Saint-Exupéry", price: 1200, language: "Français", image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400", isbn: "978-2070612758" },
-  { id: 3, title: "Les Misérables", author: "Victor Hugo", price: 2500, language: "Français", image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400", isbn: "978-2253096344" },
-  { id: 4, title: "Madame Bovary", author: "Gustave Flaubert", price: 1800, language: "Français", image: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=400", isbn: "978-2253004080" },
-  { id: 5, title: "Germinal", author: "Émile Zola", price: 2000, language: "Français", image: "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400", isbn: "978-2253004226" },
-  { id: 6, title: "Le Rouge et le Noir", author: "Stendhal", price: 1900, language: "Français", image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400", isbn: "978-2253004103" },
-  { id: 7, title: "Candide", author: "Voltaire", price: 1300, language: "Français", image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400", isbn: "978-2253006329" },
-  { id: 8, title: "Notre-Dame de Paris", author: "Victor Hugo", price: 2200, language: "Français", image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400", isbn: "978-2253002864" },
-  { id: 9, title: "Le Comte de Monte-Cristo", author: "Alexandre Dumas", price: 2800, language: "Français", image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400", isbn: "978-2253098058" },
-  { id: 10, title: "Thérèse Raquin", author: "Émile Zola", price: 1600, language: "Français", image: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=400", isbn: "978-2253006329" },
-];
 
 const Marketing = () => {
   // Book Sections State
   const [bookSections, setBookSections] = useState([]);
+  const [loadingSections, setLoadingSections] = useState(true);
 
   // Book Packs State
   const [bookPacks, setBookPacks] = useState([]);
+  const [loadingPacks, setLoadingPacks] = useState(true);
+
+  // Available Books State
+  const [availableBooks, setAvailableBooks] = useState([]);
+  const [loadingBooks, setLoadingBooks] = useState(true);
 
   // Confirmation modal state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [deleteType, setDeleteType] = useState(null); // 'section', 'section-book', 'pack'
+
+  // Fetch main displays (book sections) from API on mount
+  useEffect(() => {
+    const fetchMainDisplays = async () => {
+      try {
+        setLoadingSections(true);
+        const response = await getMainDisplays({ page: 0, size: 1000 }); // Fetch all sections
+        const displays = response.content || response;
+        setBookSections(displays);
+      } catch (error) {
+        console.error('Error fetching main displays:', error);
+      } finally {
+        setLoadingSections(false);
+      }
+    };
+
+    fetchMainDisplays();
+  }, []);
+
+  // Fetch packs from API on mount
+  useEffect(() => {
+    const fetchPacks = async () => {
+      try {
+        setLoadingPacks(true);
+        const response = await getPacks({ page: 0, size: 1000 }); // Fetch all packs
+        const packs = response.content || response;
+        setBookPacks(packs);
+      } catch (error) {
+        console.error('Error fetching packs:', error);
+      } finally {
+        setLoadingPacks(false);
+      }
+    };
+
+    fetchPacks();
+  }, []);
+
+  // Fetch available books from API on mount
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        setLoadingBooks(true);
+        const response = await getBooks({ page: 0, size: 1000 }); // Fetch all books for selection
+        const books = response.content || response;
+        setAvailableBooks(books);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+      } finally {
+        setLoadingBooks(false);
+      }
+    };
+
+    fetchBooks();
+  }, []);
 
   // Handlers for deletion confirmation
   const handleDeleteRequest = (type, item) => {
@@ -37,24 +87,38 @@ const Marketing = () => {
     setDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!itemToDelete) return;
 
-    if (deleteType === 'section') {
-      setBookSections(bookSections.filter(s => s.id !== itemToDelete.id));
-    } else if (deleteType === 'section-book') {
-      const { sectionId, bookId } = itemToDelete;
-      setBookSections(bookSections.map(section => {
-        if (section.id === sectionId) {
-          return {
-            ...section,
-            books: section.books.filter(book => book.id !== bookId)
-          };
-        }
-        return section;
-      }));
-    } else if (deleteType === 'pack') {
-      setBookPacks(bookPacks.filter(p => p.id !== itemToDelete.id));
+    try {
+      if (deleteType === 'section') {
+        // Call API to delete main display section
+        await deleteMainDisplay(itemToDelete.id);
+        // Update local state
+        setBookSections(bookSections.filter(s => s.id !== itemToDelete.id));
+      } else if (deleteType === 'section-book') {
+        const { sectionId, bookId } = itemToDelete;
+        // In the updated implementation, this will be handled through the API
+        // For now, keep the local state update
+        setBookSections(bookSections.map(section => {
+          if (section.id === sectionId) {
+            return {
+              ...section,
+              books: section.books.filter(book => book.id !== bookId)
+            };
+          }
+          return section;
+        }));
+      } else if (deleteType === 'pack') {
+        // Call API to delete pack
+        await deletePack(itemToDelete.id);
+        // Update local state
+        setBookPacks(bookPacks.filter(p => p.id !== itemToDelete.id));
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('Une erreur est survenue lors de la suppression. Veuillez réessayer.');
+      return;
     }
 
     setDeleteConfirmOpen(false);
@@ -101,8 +165,9 @@ const Marketing = () => {
         <BookSectionManager
           sections={bookSections}
           setSections={setBookSections}
-          availableBooks={mockBooks}
+          availableBooks={availableBooks}
           onDeleteRequest={handleDeleteRequest}
+          loading={loadingSections || loadingBooks}
         />
       </div>
 
@@ -121,8 +186,9 @@ const Marketing = () => {
         <PackManager
           packs={bookPacks}
           setPacks={setBookPacks}
-          availableBooks={mockBooks}
+          availableBooks={availableBooks}
           onDeleteRequest={handleDeleteRequest}
+          loading={loadingPacks || loadingBooks}
         />
       </div>
 

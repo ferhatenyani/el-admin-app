@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader } from 'lucide-react';
 import BookSectionModal from './BookSectionModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
+import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay } from '../../services/mainDisplayApi';
 
-const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteRequest }) => {
+const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteRequest, loading }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const {
     currentPage,
@@ -32,32 +34,87 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
     onDeleteRequest('section', section);
   };
 
-  const handleRemoveBookFromSection = (sectionId, book) => {
-    onDeleteRequest('section-book', {
-      sectionId,
-      bookId: book.id,
-      bookTitle: book.title
-    });
+  const handleRemoveBookFromSection = async (sectionId, book) => {
+    try {
+      // Call API to remove book from main display
+      await removeBooksFromMainDisplay(sectionId, [book.id]);
+
+      // Update local state
+      setSections(sections.map(section => {
+        if (section.id === sectionId) {
+          return {
+            ...section,
+            books: section.books.filter(b => b.id !== book.id)
+          };
+        }
+        return section;
+      }));
+    } catch (error) {
+      console.error('Error removing book from section:', error);
+      alert('Une erreur est survenue lors de la suppression du livre. Veuillez réessayer.');
+    }
   };
 
-  const handleSaveSection = (sectionData) => {
-    if (editingSection) {
-      // Update existing section
-      setSections(sections.map(s =>
-        s.id === editingSection.id
-          ? { ...sectionData, id: editingSection.id }
-          : s
-      ));
-    } else {
-      // Add new section
-      const newSection = {
-        ...sectionData,
-        id: Date.now() // Simple ID generation
-      };
-      setSections([...sections, newSection]);
+  const handleSaveSection = async (sectionData) => {
+    try {
+      setSaving(true);
+
+      if (editingSection) {
+        // Update existing section
+        const updatedSection = await updateMainDisplay(editingSection.id, {
+          nameEn: sectionData.name,
+          nameFr: sectionData.name,
+          active: true,
+        });
+
+        // Handle book changes
+        const currentBookIds = editingSection.books.map(b => b.id);
+        const newBookIds = sectionData.books.map(b => b.id);
+
+        // Books to add
+        const booksToAdd = newBookIds.filter(id => !currentBookIds.includes(id));
+        if (booksToAdd.length > 0) {
+          await addBooksToMainDisplay(editingSection.id, booksToAdd);
+        }
+
+        // Books to remove
+        const booksToRemove = currentBookIds.filter(id => !newBookIds.includes(id));
+        if (booksToRemove.length > 0) {
+          await removeBooksFromMainDisplay(editingSection.id, booksToRemove);
+        }
+
+        // Update local state with the complete data
+        setSections(sections.map(s =>
+          s.id === editingSection.id
+            ? { ...updatedSection, books: sectionData.books }
+            : s
+        ));
+      } else {
+        // Create new section
+        const newSection = await createMainDisplay({
+          nameEn: sectionData.name,
+          nameFr: sectionData.name,
+          active: true,
+        });
+
+        // Add books to the new section
+        if (sectionData.books.length > 0) {
+          const bookIds = sectionData.books.map(b => b.id);
+          await addBooksToMainDisplay(newSection.id, bookIds);
+        }
+
+        // Update local state
+        setSections([...sections, { ...newSection, books: sectionData.books }]);
+      }
+
+      setIsModalOpen(false);
+      setEditingSection(null);
+    } catch (error) {
+      console.error('Error saving section:', error);
+      alert('Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.');
+    } finally {
+      setSaving(false);
     }
-    setIsModalOpen(false);
-    setEditingSection(null);
   };
 
   return (
@@ -66,7 +123,8 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
       <div className="flex justify-end">
         <button
           onClick={handleAddSection}
-          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105 text-sm sm:text-base"
+          disabled={loading}
+          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="hidden xs:inline">Ajouter une Section</span>
@@ -74,8 +132,13 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
         </button>
       </div>
 
-      {/* Sections List */}
-      {sections.length === 0 ? (
+      {/* Loading State */}
+      {loading ? (
+        <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg sm:rounded-xl border-2 border-dashed border-gray-300">
+          <Loader className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-blue-600 mb-2 sm:mb-3 animate-spin" />
+          <p className="text-gray-500 text-base sm:text-lg px-2">Chargement des sections...</p>
+        </div>
+      ) : sections.length === 0 ? (
         <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg sm:rounded-xl border-2 border-dashed border-gray-300">
           <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-2 sm:mb-3" />
           <p className="text-gray-500 text-base sm:text-lg px-2">Aucune section de livres pour le moment</p>
@@ -121,6 +184,7 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
         onSave={handleSaveSection}
         section={editingSection}
         availableBooks={availableBooks}
+        saving={saving}
       />
     </div>
   );
