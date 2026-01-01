@@ -1,46 +1,77 @@
 import { useState, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import { Download, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import OrdersTable from '../components/orders/OrdersTable';
 import OrderDetailsModal from '../components/common/OrderDetailsModal';
+import CreateOrderModal from '../components/orders/CreateOrderModal';
+import * as ordersApi from '../services/ordersApi';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState('date');
+  const [sortBy, setSortBy] = useState('date-desc');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     fetchOrders();
-  }, [sortBy, statusFilter]);
-
-  useEffect(() => {
-    if (searchQuery) {
-      const filtered = orders.filter(
-        (order) =>
-          order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          order.customerEmail.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredOrders(filtered);
-    } else {
-      setFilteredOrders(orders);
-    }
-  }, [searchQuery, orders]);
+  }, [sortBy, statusFilter, searchQuery]);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with real API call
-      const data = [];
-      setOrders(data);
-      setFilteredOrders(data);
+      // Parse sortBy to get field and direction
+      const [sortField, sortDirection] = sortBy.split('-');
+      const sortParam = sortField === 'date'
+        ? `createdAt,${sortDirection}`
+        : `totalAmount,${sortDirection}`;
+
+      const params = {
+        page: 0,
+        size: 1000,
+        sort: sortParam,
+      };
+
+      // Add status filter if not 'all'
+      if (statusFilter !== 'all') {
+        params.status = statusFilter.toUpperCase();
+      }
+
+      const response = await ordersApi.getOrders(params);
+      const data = response.content || response || [];
+
+      // Transform API data to match OrdersTable expected format
+      const transformedData = data.map(order => ({
+        ...order,
+        orderNumber: order.uniqueId || order.orderNumber,
+        customer: order.fullName || order.customer,
+        customerEmail: order.email || order.customerEmail,
+        date: order.createdAt || order.date,
+        total: order.totalAmount || order.total,
+      }));
+
+      // Client-side search filtering (since API doesn't support search)
+      let filteredData = transformedData;
+      if (searchQuery) {
+        filteredData = transformedData.filter(
+          (order) =>
+            (order.uniqueId && order.uniqueId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (order.fullName && order.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (order.email && order.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (order.phone && order.phone.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+      }
+
+      setOrders(transformedData);
+      setFilteredOrders(filteredData);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setOrders([]);
+      setFilteredOrders([]);
     } finally {
       setLoading(false);
     }
@@ -53,10 +84,31 @@ const Orders = () => {
 
   const handleUpdateStatus = async (orderId, status) => {
     try {
-      // TODO: Replace with real API call
+      // Fetch the complete order data from the API to get all fields including orderItems
+      const fullOrder = await ordersApi.getOrderById(orderId);
+
+      // Send all fields as-is from the API response, only updating the status
+      await ordersApi.updateOrder(orderId, {
+        ...fullOrder,
+        status: status.toUpperCase(),
+      });
+
       fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
+      alert('Erreur lors de la mise à jour du statut de la commande: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleCreateOrder = async (orderData) => {
+    try {
+      await ordersApi.createOrder(orderData);
+      setIsCreateModalOpen(false);
+      fetchOrders();
+      alert('Commande créée avec succès!');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Erreur lors de la création de la commande: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -81,15 +133,27 @@ const Orders = () => {
           <p className="text-gray-600 mt-1">Gérez les commandes clients et suivez les livraisons</p>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm"
-        >
-          <Download className="w-5 h-5" />
-          Exporter
-        </motion.button>
+        <div className="flex gap-3">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm"
+          >
+            <Plus className="w-5 h-5" />
+            Ajouter une commande
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm"
+          >
+            <Download className="w-5 h-5" />
+            Exporter
+          </motion.button>
+        </div>
       </div>
 
       <OrdersTable
@@ -108,6 +172,12 @@ const Orders = () => {
         onClose={() => setIsModalOpen(false)}
         order={selectedOrder}
         onUpdateStatus={handleUpdateStatus}
+      />
+
+      <CreateOrderModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateOrder}
       />
     </div>
   );

@@ -23,6 +23,12 @@ const statusConfig = {
     border: 'border-amber-200',
     dot: 'bg-amber-400',
   },
+  confirmed: {
+    bg: 'bg-indigo-50',
+    text: 'text-indigo-700',
+    border: 'border-indigo-200',
+    dot: 'bg-indigo-400',
+  },
   shipped: {
     bg: 'bg-blue-50',
     text: 'text-blue-700',
@@ -103,18 +109,89 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                   <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Informations client</h3>
                   <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 space-y-3 border border-gray-200">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 font-medium">Nom</span>
-                      <span className="text-sm font-bold text-gray-900">{order.customer}</span>
+                      <span className="text-sm text-gray-600 font-medium">Nom complet</span>
+                      <span className="text-sm font-bold text-gray-900">{order.customer || order.fullName}</span>
+                    </div>
+                    <div className="border-t border-gray-200"></div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 font-medium">Téléphone</span>
+                      <span className="text-sm font-semibold text-gray-900">{order.phone || 'N/A'}</span>
                     </div>
                     <div className="border-t border-gray-200"></div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 font-medium">Email</span>
-                      <span className="text-sm font-semibold text-blue-600">{order.customerEmail || 'N/A'}</span>
+                      <span className="text-sm font-semibold text-blue-600">{order.customerEmail || order.email || 'N/A'}</span>
                     </div>
                     <div className="border-t border-gray-200"></div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 font-medium">Date de commande</span>
-                      <span className="text-sm font-bold text-gray-900">{formatDateTime(order.date)}</span>
+                      <span className="text-sm font-bold text-gray-900">{formatDateTime(order.date || order.createdAt)}</span>
+                    </div>
+                    {order.user && (
+                      <>
+                        <div className="border-t border-gray-200"></div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 font-medium">Compte utilisateur</span>
+                          <span className="text-sm font-semibold text-indigo-600">{order.user.login}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Shipping & Address Info Card */}
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Livraison et adresse</h3>
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 space-y-3 border border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 font-medium">Wilaya</span>
+                      <span className="text-sm font-bold text-gray-900">{order.wilaya || 'N/A'}</span>
+                    </div>
+                    <div className="border-t border-gray-200"></div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 font-medium">Ville</span>
+                      <span className="text-sm font-bold text-gray-900">{order.city || 'N/A'}</span>
+                    </div>
+                    {order.streetAddress && (
+                      <>
+                        <div className="border-t border-gray-200"></div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 font-medium">Adresse</span>
+                          <span className="text-sm font-semibold text-gray-900">{order.streetAddress}</span>
+                        </div>
+                      </>
+                    )}
+                    {order.postalCode && (
+                      <>
+                        <div className="border-t border-gray-200"></div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 font-medium">Code postal</span>
+                          <span className="text-sm font-semibold text-gray-900">{order.postalCode}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="border-t border-gray-200"></div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 font-medium">Méthode de livraison</span>
+                      <span className="text-sm font-bold text-gray-900">
+                        {order.shippingMethod === 'SHIPPING_PROVIDER' ? 'Fournisseur de livraison' : 'Livraison à domicile'}
+                      </span>
+                    </div>
+                    {order.shippingProvider && (
+                      <>
+                        <div className="border-t border-gray-200"></div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 font-medium">Fournisseur</span>
+                          <span className="px-3 py-1 text-xs font-bold text-purple-700 bg-purple-100 rounded-full">
+                            {order.shippingProvider}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    <div className="border-t border-gray-200"></div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 font-medium">Frais de livraison</span>
+                      <span className="text-sm font-bold text-green-600">{formatCurrency(order.shippingCost || 0)}</span>
                     </div>
                   </div>
                 </div>
@@ -128,33 +205,43 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                       <table className="w-full">
                       <thead className="bg-gradient-to-r from-gray-100 to-gray-50">
                         <tr>
-                          <th className="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Livre</th>
-                          <th className="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Langue</th>
+                          <th className="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Article</th>
+                          <th className="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
+                          <th className="px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Auteur</th>
                           <th className="px-5 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Qté</th>
-                          <th className="px-5 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Prix</th>
+                          <th className="px-5 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Prix unitaire</th>
                           <th className="px-5 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Total</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {order.items && order.items.length > 0 ? (
-                          order.items.map((item, index) => (
+                        {(order.items || order.orderItems) && (order.items || order.orderItems).length > 0 ? (
+                          (order.items || order.orderItems).map((item, index) => (
                             <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
-                              <td className="px-5 py-4 text-sm font-medium text-gray-900">{item.title}</td>
+                              <td className="px-5 py-4 text-sm font-medium text-gray-900">
+                                {item.title || item.bookTitle || item.bookPackTitle || 'N/A'}
+                              </td>
                               <td className="px-5 py-4 text-sm text-gray-700">
-                                <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                                  {item.language || 'Langue inconnue'}
+                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                  item.itemType === 'BOOK'
+                                    ? 'text-blue-700 bg-blue-100'
+                                    : 'text-purple-700 bg-purple-100'
+                                }`}>
+                                  {item.itemType === 'BOOK' ? 'Livre' : 'Pack'}
                                 </span>
                               </td>
+                              <td className="px-5 py-4 text-sm text-gray-700">
+                                {item.author || item.bookAuthor || 'N/A'}
+                              </td>
                               <td className="px-5 py-4 text-sm text-gray-700 text-right font-semibold">{item.quantity}</td>
-                              <td className="px-5 py-4 text-sm text-gray-700 text-right">{formatCurrency(item.price)}</td>
+                              <td className="px-5 py-4 text-sm text-gray-700 text-right">{formatCurrency(item.price || item.unitPrice)}</td>
                               <td className="px-5 py-4 text-sm font-bold text-gray-900 text-right">
-                                {formatCurrency(item.price * item.quantity)}
+                                {formatCurrency(item.totalPrice || (item.price * item.quantity) || (item.unitPrice * item.quantity))}
                               </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="5" className="px-5 py-8 text-center text-sm text-gray-500">
+                            <td colSpan="6" className="px-5 py-8 text-center text-sm text-gray-500">
                               Aucun article disponible
                             </td>
                           </tr>
@@ -162,11 +249,27 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                       </tbody>
                       <tfoot className="bg-gradient-to-r from-blue-50 to-purple-50">
                         <tr>
-                          <td colSpan="4" className="px-5 py-4 text-base font-bold text-gray-900 text-right">
+                          <td colSpan="5" className="px-5 py-3 text-sm font-semibold text-gray-700 text-right">
+                            Sous-total
+                          </td>
+                          <td className="px-5 py-3 text-sm font-bold text-gray-900 text-right">
+                            {formatCurrency((order.total || order.totalAmount || 0) - (order.shippingCost || 0))}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan="5" className="px-5 py-3 text-sm font-semibold text-gray-700 text-right">
+                            Frais de livraison
+                          </td>
+                          <td className="px-5 py-3 text-sm font-bold text-green-600 text-right">
+                            {formatCurrency(order.shippingCost || 0)}
+                          </td>
+                        </tr>
+                        <tr className="border-t-2 border-gray-300">
+                          <td colSpan="5" className="px-5 py-4 text-base font-bold text-gray-900 text-right">
                             Montant total
                           </td>
                           <td className="px-5 py-4 text-base font-extrabold text-blue-600 text-right">
-                            {formatCurrency(order.total)}
+                            {formatCurrency(order.total || order.totalAmount || 0)}
                           </td>
                         </tr>
                       </tfoot>
@@ -209,6 +312,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           >
                             <option value="pending">En attente</option>
+                            <option value="confirmed">Confirmé</option>
                             <option value="shipped">Expédié</option>
                             <option value="delivered">Livré</option>
                             <option value="cancelled">Annulé</option>
@@ -220,7 +324,32 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                 </div>
               </div>
 
-             
+              {/* Footer with action buttons */}
+              <div className="border-t border-gray-200 p-6 bg-gray-50">
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={onClose}
+                    className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors duration-200"
+                  >
+                    Fermer
+                  </button>
+                  {onUpdateStatus && (
+                    <button
+                      onClick={handleUpdateStatus}
+                      disabled={selectedStatus === order.status}
+                      className={`
+                        px-6 py-2.5 rounded-lg font-medium transition-all duration-200
+                        ${selectedStatus === order.status
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg'
+                        }
+                      `}
+                    >
+                      Mettre à jour le statut
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </motion.div>
         </>

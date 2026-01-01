@@ -19,14 +19,17 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
     { value: 'pending', label: 'En attente' },
+    { value: 'confirmed', label: 'Confirmé' },
     { value: 'shipped', label: 'Expédié' },
     { value: 'delivered', label: 'Livré' },
     { value: 'cancelled', label: 'Annulé' }
   ];
 
   const sortOptions = [
-    { value: 'date', label: 'Trier par date' },
-    { value: 'total', label: 'Trier par total' }
+    { value: 'date-desc', label: 'Date (plus récent)' },
+    { value: 'date-asc', label: 'Date (plus ancien)' },
+    { value: 'price-desc', label: 'Prix (décroissant)' },
+    { value: 'price-asc', label: 'Prix (croissant)' }
   ];
 
   return (
@@ -56,12 +59,12 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
               />
             </div>
 
-            <div className="min-w-[150px]">
+            <div className="min-w-[180px]">
               <CustomSelect
                 value={sortBy}
                 onChange={onSortChange}
                 options={sortOptions}
-                placeholder="Trier par date"
+                placeholder="Trier par..."
               />
             </div>
           </div>
