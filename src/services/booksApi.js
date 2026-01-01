@@ -73,23 +73,26 @@ const normalizeImageUrl = (imageUrl) => {
 };
 
 /**
- * Process book data to normalize image URLs
+ * Process book data to normalize image URLs and transform author
  * @param {Object|Array} data - Single book or array of books
- * @returns {Object|Array} Processed data with normalized image URLs
+ * @returns {Object|Array} Processed data with normalized structure
  */
 const processBookData = (data) => {
+  const transformBook = (book) => ({
+    ...book,
+    coverImageUrl: normalizeImageUrl(book.coverImageUrl),
+    image: normalizeImageUrl(book.coverImageUrl), // Add image field for compatibility
+    author: typeof book.author === 'object' && book.author !== null
+      ? `${book.author.firstName || ''} ${book.author.lastName || ''}`.trim()
+      : book.author || 'Unknown Author',
+  });
+
   if (Array.isArray(data)) {
-    return data.map(book => ({
-      ...book,
-      coverImageUrl: normalizeImageUrl(book.coverImageUrl)
-    }));
+    return data.map(transformBook);
   }
 
   if (data && typeof data === 'object') {
-    return {
-      ...data,
-      coverImageUrl: normalizeImageUrl(data.coverImageUrl)
-    };
+    return transformBook(data);
   }
 
   return data;

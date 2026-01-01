@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getCookie } from '../utils/cookies';
+import { getBookCoverUrl } from './booksApi';
 
 // API base URL - should be configured in environment variables
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -134,6 +135,7 @@ const transformToBackendFormat = (displayData) => {
  * @param {number} params.size - Page size (default: 20)
  * @param {string} params.search - Search query
  * @param {string} params.sort - Sort parameter (e.g., 'nameEn,asc')
+ * @param {boolean} params.includeBooks - Whether to fetch books for each main display (default: true)
  * @param {AbortSignal} signal - Abort signal for cancellation
  * @returns {Promise} Response with main displays data and pagination info
  */
@@ -152,8 +154,64 @@ export const getMainDisplays = async (params = {}, signal = null) => {
       signal,
     });
 
-    // Process response data to normalize structure and image URLs
-    return processMainDisplayData(response.data);
+    // Process response data
+    const processedData = processMainDisplayData(response.data);
+
+    // Fetch books for each main display if requested (default: true)
+    if (params.includeBooks !== false) {
+      const displays = processedData.content || processedData;
+
+      if (Array.isArray(displays)) {
+        // Fetch books for each display in parallel
+        const displaysWithBooks = await Promise.all(
+          displays.map(async (display) => {
+            try {
+              const booksResponse = await api.get('/api/books', {
+                params: {
+                  mainDisplayId: display.id,
+                  page: 0,
+                  size: 1000, // Get all books for this display
+                },
+                signal,
+              });
+              const books = booksResponse.data.content || booksResponse.data;
+              // Transform books to match expected format
+              const transformedBooks = Array.isArray(books)
+                ? books.map(book => ({
+                    ...book,
+                    image: getBookCoverUrl(book.id), // Use the same pattern as BooksTable
+                    coverImageUrl: getBookCoverUrl(book.id),
+                    author: typeof book.author === 'object' && book.author !== null
+                      ? `${book.author.firstName || ''} ${book.author.lastName || ''}`.trim()
+                      : book.author || 'Unknown Author',
+                  }))
+                : [];
+              return {
+                ...display,
+                books: transformedBooks,
+              };
+            } catch (error) {
+              console.error(`Error fetching books for main display ${display.id}:`, error);
+              return {
+                ...display,
+                books: [],
+              };
+            }
+          })
+        );
+
+        // Return with same structure
+        if (processedData.content) {
+          return {
+            ...processedData,
+            content: displaysWithBooks,
+          };
+        }
+        return displaysWithBooks;
+      }
+    }
+
+    return processedData;
   } catch (error) {
     if (axios.isCancel(error)) {
       throw new Error('REQUEST_CANCELLED');

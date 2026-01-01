@@ -4,6 +4,7 @@ import BookSectionModal from './BookSectionModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
 import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay } from '../../services/mainDisplayApi';
+import { getBookCoverUrl } from '../../services/booksApi';
 
 const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteRequest, loading }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -193,6 +194,7 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
 // Section Card Component with Carousel Preview
 const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [failedImages, setFailedImages] = useState(new Set());
 
   // Baseline reference: 700px viewport = 170px width, 250px height
   const getCardDimensions = () => {
@@ -337,11 +339,27 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
                     {/* Book Image Container */}
                     <div>
                       <div className="relative overflow-hidden shadow-sm" style={{ height: `${imageHeight}px` }}>
-                        <img
-                          src={book.image}
-                          alt={book.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
+                        {failedImages.has(book.id) ? (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <BookOpen className="w-12 h-12 text-gray-400" />
+                          </div>
+                        ) : (
+                          <img
+                            src={getBookCoverUrl(book.id, failedImages.has(`${book.id}-placeholder`))}
+                            alt={book.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            onError={(e) => {
+                              // Try placeholder if not already tried
+                              if (!failedImages.has(`${book.id}-placeholder`)) {
+                                setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
+                                e.target.src = getBookCoverUrl(book.id, true);
+                              } else {
+                                // Both failed, show icon
+                                setFailedImages(prev => new Set(prev).add(book.id));
+                              }
+                            }}
+                          />
+                        )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
                         {/* Price Badge */}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, BookOpen, Search, Check, ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
+import { getBookCoverUrl } from '../../services/booksApi';
 
 const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, saving }) => {
   const [sectionName, setSectionName] = useState('');
@@ -11,6 +12,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(false);
   const scrollContainerRef = useRef(null);
+  const [failedImages, setFailedImages] = useState(new Set());
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -29,9 +31,9 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
   }, [section, isOpen]);
 
   // Filter books based on search query
-  const filteredBooks = availableBooks.filter(book =>
-    book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book.author.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredBooks = (availableBooks || []).filter(book =>
+    book?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    book?.author?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleToggleBook = (book) => {
@@ -255,11 +257,27 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
                                 )}
 
                                 {/* Book Card */}
-                                <img
-                                  src={book.image}
-                                  alt={book.title}
-                                  className="w-full h-32 object-cover rounded-t-lg"
-                                />
+                                {failedImages.has(book.id) ? (
+                                  <div className="w-full h-32 bg-gray-200 rounded-t-lg flex items-center justify-center">
+                                    <BookOpen className="w-8 h-8 text-gray-400" />
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={getBookCoverUrl(book.id, failedImages.has(`${book.id}-placeholder`))}
+                                    alt={book.title}
+                                    className="w-full h-32 object-cover rounded-t-lg"
+                                    onError={(e) => {
+                                      // Try placeholder if not already tried
+                                      if (!failedImages.has(`${book.id}-placeholder`)) {
+                                        setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
+                                        e.target.src = getBookCoverUrl(book.id, true);
+                                      } else {
+                                        // Both failed, show icon
+                                        setFailedImages(prev => new Set(prev).add(book.id));
+                                      }
+                                    }}
+                                  />
+                                )}
                                 <div className="p-3">
                                   <h4 className="font-semibold text-sm text-gray-800 truncate" title={book.title}>
                                     {book.title}

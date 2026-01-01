@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Package, Upload, Search, Check } from 'lucide-react';
+import { X, Package, Upload, Search, Check, BookOpen } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
+import { getBookCoverUrl } from '../../services/booksApi';
 
 const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving = false }) => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
   const [imagePreview, setImagePreview] = useState('');
   const [coverImageFile, setCoverImageFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [failedImages, setFailedImages] = useState(new Set());
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -415,13 +417,24 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                               )}
 
                               {/* Book Card */}
-                              {book.coverImageUrl && (
+                              {failedImages.has(book.id) ? (
+                                <div className="w-full h-32 bg-gray-200 rounded-t-lg flex items-center justify-center">
+                                  <BookOpen className="w-8 h-8 text-gray-400" />
+                                </div>
+                              ) : (
                                 <img
-                                  src={book.coverImageUrl}
+                                  src={getBookCoverUrl(book.id, failedImages.has(`${book.id}-placeholder`))}
                                   alt={book.title}
                                   className="w-full h-32 object-cover rounded-t-lg"
                                   onError={(e) => {
-                                    e.target.style.display = 'none';
+                                    // Try placeholder if not already tried
+                                    if (!failedImages.has(`${book.id}-placeholder`)) {
+                                      setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
+                                      e.target.src = getBookCoverUrl(book.id, true);
+                                    } else {
+                                      // Both failed, show icon
+                                      setFailedImages(prev => new Set(prev).add(book.id));
+                                    }
                                   }}
                                 />
                               )}
