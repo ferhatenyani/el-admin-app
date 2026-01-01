@@ -23,7 +23,11 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
   // Réinitialiser le formulaire lors de l'ouverture/fermeture du modal ou du changement de initialData
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      // Only copy name and imageUrl - exclude profilePictureUrl
+      setFormData({
+        name: initialData.name || '',
+        imageUrl: initialData.imageUrl || '',
+      });
     } else {
       setFormData({
         name: '',
@@ -57,9 +61,10 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     e.preventDefault();
 
     if (validateForm()) {
+      // Only send name and imageUrl - explicitly exclude profilePictureUrl
       onSubmit({
-        ...formData,
         name: formData.name.trim(),
+        imageUrl: formData.imageUrl,
       });
     }
   };

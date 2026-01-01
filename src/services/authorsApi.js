@@ -135,8 +135,14 @@ export const getTopAuthors = async () => {
 export const createAuthor = async (authorData, profilePicture = null) => {
   const formData = new FormData();
 
+  // Add author data with empty string for profilePictureUrl to satisfy @NotNull validation
+  const authorWithUrl = {
+    ...authorData,
+    profilePictureUrl: ''
+  };
+
   // Add author data as JSON blob with proper content type
-  const authorBlob = new Blob([JSON.stringify(authorData)], {
+  const authorBlob = new Blob([JSON.stringify(authorWithUrl)], {
     type: 'application/json'
   });
   formData.append('author', authorBlob);
@@ -162,8 +168,22 @@ export const createAuthor = async (authorData, profilePicture = null) => {
 export const updateAuthor = async (id, authorData, profilePicture = null) => {
   const formData = new FormData();
 
+  // Always send empty string for profilePictureUrl - backend manages the actual path
+  const authorWithUrl = {
+    ...authorData,
+    id,
+    profilePictureUrl: ''
+  };
+
+  console.log('=== updateAuthor DEBUG ===');
+  console.log('id:', id);
+  console.log('authorData received:', authorData);
+  console.log('authorWithUrl:', authorWithUrl);
+  console.log('JSON being sent:', JSON.stringify(authorWithUrl));
+  console.log('profilePicture:', profilePicture);
+
   // Add author data as JSON blob with proper content type
-  const authorBlob = new Blob([JSON.stringify({ ...authorData, id })], {
+  const authorBlob = new Blob([JSON.stringify(authorWithUrl)], {
     type: 'application/json'
   });
   formData.append('author', authorBlob);

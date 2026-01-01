@@ -79,17 +79,25 @@ const AuthorsSection = () => {
   // Gérer la soumission d'auteur (ajout ou mise à jour)
   const handleSubmitAuthor = async (authorData) => {
     try {
+      // Only send name field - never send profilePictureUrl
+      const cleanData = { name: authorData.name };
+
+      console.log('=== handleSubmitAuthor DEBUG ===');
+      console.log('authorData received:', authorData);
+      console.log('cleanData:', cleanData);
+      console.log('imageUrl (file):', authorData.imageUrl);
+
       if (editingAuthor) {
         // Update existing author
         await authorsApi.updateAuthor(
           editingAuthor.id,
-          { name: authorData.name },
+          cleanData,
           authorData.imageUrl // File object from UploadImageInput
         );
       } else {
         // Create new author
         await authorsApi.createAuthor(
-          { name: authorData.name },
+          cleanData,
           authorData.imageUrl // File object from UploadImageInput
         );
       }
