@@ -1,4 +1,4 @@
-import { BookOpen, Users, TrendingUp, Sparkles, Calendar, ShoppingCart } from 'lucide-react';
+import { Users, TrendingUp, Sparkles, Calendar, ShoppingCart, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 import StatsCard from '../components/common/StatsCard';
 import SalesChart from '../components/dashboard/SalesChart';
@@ -20,6 +20,41 @@ const Dashboard = () => {
   const recentOrders = [];
   const isLoading = false;
 
+  // Mock dashboard data
+  const mockDashboardData = {
+    bestSellingBook: {
+      title: "Le Petit Prince",
+      soldCount: 1247,
+      price: 12.99,
+    },
+    newUsers: {
+      total: 342,
+      today: 24,
+      thisWeek: 89,
+      thisMonth: 342,
+    },
+    totalOrders: 1893,
+    monthlySales: 45678.50,
+    growth: {
+      bestSellingBook: {
+        value: 18,
+        isPositive: true,
+      },
+      newUsers: {
+        value: 23,
+        isPositive: true,
+      },
+      orders: {
+        value: 12,
+        isPositive: true,
+      },
+      sales: {
+        value: 15,
+        isPositive: true,
+      },
+    },
+  };
+
   // Get current date for header
   const currentDate = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
@@ -29,37 +64,32 @@ const Dashboard = () => {
   });
 
   // Detail builders for each stat card - pure functions, no state
-  const buildBooksDetails = (data, timeRange) => ({
-    description: "Nombre total de livres disponibles dans votre catalogue",
+  const buildBestSellingBookDetails = (data) => ({
+    description: "Le livre le plus populaire de votre catalogue",
     breakdown: [
-      { label: "Disponibles", value: data.totalBooks - 45, color: "text-green-600" },
-      { label: "En rupture de stock", value: 45, color: "text-red-600" },
-      { label: "Nouveaux ce mois-ci", value: 23, color: "text-blue-600" }
+      { label: "Exemplaires vendus", value: data.bestSellingBook.soldCount, color: "text-blue-600" },
+      { label: "Prix unitaire", value: formatCurrency(data.bestSellingBook.price), color: "text-green-600" },
+      { label: "Revenu total", value: formatCurrency(data.bestSellingBook.soldCount * data.bestSellingBook.price), color: "text-purple-600" }
     ],
-    lastUpdated: "Mis à jour il y a 2 heures",
-    comparison: {
-      period: "vs mois dernier",
-      change: `${data.growth.books.isPositive ? '+' : '-'}${data.growth.books.value}%`,
-      isPositive: data.growth.books.isPositive
-    }
+    lastUpdated: "Mis à jour il y a 2 heures"
   });
 
-  const buildUsersDetails = (data, timeRange) => ({
-    description: "Utilisateurs inscrits sur votre plateforme",
+  const buildNewUsersDetails = (data) => ({
+    description: "Nouveaux utilisateurs inscrits sur votre plateforme",
     breakdown: [
-      { label: "Utilisateurs actifs", value: Math.floor(data.totalUsers * 0.68), color: "text-green-600" },
-      { label: "Utilisateurs inactifs", value: Math.floor(data.totalUsers * 0.32), color: "text-gray-600" },
-      { label: "Nouveaux cette semaine", value: 156, color: "text-blue-600" }
+      { label: "Cette semaine", value: data.newUsers.thisWeek, color: "text-blue-600" },
+      { label: "Ce mois-ci", value: data.newUsers.thisMonth, color: "text-green-600" },
+      { label: "Aujourd'hui", value: data.newUsers.today, color: "text-purple-600" }
     ],
     lastUpdated: "Mis à jour il y a 1 heure",
     comparison: {
       period: "vs mois dernier",
-      change: `${data.growth.users.isPositive ? '+' : '-'}${data.growth.users.value}%`,
-      isPositive: data.growth.users.isPositive
+      change: `${data.growth.newUsers.isPositive ? '+' : '-'}${data.growth.newUsers.value}%`,
+      isPositive: data.growth.newUsers.isPositive
     }
   });
 
-  const buildOrdersDetails = (data, timeRange) => ({
+  const buildOrdersDetails = (data) => ({
     description: "Total des commandes reçues depuis toujours",
     breakdown: [
       { label: "Terminées", value: Math.floor(data.totalOrders * 0.65), color: "text-green-600" },
@@ -74,7 +104,7 @@ const Dashboard = () => {
     }
   });
 
-  const buildSalesDetails = (data, timeRange) => ({
+  const buildSalesDetails = (data) => ({
     description: "Revenu généré ce mois-ci",
     breakdown: [
       { label: "Ventes en ligne", value: formatCurrency(data.monthlySales * 0.72), color: "text-green-600" },
@@ -147,22 +177,24 @@ const Dashboard = () => {
         {/* Stats Cards Grid - Each card is independent and self-managing */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10" style={{ overflow: 'visible' }}>
           <StatsCard
-            title="Total des livres"
-            icon={BookOpen}
+            title="Livre le plus vendu"
+            icon={Award}
             color="blue"
             delay={0}
-            metricKey="books"
+            metricKey="bestSellingBook"
             showTimeSelector={true}
-            detailsDataBuilder={buildBooksDetails}
+            detailsDataBuilder={buildBestSellingBookDetails}
+            mockData={mockDashboardData}
           />
           <StatsCard
-            title="Total des utilisateurs"
+            title="Nouveaux utilisateurs"
             icon={Users}
             color="green"
             delay={0.1}
-            metricKey="users"
+            metricKey="newUsers"
             showTimeSelector={true}
-            detailsDataBuilder={buildUsersDetails}
+            detailsDataBuilder={buildNewUsersDetails}
+            mockData={mockDashboardData}
           />
           <StatsCard
             title="Total des commandes"
@@ -172,6 +204,7 @@ const Dashboard = () => {
             metricKey="orders"
             showTimeSelector={true}
             detailsDataBuilder={buildOrdersDetails}
+            mockData={mockDashboardData}
           />
           <StatsCard
             title="Ventes mensuelles"
@@ -181,6 +214,7 @@ const Dashboard = () => {
             metricKey="sales"
             showTimeSelector={true}
             detailsDataBuilder={buildSalesDetails}
+            mockData={mockDashboardData}
           />
         </div>
 

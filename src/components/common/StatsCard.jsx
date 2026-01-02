@@ -22,6 +22,7 @@ const StatsCard = memo(({
   metricKey, // 'books' | 'users' | 'orders' | 'sales' - determines which data to extract
   showTimeSelector = true,
   detailsDataBuilder = null, // Function to build details data: (stats, recentOrders) => detailsData
+  mockData = null, // Optional mock data passed from parent
 }) => {
   // Local state - completely isolated from parent and siblings
   const [timeRange, setTimeRange] = useState('Ce mois-ci');
@@ -36,36 +37,36 @@ const StatsCard = memo(({
 
   const timeRangeOptions = ['Aujourd\'hui', 'Cette semaine', 'Ce mois-ci'];
 
-  // Mock data - replace with real API call
-  const data = null;
+  // Use mock data if provided, otherwise null (will fetch from API in real implementation)
+  const data = mockData;
   const isLoading = false;
   const isError = false;
   const error = null;
 
   // Extract metric-specific data
   const getMetricData = () => {
-    if (!data) return { value: 0, growth: { value: 0, isPositive: true } };
+    if (!data) return { value: 0, growth: null };
 
     const metricMap = {
-      books: {
-        value: data.totalBooks,
-        growth: data.growth.books,
+      bestSellingBook: {
+        value: data.bestSellingBook?.title || 'N/A',
+        growth: data.growth?.bestSellingBook,
       },
-      users: {
-        value: data.totalUsers,
-        growth: data.growth.users,
+      newUsers: {
+        value: data.newUsers?.total || 0,
+        growth: data.growth?.newUsers,
       },
       orders: {
         value: data.totalOrders,
-        growth: data.growth.orders,
+        growth: data.growth?.orders,
       },
       sales: {
         value: formatCurrency(data.monthlySales),
-        growth: data.growth.sales,
+        growth: data.growth?.sales,
       },
     };
 
-    return metricMap[metricKey] || { value: 0, growth: { value: 0, isPositive: true } };
+    return metricMap[metricKey] || { value: 0, growth: null };
   };
 
   const { value, growth } = getMetricData();
@@ -243,7 +244,7 @@ const StatsCard = memo(({
         {/* Header Row: Title and Time Selector */}
         <div className="flex items-start justify-between gap-3">
           {/* Title */}
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wide flex-1">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide flex-1">
             {title}
           </p>
 
@@ -330,7 +331,7 @@ const StatsCard = memo(({
         <div className="flex items-center justify-between gap-3">
           {/* Value */}
           <div className="flex-1 min-w-0">
-            <p className="text-4xl font-bold text-gray-900 tracking-tight truncate">
+            <p className="text-3xl font-bold text-gray-900 tracking-tight truncate">
               {value}
             </p>
           </div>
@@ -358,22 +359,22 @@ const StatsCard = memo(({
         {growth && (
           <div className="flex items-center gap-2 flex-wrap">
             <div className={`
-              flex items-center gap-1 px-2.5 py-1 rounded-full
+              flex items-center gap-1 px-2 py-0.5 rounded-full
               ${growth.isPositive
                 ? 'bg-emerald-50 text-emerald-700'
                 : 'bg-rose-50 text-rose-700'
               }
             `}>
               {growth.isPositive ? (
-                <TrendingUp className="w-3.5 h-3.5" />
+                <TrendingUp className="w-3 h-3" />
               ) : (
-                <TrendingDown className="w-3.5 h-3.5" />
+                <TrendingDown className="w-3 h-3" />
               )}
-              <span className="text-xs font-bold">
+              <span className="text-[11px] font-bold">
                 {growth.isPositive ? '+' : '-'}{growth.value}%
               </span>
             </div>
-            <span className="text-xs text-gray-500">
+            <span className="text-[11px] text-gray-500">
               {timeRange === 'Aujourd\'hui' ? 'depuis hier' :
                timeRange === 'Cette semaine' ? 'depuis la semaine dernière' :
                'depuis le mois dernier'}
