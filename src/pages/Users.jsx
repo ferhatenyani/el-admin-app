@@ -3,6 +3,7 @@ import { Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import UsersTable from '../components/users/UsersTable';
 import UserDetailsModal from '../components/users/UserDetailsModal';
+import { getUsers, toggleUserActivation, exportUsers } from '../services/usersApi';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -13,51 +14,67 @@ const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState('date');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [statusFilter, currentPage]);
 
   useEffect(() => {
     let result = [...users];
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'active') {
-        result = result.filter((user) => user.active === true);
-      } else if (statusFilter === 'inactive') {
-        result = result.filter((user) => user.active === false);
-      }
-    }
-
-    // Apply search query
+    // Apply search query (client-side filtering)
     if (searchQuery) {
       result = result.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchQuery.toLowerCase())
+        (user) => {
+          const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
+          const email = (user.email || '').toLowerCase();
+          const query = searchQuery.toLowerCase();
+          return fullName.includes(query) || email.includes(query);
+        }
       );
     }
 
-    // Apply sorting
+    // Apply sorting (client-side)
     if (sortBy === 'date') {
-      result.sort((a, b) => new Date(b.joinedDate || 0) - new Date(a.joinedDate || 0));
+      result.sort((a, b) => new Date(b.createdDate || 0) - new Date(a.createdDate || 0));
     } else if (sortBy === 'name') {
-      result.sort((a, b) => a.name.localeCompare(b.name));
+      const getFullName = (user) => `${user.firstName || ''} ${user.lastName || ''}`;
+      result.sort((a, b) => getFullName(a).localeCompare(getFullName(b)));
     }
 
     setFilteredUsers(result);
-  }, [searchQuery, users, sortBy, statusFilter]);
+  }, [searchQuery, users, sortBy]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with real API call
-      const data = [];
-      setUsers(data);
-      setFilteredUsers(data);
+      const params = {
+        page: currentPage,
+        size: 100, // Fetch all users for client-side filtering
+      };
+
+      // Apply server-side active filter if not 'all'
+      if (statusFilter === 'active') {
+        params.active = true;
+      } else if (statusFilter === 'inactive') {
+        params.active = false;
+      }
+
+      const response = await getUsers(params);
+
+      // Handle Spring Data Page response
+      const usersData = response.content || [];
+      setUsers(usersData);
+      setFilteredUsers(usersData);
+      setTotalPages(response.totalPages || 0);
+      setTotalElements(response.totalElements || 0);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
+      setFilteredUsers([]);
     } finally {
       setLoading(false);
     }
@@ -70,17 +87,46 @@ const Users = () => {
 
   const handleToggleActive = async (userId) => {
     try {
-      // TODO: Replace with real API call
-      fetchUsers();
+      await toggleUserActivation(userId);
+      // Refresh users list after toggle
+      await fetchUsers();
     } catch (error) {
       console.error('Error toggling user status:', error);
+      alert('Erreur lors de la modification du statut de l\'utilisateur');
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const response = await exportUsers();
 
-  const handleExport = () => {
-    console.log('Export triggered for users');
-    // TODO: Implement export logic
+      // Create a download link for the blob
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Extract filename from Content-Disposition header or use default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'users_export.xlsx';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      alert('Erreur lors de l\'export des utilisateurs');
+    }
   };
 
   if (loading) {

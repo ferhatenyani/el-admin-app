@@ -53,6 +53,7 @@ api.interceptors.response.use(
  * @param {Object} params - Query parameters
  * @param {number} params.page - Page number (0-indexed)
  * @param {number} params.size - Page size (default: 20)
+ * @param {boolean} params.active - Filter by activation status (optional)
  * @returns {Promise} Response with users data
  */
 export const getUsers = async (params = {}) => {
@@ -61,10 +62,38 @@ export const getUsers = async (params = {}) => {
     size: params.size || 20,
   };
 
+  // Add active filter if provided
+  if (params.active !== undefined && params.active !== null) {
+    queryParams.active = params.active;
+  }
+
   const response = await api.get('/api/app-users', { params: queryParams });
   return response.data;
 };
 
+/**
+ * Toggle user activation status (admin only)
+ * @param {string} userId - The ID of the user to toggle
+ * @returns {Promise} Response with status 204
+ */
+export const toggleUserActivation = async (userId) => {
+  const response = await api.patch(`/api/app-users/${userId}/toggle`);
+  return response.data;
+};
+
+/**
+ * Export all non-admin users to Excel (admin only)
+ * @returns {Promise} Blob response containing the Excel file
+ */
+export const exportUsers = async () => {
+  const response = await api.get('/api/app-users/export', {
+    responseType: 'blob',
+  });
+  return response;
+};
+
 export default {
   getUsers,
+  toggleUserActivation,
+  exportUsers,
 };
