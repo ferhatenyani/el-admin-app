@@ -102,7 +102,7 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
                 key={order.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                whileHover={{ backgroundColor: '#f9fafb' }}
+                className="hover:bg-gray-200 transition-colors duration-150 cursor-pointer"
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {order.orderNumber}

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Package } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import useScrollLock from '../../hooks/useScrollLock';
+import CustomSelect from './CustomSelect';
 
 /**
  * Reusable OrderDetailsModal component
@@ -64,6 +65,14 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
     }
   };
 
+  const statusOptions = [
+    { value: 'pending', label: 'En attente' },
+    { value: 'confirmed', label: 'Confirmé' },
+    { value: 'shipped', label: 'Expédié' },
+    { value: 'delivered', label: 'Livré' },
+    { value: 'cancelled', label: 'Annulé' }
+  ];
+
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
@@ -85,9 +94,9 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden pointer-events-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col pointer-events-auto">
               {/* Header with gradient */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold">Détails de la commande</h2>
@@ -103,7 +112,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
               </div>
 
               {/* Scrollable Content */}
-              <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6 space-y-6">
+              <div className="overflow-y-auto flex-1 p-6 space-y-6">
                 {/* Customer Info Card */}
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Informations client</h3>
@@ -306,17 +315,12 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Mettre à jour le statut
                           </label>
-                          <select
+                          <CustomSelect
                             value={selectedStatus}
-                            onChange={(e) => setSelectedStatus(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          >
-                            <option value="pending">En attente</option>
-                            <option value="confirmed">Confirmé</option>
-                            <option value="shipped">Expédié</option>
-                            <option value="delivered">Livré</option>
-                            <option value="cancelled">Annulé</option>
-                          </select>
+                            onChange={setSelectedStatus}
+                            options={statusOptions}
+                            placeholder="Sélectionner un statut"
+                          />
                         </div>
                       </>
                     )}
@@ -325,7 +329,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
               </div>
 
               {/* Footer with action buttons */}
-              <div className="border-t border-gray-200 p-6 bg-gray-50">
+              <div className="border-t border-gray-200 bg-gray-50 flex-shrink-0 px-6 pt-6 pb-8">
                 <div className="flex gap-3 justify-end">
                   <button
                     onClick={onClose}
