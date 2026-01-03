@@ -32,8 +32,8 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option" 
         }`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex items-center flex-1 h-11 px-4">
-          <span className={`text-sm ${selectedOption ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
+        <div className="flex items-center flex-1 h-11 px-4 overflow-hidden">
+          <span className={`text-sm truncate ${selectedOption ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
         </div>
@@ -84,11 +84,12 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option" 
                     className={`w-full text-left px-4 py-3 text-sm hover:bg-blue-50 transition-colors flex items-center border-b border-gray-100 last:border-b-0 ${
                       value === option.value ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
                     }`}
+                    title={option.label}
                   >
                     <div className={`w-3 h-3 border-2 rounded-full mr-3 flex-shrink-0 ${
                       value === option.value ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
                     }`}></div>
-                    <span className="font-medium">{option.label}</span>
+                    <span className="font-medium break-words">{option.label}</span>
                   </button>
                 ))}
               </div>
