@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader } from 'lucide-react';
 import BookSectionModal from './BookSectionModal';
 import Pagination from '../common/Pagination';
@@ -199,6 +199,46 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
 const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [failedImages, setFailedImages] = useState(new Set());
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const scrollContainerRef = useRef(null);
+
+  // Mouse/Touch drag handlers
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    scrollContainerRef.current.style.cursor = 'grabbing';
+  };
+
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    setStartX(e.touches[0].pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll speed multiplier
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    const x = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.style.cursor = 'grab';
+    }
+  };
 
   // Responsive card dimensions - Professional sizing
   const getCardDimensions = () => {
@@ -248,10 +288,22 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
   const { width: cardWidth, height: cardHeight, visible: visibleCards, imageHeight, gap } = getCardDimensions();
 
   const handleScrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: -(cardWidth + gap),
+        behavior: 'smooth'
+      });
+    }
     setScrollPosition(Math.max(0, scrollPosition - 1));
   };
 
   const handleScrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: cardWidth + gap,
+        behavior: 'smooth'
+      });
+    }
     setScrollPosition(Math.min(section.books.length - visibleCards, scrollPosition + 1));
   };
 
@@ -321,12 +373,25 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
             )}
 
             {/* Books Container */}
-            <div className="overflow-hidden">
+            <div
+              ref={scrollContainerRef}
+              className="overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing"
+              style={{
+                scrollBehavior: isDragging ? 'auto' : 'smooth',
+                WebkitOverflowScrolling: 'touch'
+              }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleDragEnd}
+              onMouseLeave={handleDragEnd}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleDragEnd}
+            >
               <div
-                className="flex transition-transform duration-300 ease-out"
+                className="flex"
                 style={{
-                  gap: `${gap}px`,
-                  transform: `translateX(-${scrollPosition * (cardWidth + gap)}px)`
+                  gap: `${gap}px`
                 }}
               >
                 {section.books.map((book) => (
