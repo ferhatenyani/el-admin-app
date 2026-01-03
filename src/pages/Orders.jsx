@@ -133,25 +133,25 @@ const Orders = () => {
           <p className="text-gray-600 mt-1">Gérez les commandes clients et suivez les livraisons</p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm whitespace-nowrap text-sm sm:text-base"
           >
-            <Plus className="w-5 h-5" />
-            Ajouter une commande
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span>Ajouter une commande</span>
           </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm whitespace-nowrap text-sm sm:text-base"
           >
-            <Download className="w-5 h-5" />
-            Exporter
+            <Download className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span>Exporter</span>
           </motion.button>
         </div>
       </div>

@@ -49,8 +49,8 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
             />
           </div>
 
-          <div className="flex gap-3 sm:ml-auto">
-            <div className="min-w-[140px]">
+          <div className="flex flex-col sm:flex-row gap-3 sm:ml-auto">
+            <div className="w-full sm:min-w-[140px]">
               <CustomSelect
                 value={statusFilter}
                 onChange={onStatusFilterChange}
@@ -59,7 +59,7 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
               />
             </div>
 
-            <div className="min-w-[180px]">
+            <div className="w-full sm:min-w-[180px]">
               <CustomSelect
                 value={sortBy}
                 onChange={onSortChange}
