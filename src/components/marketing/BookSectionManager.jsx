@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import BookSectionModal from './BookSectionModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
@@ -12,6 +13,21 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
   const [editingSection, setEditingSection] = useState(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, sectionId: null, book: null });
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter sections based on search query
+  const filteredSections = sections.filter(section => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      section.name?.toLowerCase().includes(query) ||
+      section.books?.some(book =>
+        book.title?.toLowerCase().includes(query) ||
+        book.author?.toLowerCase().includes(query)
+      )
+    );
+  });
 
   const {
     currentPage,
@@ -21,7 +37,11 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
     handlePageChange,
     handleItemsPerPageChange,
     totalItems
-  } = usePagination(sections, 5);
+  } = usePagination(filteredSections, 5);
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   const handleAddSection = () => {
     setEditingSection(null);
@@ -136,65 +156,136 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
   };
 
   return (
-    <div className="space-y-6">
-      {/* Add Section Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleAddSection}
-          disabled={loading}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden min-[400px]:inline">Ajouter une Section</span>
-          <span className="min-[400px]:hidden">Ajouter</span>
-        </button>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-6">
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 w-full sm:w-auto">
+            {/* Icon and Title */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 flex-wrap">
+                  <span className="truncate">Sections de Livres</span>
+                  <span className="text-xs sm:text-sm font-normal text-gray-500 flex-shrink-0">
+                    ({sections.length})
+                  </span>
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 mt-0.5 hidden xs:block">
+                  Gérez les sections de la page d'accueil
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleAddSection}
+              disabled={loading}
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/30 font-medium transition-all text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden xs:inline">Ajouter</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleExpand}
+              className="p-2 sm:p-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+              title={isExpanded ? 'Réduire' : 'Développer'}
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
+              ) : (
+                <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
+              )}
+            </motion.button>
+          </div>
+        </div>
       </div>
 
-      {/* Loading State */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <Loader className="w-12 h-12 text-blue-600 mb-3 animate-spin" />
-          <p className="text-gray-600 text-base font-medium">Chargement des sections...</p>
+      {/* Search Section */}
+      <div className="p-3 sm:p-6 border-b border-gray-200 bg-white">
+        <div className="relative flex-1 sm:max-w-md">
+          <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Rechercher des sections..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+          />
         </div>
-      ) : sections.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="bg-blue-50 rounded-lg p-4 mb-4">
-            <BookOpen className="w-10 h-10 text-blue-600" />
-          </div>
-          <p className="text-gray-800 text-base font-semibold mb-1.5">Aucune section de livres</p>
-          <p className="text-gray-500 text-sm max-w-md text-center px-4">
-            Créez votre première section de livres pour la page d'accueil
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-4">
-            {paginatedSections.map((section) => (
-              <SectionCard
-                key={section.id}
-                section={section}
-                onEdit={() => handleEditSection(section)}
-                onDelete={() => handleDeleteSection(section)}
-                onRemoveBook={(book) => handleRemoveBookFromSection(section.id, book)}
-              />
-            ))}
-          </div>
+      </div>
 
-          {/* Pagination */}
-          {sections.length > 0 && (
-            <div className="mt-6">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-                itemsPerPage={itemsPerPage}
-                totalItems={totalItems}
-                onItemsPerPageChange={handleItemsPerPageChange}
-              />
-            </div>
-          )}
-        </>
-      )}
+      {/* Content - Collapsible */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            {/* Loading State */}
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader className="w-12 h-12 text-blue-600 mb-3 animate-spin" />
+                <p className="text-gray-600 text-base font-medium">Chargement des sections...</p>
+              </div>
+            ) : filteredSections.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                  <BookOpen className="w-10 h-10 text-blue-600" />
+                </div>
+                <p className="text-gray-800 text-base font-semibold mb-1.5">
+                  {searchQuery ? 'Aucune section trouvée' : 'Aucune section de livres'}
+                </p>
+                <p className="text-gray-500 text-sm max-w-md text-center px-4">
+                  {searchQuery
+                    ? 'Essayez de modifier vos critères de recherche'
+                    : 'Créez votre première section de livres pour la page d\'accueil'}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4 p-3 sm:p-6">
+                  {paginatedSections.map((section) => (
+                    <SectionCard
+                      key={section.id}
+                      section={section}
+                      onEdit={() => handleEditSection(section)}
+                      onDelete={() => handleDeleteSection(section)}
+                      onRemoveBook={(book) => handleRemoveBookFromSection(section.id, book)}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {filteredSections.length > 0 && (
+                  <div className="px-3 sm:px-6 pb-6">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                      itemsPerPage={itemsPerPage}
+                      totalItems={totalItems}
+                      onItemsPerPageChange={handleItemsPerPageChange}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modal */}
       <BookSectionModal

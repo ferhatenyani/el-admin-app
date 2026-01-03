@@ -49,24 +49,6 @@ api.interceptors.response.use(
   }
 );
 
-/**
- * Normalize image URL - convert relative URLs to absolute URLs
- * @param {string} imageUrl - Image URL from backend
- * @returns {string} Absolute image URL
- */
-const normalizeImageUrl = (imageUrl) => {
-  if (!imageUrl) return null;
-
-  // If already absolute URL, return as is
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-
-  // If relative URL, prepend API base URL
-  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-  const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-  return `${baseUrl}${path}`;
-};
 
 /**
  * Process main display data to normalize image URLs and transform data structure

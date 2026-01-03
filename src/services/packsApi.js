@@ -48,24 +48,6 @@ api.interceptors.response.use(
   }
 );
 
-/**
- * Normalize image URL - convert relative URLs to absolute URLs
- * @param {string} imageUrl - Image URL from backend
- * @returns {string} Absolute image URL
- */
-const normalizeImageUrl = (imageUrl) => {
-  if (!imageUrl) return null;
-
-  // If already absolute URL, return as is
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-
-  // If relative URL, prepend API base URL
-  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-  const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-  return `${baseUrl}${path}`;
-};
 
 /**
  * Process pack data to normalize image URLs and transform data structure
@@ -124,30 +106,73 @@ const transformToBackendFormat = (packData) => {
  * @param {number} params.page - Page number (0-indexed)
  * @param {number} params.size - Page size (default: 20)
  * @param {string} params.search - Search query
- * @param {Array<number>} params.author - Filter by author IDs
  * @param {number} params.minPrice - Minimum price filter
  * @param {number} params.maxPrice - Maximum price filter
- * @param {number} params.categoryId - Filter by category tag ID
- * @param {number} params.mainDisplayId - Filter by main display tag ID
- * @param {Array<string>} params.language - Filter by languages
- * @param {string} params.sort - Sort parameter (e.g., 'title,asc' or 'price,desc')
+ * @param {Array<number>|number} params.author - Author ID(s) filter
+ * @param {Array<number>} params.categories - Array of category IDs
+ * @param {number} params.categoryId - Single category ID filter
+ * @param {Array<string>|string} params.language - Language filter(s)
  * @param {AbortSignal} signal - Abort signal for cancellation
  * @returns {Promise} Response with packs data and pagination info
  */
 export const getPacks = async (params = {}, signal = null) => {
   try {
-    const queryParams = {
-      page: params.page || 0,
-      size: params.size || 20,
-      ...(params.search && { search: params.search }),
-      ...(params.author && { author: params.author }),
-      ...(params.minPrice && { minPrice: params.minPrice }),
-      ...(params.maxPrice && { maxPrice: params.maxPrice }),
-      ...(params.categoryId && { categoryId: params.categoryId }),
-      ...(params.mainDisplayId && { mainDisplayId: params.mainDisplayId }),
-      ...(params.language && { language: params.language }),
-      ...(params.sort && { sort: params.sort }),
-    };
+    const queryParams = new URLSearchParams();
+
+    // Add pagination params
+    if (params.page !== undefined) queryParams.append('page', params.page);
+    if (params.size !== undefined) queryParams.append('size', params.size);
+
+    // Add filter params
+    if (params.search) queryParams.append('search', params.search);
+    if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice);
+    if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice);
+
+    // Add category filters (API accepts multiple categoryId params)
+    if (params.categories && params.categories.length > 0) {
+      params.categories.forEach(category => {
+        const categoryId = typeof category === 'object' ? category.id : category;
+        if (categoryId) {
+          queryParams.append('categoryId', categoryId.toString());
+        }
+      });
+    }
+
+    // Add single categoryId filter if provided (for backward compatibility)
+    if (params.categoryId !== undefined) {
+      queryParams.append('categoryId', params.categoryId.toString());
+    }
+
+    // Add author filter(s) - support both single value and array
+    if (params.author) {
+      if (Array.isArray(params.author)) {
+        params.author.forEach(authorId => {
+          queryParams.append('author', authorId.toString());
+        });
+      } else {
+        queryParams.append('author', params.author.toString());
+      }
+    }
+
+    // Add language filter(s) - support both single value and array
+    if (params.language) {
+      // Map display names to API enum values
+      const languageMap = {
+        'Français': 'FR',
+        'English': 'EN',
+        'العربية': 'AR'
+      };
+
+      if (Array.isArray(params.language)) {
+        params.language.forEach(lang => {
+          const apiLang = languageMap[lang] || lang.toUpperCase();
+          queryParams.append('language', apiLang);
+        });
+      } else {
+        const apiLang = languageMap[params.language] || params.language.toUpperCase();
+        queryParams.append('language', apiLang);
+      }
+    }
 
     const response = await api.get('/api/book-packs', {
       params: queryParams,
