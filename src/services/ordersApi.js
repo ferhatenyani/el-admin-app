@@ -179,6 +179,17 @@ export const updateOrderStatus = async (id, status) => {
 };
 
 /**
+ * Export all orders to Excel (admin only)
+ * @returns {Promise} Blob response containing the Excel file
+ */
+export const exportOrders = async () => {
+  const response = await api.get('/api/orders/export', {
+    responseType: 'blob',
+  });
+  return response;
+};
+
+/**
  * Order status enum values
  */
 export const ORDER_STATUS = {
@@ -220,6 +231,7 @@ export default {
   updateOrder,
   getCurrentUserOrders,
   updateOrderStatus,
+  exportOrders,
   ORDER_STATUS,
   SHIPPING_PROVIDER,
   SHIPPING_METHOD,

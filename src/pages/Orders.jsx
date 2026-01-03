@@ -112,9 +112,37 @@ const Orders = () => {
     }
   };
 
-  const handleExport = () => {
-    console.log('Export triggered for orders');
-    // TODO: Implement export logic
+  const handleExport = async () => {
+    try {
+      const response = await ordersApi.exportOrders();
+
+      // Create a download link for the blob
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Extract filename from Content-Disposition header or use default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'orders_export.xlsx';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting orders:', error);
+      alert('Erreur lors de l\'export des commandes');
+    }
   };
 
   if (loading) {
