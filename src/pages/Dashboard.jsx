@@ -126,47 +126,44 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 rounded-2xl shadow-xl mb-8 overflow-hidden relative"
+        className="bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 rounded-xl md:rounded-2xl shadow-xl mb-6 md:mb-8 overflow-hidden relative"
       >
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24" />
+        {/* Decorative elements - hidden on mobile for cleaner look */}
+        <div className="hidden md:block absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32" />
+        <div className="hidden md:block absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24" />
 
-        <div className="relative px-8 py-10">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex items-center gap-3 mb-3"
-              >
-                <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl">
-                  <Sparkles className="w-7 h-7 text-white" />
-                </div>
-                <h1 className="text-4xl font-bold text-white">
-                  Tableau de bord
-                </h1>
-              </motion.div>
-              <motion.p
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-blue-100 text-lg"
-              >
-                Bienvenue ! Voici ce qui se passe dans votre boutique aujourd'hui.
-              </motion.p>
-            </div>
-
-            {/* Date badge */}
+        <div className="relative px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-10">
+          <div className="space-y-3">
+            {/* Title row */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="flex items-center gap-2 px-5 py-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex items-center gap-2 sm:gap-3"
             >
-              <Calendar className="w-5 h-5 text-white" />
-              <span className="text-white font-medium text-sm">{currentDate}</span>
+              <div className="p-2 sm:p-2.5 md:p-3 bg-white/10 backdrop-blur-sm rounded-lg md:rounded-xl">
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white" />
+              </div>
+              <h1 className="text-xl sm:text-3xl md:text-4xl font-bold text-white">
+                Tableau de bord
+              </h1>
+            </motion.div>
+
+            {/* Bienvenue + Date row (horizontal on mobile < 500px) */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center justify-between gap-3"
+            >
+              <p className="text-blue-100 text-sm sm:text-base md:text-lg">
+                <span className="max-[500px]:inline hidden">Bienvenue !</span>
+                <span className="min-[501px]:inline hidden">Bienvenue ! Voici ce qui se passe dans votre boutique aujourd'hui.</span>
+              </p>
+              <div className="flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 bg-white/10 backdrop-blur-sm rounded-lg md:rounded-xl border border-white/20">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0" />
+                <span className="text-white font-medium text-xs sm:text-sm whitespace-nowrap">{currentDate}</span>
+              </div>
             </motion.div>
           </div>
         </div>

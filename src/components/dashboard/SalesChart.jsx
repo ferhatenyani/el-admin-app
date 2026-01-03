@@ -287,14 +287,14 @@ const SalesChart = memo(() => {
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
       {/* Header Section with dynamic title and dropdown */}
       <div className="p-4 sm:p-6 pb-3">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+        <div className="flex flex-row items-start justify-between gap-3 sm:gap-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{getChartTitle()}</h2>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{getChartSubtitle()}</p>
           </div>
 
-          {/* Filter Controls Container */}
-          <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+          {/* Filter Controls Container - Always on the right */}
+          <div className="flex flex-wrap items-center justify-end gap-2 flex-shrink-0 ml-auto">
             {/* Time Range Dropdown */}
             <div ref={dropdownRef} className="relative z-30">
               <button
@@ -406,7 +406,7 @@ const SalesChart = memo(() => {
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
                       className="
-                        absolute top-full right-0 mt-2
+                        absolute top-full left-0 mt-2
                         min-w-full
                         bg-white
                         border border-gray-200
@@ -496,7 +496,9 @@ const SalesChart = memo(() => {
                         z-50
                         max-h-[200px]
                         overflow-y-auto
+                        [&::-webkit-scrollbar]:hidden
                       "
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                       {monthOptions.map((month) => (
                         <button
