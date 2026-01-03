@@ -6,6 +6,7 @@ import SalesChart from '../components/dashboard/SalesChart';
 import RecentOrdersTable from '../components/dashboard/RecentOrdersTable';
 import { formatCurrency } from '../utils/format';
 import * as dashboardApi from '../services/dashboardApi';
+import * as ordersApi from '../services/ordersApi';
 
 /**
  * Modern Dashboard Page - Stateless Container
@@ -18,9 +19,10 @@ import * as dashboardApi from '../services/dashboardApi';
  */
 
 const Dashboard = () => {
-  const recentOrders = [];
   const [dashboardData, setDashboardData] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOrdersLoading, setIsOrdersLoading] = useState(true);
 
   // Fetch dashboard stats on component mount
   useEffect(() => {
@@ -37,6 +39,56 @@ const Dashboard = () => {
     };
 
     fetchDashboardStats();
+  }, []);
+
+  // Fetch recent orders on component mount
+  useEffect(() => {
+    const fetchRecentOrders = async () => {
+      try {
+        setIsOrdersLoading(true);
+        // Fetch 5 most recent orders, sorted by creation date descending
+        const response = await ordersApi.getOrders({
+          page: 0,
+          size: 5,
+          sort: 'createdAt,desc',
+        });
+
+        const orders = response.content || response || [];
+
+        // Map backend status to frontend status
+        const mapStatus = (backendStatus) => {
+          const statusMap = {
+            'PENDING': 'pending',
+            'CONFIRMED': 'pending',  // Map CONFIRMED to pending in UI
+            'SHIPPED': 'shipped',
+            'DELIVERED': 'delivered',
+            'CANCELLED': 'cancelled',
+          };
+          return statusMap[backendStatus] || 'pending';
+        };
+
+        // Transform backend OrderDTO to frontend format
+        const transformedOrders = orders.map(order => ({
+          id: order.id,
+          orderNumber: order.uniqueId || `#${order.id}`,
+          customer: order.fullName || (order.user ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() : null) || 'Guest',
+          date: order.createdAt,
+          total: Number(order.totalAmount) || 0,
+          status: mapStatus(order.status),
+          // Keep full order data for modal
+          ...order,
+        }));
+
+        setRecentOrders(transformedOrders);
+      } catch (error) {
+        console.error('Error fetching recent orders:', error);
+        setRecentOrders([]);
+      } finally {
+        setIsOrdersLoading(false);
+      }
+    };
+
+    fetchRecentOrders();
   }, []);
 
   // Get current date for header
@@ -217,7 +269,7 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Orders Section */}
-        {!isLoading && (
+        {!isOrdersLoading && (
           <div className="relative z-0">
             <RecentOrdersTable orders={recentOrders} />
           </div>

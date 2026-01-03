@@ -127,7 +127,7 @@ const RecentOrdersTable = ({ orders }) => {
           {/* Enhanced Table Body */}
           <tbody className="divide-y divide-gray-100">
             {orders.map((order, index) => {
-              const status = statusConfig[order.status];
+              const status = statusConfig[order.status] || statusConfig.pending;
 
               return (
                 <motion.tr
