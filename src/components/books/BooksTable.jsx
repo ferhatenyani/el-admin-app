@@ -35,7 +35,7 @@ const BooksTable = ({
   onPageChange = null,
   onPageSizeChange = null,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [failedImages, setFailedImages] = useState(new Set());
 
   const statusOptions = [

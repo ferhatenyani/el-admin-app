@@ -23,7 +23,7 @@ const EtiquettesSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [editingEtiquette, setEditingEtiquette] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [etiquetteToDelete, setEtiquetteToDelete] = useState(null);
