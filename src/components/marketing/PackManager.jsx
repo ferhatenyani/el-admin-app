@@ -1,42 +1,78 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Package, Loader2, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PackCard from './PackCard';
 import PackModal from './PackModal';
 import Pagination from '../common/Pagination';
-import usePagination from '../../hooks/usePagination';
-import { createPack, updatePack } from '../../services/packsApi';
+import { createPack, updatePack, getPacks } from '../../services/packsApi';
 
-const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest, loading = false }) => {
+const PackManager = ({ availableBooks, onDeleteRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPack, setEditingPack] = useState(null);
   const [saving, setSaving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Filter packs based on search query
-  const filteredPacks = packs.filter(pack => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      pack.name?.toLowerCase().includes(query) ||
-      pack.description?.toLowerCase().includes(query) ||
-      pack.price?.toString().includes(query)
-    );
-  });
-
-  const {
-    currentPage,
-    itemsPerPage,
-    totalPages,
-    paginatedItems: paginatedPacks,
-    handlePageChange,
-    handleItemsPerPageChange,
-    totalItems
-  } = usePagination(filteredPacks, 5);
+  // Pagination state
+  const [packs, setPacks] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  // Fetch packs from API
+  const fetchPacks = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getPacks({
+        page: currentPage,
+        size: itemsPerPage,
+        search: searchQuery || undefined,
+      });
+
+      const packsData = response.content || response;
+      setPacks(Array.isArray(packsData) ? packsData : []);
+
+      if (response.totalPages !== undefined) {
+        setTotalPages(response.totalPages);
+        setTotalItems(response.totalElements || 0);
+      } else {
+        setTotalPages(1);
+        setTotalItems(packsData.length);
+      }
+    } catch (error) {
+      console.error('Error fetching packs:', error);
+      setPacks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, itemsPerPage, searchQuery]);
+
+  // Fetch packs on mount and when dependencies change
+  useEffect(() => {
+    fetchPacks();
+  }, [fetchPacks]);
+
+  // Reset to page 0 when search query changes
+  useEffect(() => {
+    if (currentPage !== 0) {
+      setCurrentPage(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page - 1);
+  };
+
+  const handleItemsPerPageChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(0);
   };
 
   const handleAddPack = () => {
@@ -50,7 +86,7 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest, loading
   };
 
   const handleDeletePack = (pack) => {
-    onDeleteRequest('pack', pack);
+    onDeleteRequest('pack', pack, fetchPacks);
   };
 
   const handleSavePack = async (packData, coverImage) => {
@@ -61,14 +97,13 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest, loading
       if (editingPack) {
         // Update existing pack
         result = await updatePack(editingPack.id, packData, coverImage);
-        setPacks(packs.map(p =>
-          p.id === editingPack.id ? result : p
-        ));
       } else {
         // Create new pack
         result = await createPack(packData, coverImage);
-        setPacks([...packs, result]);
       }
+
+      // Refresh the list after save
+      await fetchPacks();
 
       setIsModalOpen(false);
       setEditingPack(null);
@@ -95,7 +130,7 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest, loading
                 <h2 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 flex-wrap">
                   <span className="truncate">Packs de Livres</span>
                   <span className="text-xs sm:text-sm font-normal text-gray-500 flex-shrink-0">
-                    ({packs.length})
+                    ({totalItems})
                   </span>
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 mt-0.5 hidden xs:block">
@@ -164,7 +199,7 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest, loading
                 <Loader2 className="w-12 h-12 text-green-600 mb-3 animate-spin" />
                 <p className="text-gray-600 text-base font-medium">Chargement des packs...</p>
               </div>
-            ) : filteredPacks.length === 0 ? (
+            ) : packs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="bg-green-50 rounded-lg p-4 mb-4">
                   <Package className="w-10 h-10 text-green-600" />
@@ -181,7 +216,7 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest, loading
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-3 sm:p-6">
-                  {paginatedPacks.map((pack) => (
+                  {packs.map((pack) => (
                     <PackCard
                       key={pack.id}
                       pack={pack}
@@ -192,10 +227,10 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest, loading
                 </div>
 
                 {/* Pagination */}
-                {filteredPacks.length > 0 && (
+                {totalItems > 0 && (
                   <div className="px-3 sm:px-6 pb-6">
                     <Pagination
-                      currentPage={currentPage}
+                      currentPage={currentPage + 1}
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
                       itemsPerPage={itemsPerPage}

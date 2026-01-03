@@ -117,46 +117,43 @@ const transformToBackendFormat = (packData) => {
  */
 export const getPacks = async (params = {}, signal = null) => {
   try {
-    const queryParams = new URLSearchParams();
+    const queryParams = {
+      page: params.page !== undefined ? params.page : 0,
+      size: params.size !== undefined ? params.size : 20,
+    };
 
-    // Add pagination params
-    if (params.page !== undefined) queryParams.append('page', params.page);
-    if (params.size !== undefined) queryParams.append('size', params.size);
+    // Add search filter
+    if (params.search) {
+      queryParams.search = params.search;
+    }
 
-    // Add filter params
-    if (params.search) queryParams.append('search', params.search);
-    if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice);
-    if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice);
+    // Add price filters
+    if (params.minPrice !== undefined) {
+      queryParams.minPrice = params.minPrice;
+    }
+    if (params.maxPrice !== undefined) {
+      queryParams.maxPrice = params.maxPrice;
+    }
 
-    // Add category filters (API accepts multiple categoryId params)
-    if (params.categories && params.categories.length > 0) {
-      params.categories.forEach(category => {
-        const categoryId = typeof category === 'object' ? category.id : category;
-        if (categoryId) {
-          queryParams.append('categoryId', categoryId.toString());
-        }
-      });
+    // Add category filters (for array of categories, axios will handle it)
+    if (params.categories && Array.isArray(params.categories) && params.categories.length > 0) {
+      queryParams.categoryId = params.categories.map(cat =>
+        typeof cat === 'object' ? cat.id : cat
+      );
     }
 
     // Add single categoryId filter if provided (for backward compatibility)
     if (params.categoryId !== undefined) {
-      queryParams.append('categoryId', params.categoryId.toString());
+      queryParams.categoryId = params.categoryId;
     }
 
-    // Add author filter(s) - support both single value and array
+    // Add author filter(s)
     if (params.author) {
-      if (Array.isArray(params.author)) {
-        params.author.forEach(authorId => {
-          queryParams.append('author', authorId.toString());
-        });
-      } else {
-        queryParams.append('author', params.author.toString());
-      }
+      queryParams.author = params.author;
     }
 
-    // Add language filter(s) - support both single value and array
+    // Add language filter(s) with mapping
     if (params.language) {
-      // Map display names to API enum values
       const languageMap = {
         'Français': 'FR',
         'English': 'EN',
@@ -164,13 +161,11 @@ export const getPacks = async (params = {}, signal = null) => {
       };
 
       if (Array.isArray(params.language)) {
-        params.language.forEach(lang => {
-          const apiLang = languageMap[lang] || lang.toUpperCase();
-          queryParams.append('language', apiLang);
-        });
+        queryParams.language = params.language.map(lang =>
+          languageMap[lang] || lang.toUpperCase()
+        );
       } else {
-        const apiLang = languageMap[params.language] || params.language.toUpperCase();
-        queryParams.append('language', apiLang);
+        queryParams.language = languageMap[params.language] || params.language.toUpperCase();
       }
     }
 

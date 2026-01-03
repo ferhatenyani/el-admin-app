@@ -1,46 +1,81 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BookSectionModal from './BookSectionModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
-import usePagination from '../../hooks/usePagination';
-import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay } from '../../services/mainDisplayApi';
+import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, getMainDisplays } from '../../services/mainDisplayApi';
 import { getBookCoverUrl } from '../../services/booksApi';
 
-const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteRequest, loading }) => {
+const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, sectionId: null, book: null });
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Filter sections based on search query
-  const filteredSections = sections.filter(section => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      section.name?.toLowerCase().includes(query) ||
-      section.books?.some(book =>
-        book.title?.toLowerCase().includes(query) ||
-        book.author?.toLowerCase().includes(query)
-      )
-    );
-  });
-
-  const {
-    currentPage,
-    itemsPerPage,
-    totalPages,
-    paginatedItems: paginatedSections,
-    handlePageChange,
-    handleItemsPerPageChange,
-    totalItems
-  } = usePagination(filteredSections, 5);
+  // Pagination state
+  const [sections, setSections] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  // Fetch sections from API
+  const fetchSections = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getMainDisplays({
+        page: currentPage,
+        size: itemsPerPage,
+        search: searchQuery || undefined,
+        includeBooks: true,
+      });
+
+      const sectionsData = response.content || response;
+      setSections(Array.isArray(sectionsData) ? sectionsData : []);
+
+      if (response.totalPages !== undefined) {
+        setTotalPages(response.totalPages);
+        setTotalItems(response.totalElements || 0);
+      } else {
+        setTotalPages(1);
+        setTotalItems(sectionsData.length);
+      }
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+      setSections([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, itemsPerPage, searchQuery]);
+
+  // Fetch sections on mount and when dependencies change
+  useEffect(() => {
+    fetchSections();
+  }, [fetchSections]);
+
+  // Reset to page 0 when search query changes
+  useEffect(() => {
+    if (currentPage !== 0) {
+      setCurrentPage(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page - 1);
+  };
+
+  const handleItemsPerPageChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(0);
   };
 
   const handleAddSection = () => {
@@ -54,7 +89,7 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
   };
 
   const handleDeleteSection = (section) => {
-    onDeleteRequest('section', section);
+    onDeleteRequest('section', section, fetchSections);
   };
 
   const handleRemoveBookFromSection = (sectionId, book) => {
@@ -69,16 +104,8 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
       // Call API to remove book from main display
       await removeBooksFromMainDisplay(sectionId, [book.id]);
 
-      // Update local state
-      setSections(sections.map(section => {
-        if (section.id === sectionId) {
-          return {
-            ...section,
-            books: section.books.filter(b => b.id !== book.id)
-          };
-        }
-        return section;
-      }));
+      // Refresh the list after removal
+      await fetchSections();
 
       // Close confirmation modal
       setConfirmDelete({ isOpen: false, sectionId: null, book: null });
@@ -99,7 +126,7 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
 
       if (editingSection) {
         // Update existing section
-        const updatedSection = await updateMainDisplay(editingSection.id, {
+        await updateMainDisplay(editingSection.id, {
           nameEn: sectionData.name,
           nameFr: sectionData.name,
           active: true,
@@ -120,13 +147,6 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
         if (booksToRemove.length > 0) {
           await removeBooksFromMainDisplay(editingSection.id, booksToRemove);
         }
-
-        // Update local state with the complete data
-        setSections(sections.map(s =>
-          s.id === editingSection.id
-            ? { ...updatedSection, books: sectionData.books }
-            : s
-        ));
       } else {
         // Create new section
         const newSection = await createMainDisplay({
@@ -140,10 +160,10 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
           const bookIds = sectionData.books.map(b => b.id);
           await addBooksToMainDisplay(newSection.id, bookIds);
         }
-
-        // Update local state
-        setSections([...sections, { ...newSection, books: sectionData.books }]);
       }
+
+      // Refresh the list after save
+      await fetchSections();
 
       setIsModalOpen(false);
       setEditingSection(null);
@@ -170,7 +190,7 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
                 <h2 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 flex-wrap">
                   <span className="truncate">Sections de Livres</span>
                   <span className="text-xs sm:text-sm font-normal text-gray-500 flex-shrink-0">
-                    ({sections.length})
+                    ({totalItems})
                   </span>
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 mt-0.5 hidden xs:block">
@@ -240,7 +260,7 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
                 <Loader className="w-12 h-12 text-blue-600 mb-3 animate-spin" />
                 <p className="text-gray-600 text-base font-medium">Chargement des sections...</p>
               </div>
-            ) : filteredSections.length === 0 ? (
+            ) : sections.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="bg-blue-50 rounded-lg p-4 mb-4">
                   <BookOpen className="w-10 h-10 text-blue-600" />
@@ -257,7 +277,7 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
             ) : (
               <>
                 <div className="space-y-4 p-3 sm:p-6">
-                  {paginatedSections.map((section) => (
+                  {sections.map((section) => (
                     <SectionCard
                       key={section.id}
                       section={section}
@@ -269,10 +289,10 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
                 </div>
 
                 {/* Pagination */}
-                {filteredSections.length > 0 && (
+                {totalItems > 0 && (
                   <div className="px-3 sm:px-6 pb-6">
                     <Pagination
-                      currentPage={currentPage}
+                      currentPage={currentPage + 1}
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
                       itemsPerPage={itemsPerPage}
