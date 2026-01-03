@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader } from 'lucide-react';
 import BookSectionModal from './BookSectionModal';
+import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
 import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay } from '../../services/mainDisplayApi';
@@ -10,6 +11,7 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, sectionId: null, book: null });
 
   const {
     currentPage,
@@ -35,7 +37,14 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
     onDeleteRequest('section', section);
   };
 
-  const handleRemoveBookFromSection = async (sectionId, book) => {
+  const handleRemoveBookFromSection = (sectionId, book) => {
+    // Show confirmation modal
+    setConfirmDelete({ isOpen: true, sectionId, book });
+  };
+
+  const confirmRemoveBook = async () => {
+    const { sectionId, book } = confirmDelete;
+
     try {
       // Call API to remove book from main display
       await removeBooksFromMainDisplay(sectionId, [book.id]);
@@ -50,10 +59,18 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
         }
         return section;
       }));
+
+      // Close confirmation modal
+      setConfirmDelete({ isOpen: false, sectionId: null, book: null });
     } catch (error) {
       console.error('Error removing book from section:', error);
       alert('Une erreur est survenue lors de la suppression du livre. Veuillez réessayer.');
+      setConfirmDelete({ isOpen: false, sectionId: null, book: null });
     }
+  };
+
+  const cancelRemoveBook = () => {
+    setConfirmDelete({ isOpen: false, sectionId: null, book: null });
   };
 
   const handleSaveSection = async (sectionData) => {
@@ -190,6 +207,14 @@ const BookSectionManager = ({ sections, setSections, availableBooks, onDeleteReq
         section={editingSection}
         availableBooks={availableBooks}
         saving={saving}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={confirmDelete.isOpen}
+        onConfirm={confirmRemoveBook}
+        onCancel={cancelRemoveBook}
+        itemName={confirmDelete.book ? `"${confirmDelete.book.title}"` : 'ce livre'}
       />
     </div>
   );

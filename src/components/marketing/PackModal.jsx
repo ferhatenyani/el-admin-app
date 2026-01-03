@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Package, Upload, Search, Check, BookOpen } from 'lucide-react';
+import { X, Package, Search, Check, BookOpen } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
 
@@ -9,13 +9,10 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
     name: '',
     description: '',
     price: '',
-    image: '',
     books: []
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [errors, setErrors] = useState({});
-  const [imagePreview, setImagePreview] = useState('');
-  const [coverImageFile, setCoverImageFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [failedImages, setFailedImages] = useState(new Set());
 
@@ -35,25 +32,18 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
   useEffect(() => {
     if (pack) {
       setFormData({
-        name: pack.name || '',
+        name: pack.name || pack.title || '',
         description: pack.description || '',
         price: pack.price || '',
-        image: pack.image || '',
-        coverUrl: pack.coverUrl || '', // Keep original coverUrl for updates
         books: pack.books || []
       });
-      setImagePreview(pack.image || '');
-      setCoverImageFile(null);
     } else {
       setFormData({
         name: '',
         description: '',
         price: '',
-        image: '',
         books: []
       });
-      setImagePreview('');
-      setCoverImageFile(null);
     }
     setErrors({});
     setSearchQuery('');
@@ -83,34 +73,6 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     setErrors({ ...errors, [name]: '' });
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrors({ ...errors, image: 'Veuillez sélectionner un fichier image valide' });
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors({ ...errors, image: 'La taille de l\'image doit être inférieure à 5 MB' });
-        return;
-      }
-
-      // Store the file for upload
-      setCoverImageFile(file);
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setErrors({ ...errors, image: '' });
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handleToggleBook = (book) => {
@@ -148,11 +110,6 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
       newErrors.price = 'Veuillez entrer un prix valide';
     }
 
-    // For new packs, image is required. For updates, it's optional
-    if (!pack && !coverImageFile && !imagePreview) {
-      newErrors.image = 'L\'image du pack est requise';
-    }
-
     if (formData.books.length === 0) {
       newErrors.books = 'Veuillez sélectionner au moins un livre';
     } else if (formData.books.length < 2) {
@@ -173,15 +130,14 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
     try {
       // Prepare pack data
       const packData = {
-        name: formData.name,
+        title: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
-        coverUrl: formData.coverUrl || '', // Keep original coverUrl for updates
         books: formData.books
       };
 
-      // Call onSave with pack data and cover image file
-      await onSave(packData, coverImageFile);
+      // Call onSave with pack data
+      await onSave(packData);
     } catch (error) {
       console.error('Error saving pack:', error);
       setErrors({
@@ -212,8 +168,12 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+            onClick={onClose}
           >
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col">
+            <div
+              className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Header - Professional with green accent */}
               <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-center justify-between">
@@ -324,49 +284,6 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                       className="text-red-600 text-xs mt-1.5 font-medium"
                     >
                       {errors.price}
-                    </motion.p>
-                  )}
-                </div>
-
-                {/* Image Upload */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Image du Pack <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-3">
-                    {/* Image Preview */}
-                    {imagePreview && (
-                      <div className="flex-shrink-0">
-                        <img
-                          src={imagePreview}
-                          alt="Aperçu du pack"
-                          className="w-28 h-28 object-cover rounded-lg border border-gray-300"
-                        />
-                      </div>
-                    )}
-
-                    {/* Upload Button */}
-                    <div className="flex-1">
-                      <label className="flex flex-col items-center justify-center w-full h-28 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-all">
-                        <Upload className="w-7 h-7 text-gray-400 mb-1.5" />
-                        <span className="text-xs text-gray-500">Cliquer pour télécharger</span>
-                        <span className="text-xs text-gray-400 mt-0.5">Max: 5MB</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                  {errors.image && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-red-600 text-xs mt-1.5 font-medium"
-                    >
-                      {errors.image}
                     </motion.p>
                   )}
                 </div>
