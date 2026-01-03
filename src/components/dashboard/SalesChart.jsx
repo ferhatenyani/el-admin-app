@@ -1,7 +1,8 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useRef, useEffect, memo, useMemo } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { ChevronDown, Check, AlertCircle } from 'lucide-react';
+import * as dashboardApi from '../../services/dashboardApi';
 
 /**
  * Modern minimalist SalesChart component with isolated data fetching
@@ -49,153 +50,44 @@ const SalesChart = memo(() => {
     { value: 12, label: 'Décembre' },
   ];
 
-  // Mock data - stable data that doesn't change on re-renders
-  // useMemo ensures data only changes when timeRange, selectedYear, or selectedMonth changes
-  const data = useMemo(() => {
-    switch(timeRange) {
-      case 'Aujourd\'hui':
-        // Hourly data for today (24 hours) - realistic sales pattern
-        return [
-          { name: '0h', sales: 120 },
-          { name: '1h', sales: 95 },
-          { name: '2h', sales: 80 },
-          { name: '3h', sales: 75 },
-          { name: '4h', sales: 85 },
-          { name: '5h', sales: 110 },
-          { name: '6h', sales: 180 },
-          { name: '7h', sales: 280 },
-          { name: '8h', sales: 350 },
-          { name: '9h', sales: 420 },
-          { name: '10h', sales: 480 },
-          { name: '11h', sales: 520 },
-          { name: '12h', sales: 590 },
-          { name: '13h', sales: 560 },
-          { name: '14h', sales: 490 },
-          { name: '15h', sales: 460 },
-          { name: '16h', sales: 510 },
-          { name: '17h', sales: 540 },
-          { name: '18h', sales: 480 },
-          { name: '19h', sales: 380 },
-          { name: '20h', sales: 290 },
-          { name: '21h', sales: 220 },
-          { name: '22h', sales: 180 },
-          { name: '23h', sales: 150 },
-        ];
+  // State for API data
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState(null);
 
-      case 'Cette semaine':
-        // Daily data for this week (7 days)
-        return [
-          { name: 'Lun', sales: 3200 },
-          { name: 'Mar', sales: 2800 },
-          { name: 'Mer', sales: 3400 },
-          { name: 'Jeu', sales: 2900 },
-          { name: 'Ven', sales: 3800 },
-          { name: 'Sam', sales: 4200 },
-          { name: 'Dim', sales: 3600 },
-        ];
+  // Fetch sales data when timeRange, selectedYear, or selectedMonth changes
+  useEffect(() => {
+    const fetchSalesData = async () => {
+      try {
+        setIsLoading(true);
+        setIsError(false);
+        setError(null);
 
-      case 'mois':
-        // Weekly data for the selected month (4 weeks)
-        const monthData = {
-          1: [{ name: 'Sem 1', sales: 8200 }, { name: 'Sem 2', sales: 7800 }, { name: 'Sem 3', sales: 8500 }, { name: 'Sem 4', sales: 9200 }],
-          2: [{ name: 'Sem 1', sales: 7500 }, { name: 'Sem 2', sales: 8100 }, { name: 'Sem 3', sales: 7900 }, { name: 'Sem 4', sales: 8400 }],
-          3: [{ name: 'Sem 1', sales: 9100 }, { name: 'Sem 2', sales: 9500 }, { name: 'Sem 3', sales: 9800 }, { name: 'Sem 4', sales: 10200 }],
-          4: [{ name: 'Sem 1', sales: 8800 }, { name: 'Sem 2', sales: 9200 }, { name: 'Sem 3', sales: 8600 }, { name: 'Sem 4', sales: 9400 }],
-          5: [{ name: 'Sem 1', sales: 10500 }, { name: 'Sem 2', sales: 11200 }, { name: 'Sem 3', sales: 10800 }, { name: 'Sem 4', sales: 11600 }],
-          6: [{ name: 'Sem 1', sales: 9800 }, { name: 'Sem 2', sales: 10200 }, { name: 'Sem 3', sales: 9600 }, { name: 'Sem 4', sales: 10400 }],
-          7: [{ name: 'Sem 1', sales: 8400 }, { name: 'Sem 2', sales: 8800 }, { name: 'Sem 3', sales: 8200 }, { name: 'Sem 4', sales: 8600 }],
-          8: [{ name: 'Sem 1', sales: 9200 }, { name: 'Sem 2', sales: 9600 }, { name: 'Sem 3', sales: 9000 }, { name: 'Sem 4', sales: 9800 }],
-          9: [{ name: 'Sem 1', sales: 10200 }, { name: 'Sem 2', sales: 10800 }, { name: 'Sem 3', sales: 10400 }, { name: 'Sem 4', sales: 11000 }],
-          10: [{ name: 'Sem 1', sales: 9600 }, { name: 'Sem 2', sales: 10000 }, { name: 'Sem 3', sales: 9400 }, { name: 'Sem 4', sales: 10200 }],
-          11: [{ name: 'Sem 1', sales: 11400 }, { name: 'Sem 2', sales: 12000 }, { name: 'Sem 3', sales: 11800 }, { name: 'Sem 4', sales: 13200 }],
-          12: [{ name: 'Sem 1', sales: 13800 }, { name: 'Sem 2', sales: 14500 }, { name: 'Sem 3', sales: 15200 }, { name: 'Sem 4', sales: 16800 }],
-        };
-        return monthData[selectedMonth] || monthData[1];
+        // Fetch data from API
+        const rawData = await dashboardApi.getSalesChartData(timeRange, selectedYear, selectedMonth);
 
-      case 'Année':
-        // Monthly data for the selected year (12 months)
-        const yearData = {
-          2026: [
-            { name: 'Jan', sales: 8900 },
-            { name: 'Fév', sales: 8200 },
-            { name: 'Mar', sales: 9800 },
-            { name: 'Avr', sales: 9400 },
-            { name: 'Mai', sales: 11200 },
-            { name: 'Jun', sales: 10200 },
-            { name: 'Jul', sales: 8600 },
-            { name: 'Aoû', sales: 9400 },
-            { name: 'Sep', sales: 10800 },
-            { name: 'Oct', sales: 10000 },
-            { name: 'Nov', sales: 12400 },
-            { name: 'Déc', sales: 15800 },
-          ],
-          2025: [
-            { name: 'Jan', sales: 8200 },
-            { name: 'Fév', sales: 7800 },
-            { name: 'Mar', sales: 9200 },
-            { name: 'Avr', sales: 8900 },
-            { name: 'Mai', sales: 10800 },
-            { name: 'Jun', sales: 9800 },
-            { name: 'Jul', sales: 8200 },
-            { name: 'Aoû', sales: 9000 },
-            { name: 'Sep', sales: 10200 },
-            { name: 'Oct', sales: 9600 },
-            { name: 'Nov', sales: 11800 },
-            { name: 'Déc', sales: 14900 },
-          ],
-          2024: [
-            { name: 'Jan', sales: 7800 },
-            { name: 'Fév', sales: 7200 },
-            { name: 'Mar', sales: 8600 },
-            { name: 'Avr', sales: 8400 },
-            { name: 'Mai', sales: 10200 },
-            { name: 'Jun', sales: 9200 },
-            { name: 'Jul', sales: 7800 },
-            { name: 'Aoû', sales: 8400 },
-            { name: 'Sep', sales: 9600 },
-            { name: 'Oct', sales: 9000 },
-            { name: 'Nov', sales: 11200 },
-            { name: 'Déc', sales: 14200 },
-          ],
-          2023: [
-            { name: 'Jan', sales: 7200 },
-            { name: 'Fév', sales: 6800 },
-            { name: 'Mar', sales: 8000 },
-            { name: 'Avr', sales: 7800 },
-            { name: 'Mai', sales: 9600 },
-            { name: 'Jun', sales: 8600 },
-            { name: 'Jul', sales: 7200 },
-            { name: 'Aoû', sales: 7800 },
-            { name: 'Sep', sales: 9000 },
-            { name: 'Oct', sales: 8400 },
-            { name: 'Nov', sales: 10600 },
-            { name: 'Déc', sales: 13400 },
-          ],
-          2022: [
-            { name: 'Jan', sales: 6800 },
-            { name: 'Fév', sales: 6200 },
-            { name: 'Mar', sales: 7400 },
-            { name: 'Avr', sales: 7200 },
-            { name: 'Mai', sales: 9000 },
-            { name: 'Jun', sales: 8000 },
-            { name: 'Jul', sales: 6600 },
-            { name: 'Aoû', sales: 7200 },
-            { name: 'Sep', sales: 8400 },
-            { name: 'Oct', sales: 7800 },
-            { name: 'Nov', sales: 10000 },
-            { name: 'Déc', sales: 12800 },
-          ],
-        };
-        return yearData[selectedYear] || yearData[2026];
+        // Transform backend data to frontend format
+        // Backend returns: [{ name: "...", sales: BigDecimal }]
+        // Frontend expects: [{ name: "...", sales: number }]
+        const transformedData = rawData.map(point => ({
+          name: point.name,
+          sales: Number(point.sales) || 0,
+        }));
 
-      default:
-        return [];
-    }
+        setData(transformedData);
+      } catch (err) {
+        console.error('Error fetching sales chart data:', err);
+        setIsError(true);
+        setError(err);
+        setData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSalesData();
   }, [timeRange, selectedYear, selectedMonth]);
-
-  const isLoading = false;
-  const isError = false;
-  const error = null;
 
   // Close dropdowns when clicking outside
   useEffect(() => {
