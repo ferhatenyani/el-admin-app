@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
+import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 /**
  * ChangePasswordForm Component
  * Allows admin to change their password with validation
  */
-const ChangePasswordForm = ({ onSubmit, onCancel }) => {
+const ChangePasswordForm = forwardRef(({ onSubmit, onCancel, hideButtons = false, isSubmitting: externalIsSubmitting = false }, ref) => {
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -21,6 +21,16 @@ const ChangePasswordForm = ({ onSubmit, onCancel }) => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Expose submitForm method to parent via ref
+  useImperativeHandle(ref, () => ({
+    submitForm: () => {
+      handleSubmit({ preventDefault: () => {} });
+    }
+  }));
+
+  // Use external isSubmitting state if provided, otherwise use internal
+  const submitting = hideButtons ? externalIsSubmitting : isSubmitting;
 
   // Password validation
   const validatePassword = (password) => {
@@ -137,11 +147,11 @@ const ChangePasswordForm = ({ onSubmit, onCancel }) => {
   const passwordStrength = getPasswordStrength(formData.newPassword);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
       {/* Current Password */}
       <div>
-        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
-          Mot de passe actuel
+        <label htmlFor="currentPassword" className="block text-sm font-semibold text-gray-900 mb-2">
+          Mot de Passe Actuel
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -153,10 +163,10 @@ const ChangePasswordForm = ({ onSubmit, onCancel }) => {
             name="currentPassword"
             value={formData.currentPassword}
             onChange={handleChange}
-            className={`block w-full pl-10 pr-10 py-3 border ${
-              errors.currentPassword ? 'border-red-300' : 'border-gray-300'
-            } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            placeholder="Entrez le mot de passe actuel"
+            className={`block w-full pl-10 pr-10 py-2.5 sm:py-3 border ${
+              errors.currentPassword ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+            } rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm sm:text-base`}
+            placeholder="Entrez votre mot de passe actuel"
           />
           <button
             type="button"
@@ -184,8 +194,8 @@ const ChangePasswordForm = ({ onSubmit, onCancel }) => {
 
       {/* New Password */}
       <div>
-        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-          Nouveau mot de passe
+        <label htmlFor="newPassword" className="block text-sm font-semibold text-gray-900 mb-2">
+          Nouveau Mot de Passe
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -197,10 +207,10 @@ const ChangePasswordForm = ({ onSubmit, onCancel }) => {
             name="newPassword"
             value={formData.newPassword}
             onChange={handleChange}
-            className={`block w-full pl-10 pr-10 py-3 border ${
-              errors.newPassword ? 'border-red-300' : 'border-gray-300'
-            } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            placeholder="Entrez le nouveau mot de passe"
+            className={`block w-full pl-10 pr-10 py-2.5 sm:py-3 border ${
+              errors.newPassword ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+            } rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm sm:text-base`}
+            placeholder="Créez un nouveau mot de passe"
           />
           <button
             type="button"
@@ -249,24 +259,24 @@ const ChangePasswordForm = ({ onSubmit, onCancel }) => {
         )}
 
         {/* Password Requirements */}
-        <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-          <p className="text-xs font-medium text-blue-900 mb-2">Le mot de passe doit contenir :</p>
-          <ul className="space-y-1 text-xs text-blue-700">
-            <li className="flex items-center gap-1">
-              <CheckCircle className={`w-3 h-3 ${formData.newPassword.length >= 8 ? 'text-green-600' : 'text-gray-400'}`} />
-              Au moins 8 caractères
+        <div className="mt-3 p-4 bg-gradient-to-br from-blue-50 to-purple-50/30 rounded-lg border border-blue-100">
+          <p className="text-xs font-semibold text-gray-900 mb-2.5">Exigences du mot de passe :</p>
+          <ul className="space-y-1.5 text-xs text-gray-700">
+            <li className="flex items-center gap-2">
+              <CheckCircle className={`w-3.5 h-3.5 flex-shrink-0 ${formData.newPassword.length >= 8 ? 'text-green-600' : 'text-gray-400'}`} />
+              <span className={formData.newPassword.length >= 8 ? 'text-green-700 font-medium' : ''}>Au moins 8 caractères</span>
             </li>
-            <li className="flex items-center gap-1">
-              <CheckCircle className={`w-3 h-3 ${/[A-Z]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-400'}`} />
-              Une lettre majuscule
+            <li className="flex items-center gap-2">
+              <CheckCircle className={`w-3.5 h-3.5 flex-shrink-0 ${/[A-Z]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-400'}`} />
+              <span className={/[A-Z]/.test(formData.newPassword) ? 'text-green-700 font-medium' : ''}>Une lettre majuscule</span>
             </li>
-            <li className="flex items-center gap-1">
-              <CheckCircle className={`w-3 h-3 ${/[a-z]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-400'}`} />
-              Une lettre minuscule
+            <li className="flex items-center gap-2">
+              <CheckCircle className={`w-3.5 h-3.5 flex-shrink-0 ${/[a-z]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-400'}`} />
+              <span className={/[a-z]/.test(formData.newPassword) ? 'text-green-700 font-medium' : ''}>Une lettre minuscule</span>
             </li>
-            <li className="flex items-center gap-1">
-              <CheckCircle className={`w-3 h-3 ${/[0-9]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-400'}`} />
-              Un chiffre
+            <li className="flex items-center gap-2">
+              <CheckCircle className={`w-3.5 h-3.5 flex-shrink-0 ${/[0-9]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-400'}`} />
+              <span className={/[0-9]/.test(formData.newPassword) ? 'text-green-700 font-medium' : ''}>Un chiffre</span>
             </li>
           </ul>
         </div>
@@ -274,8 +284,8 @@ const ChangePasswordForm = ({ onSubmit, onCancel }) => {
 
       {/* Confirm Password */}
       <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-          Confirmer le nouveau mot de passe
+        <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-900 mb-2">
+          Confirmer le Mot de Passe
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -287,10 +297,10 @@ const ChangePasswordForm = ({ onSubmit, onCancel }) => {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
-            className={`block w-full pl-10 pr-10 py-3 border ${
-              errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-            } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            placeholder="Confirmez le nouveau mot de passe"
+            className={`block w-full pl-10 pr-10 py-2.5 sm:py-3 border ${
+              errors.confirmPassword ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+            } rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm sm:text-base`}
+            placeholder="Confirmez votre nouveau mot de passe"
           />
           <button
             type="button"
@@ -327,27 +337,41 @@ const ChangePasswordForm = ({ onSubmit, onCancel }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Annuler
-        </button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          type="submit"
-          disabled={isSubmitting}
-          className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-        >
-          {isSubmitting ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
-        </motion.button>
-      </div>
+      {!hideButtons && (
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+            className="w-full sm:w-auto px-4 sm:px-5 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+          >
+            Annuler
+          </button>
+          <motion.button
+            whileHover={{ scale: submitting ? 1 : 1.01 }}
+            whileTap={{ scale: submitting ? 1 : 0.99 }}
+            type="submit"
+            disabled={submitting}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-sm sm:text-base"
+          >
+            {submitting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Mise à jour...
+              </>
+            ) : (
+              <>
+                <Shield className="w-4 h-4" />
+                Mettre à Jour
+              </>
+            )}
+          </motion.button>
+        </div>
+      )}
     </form>
   );
-};
+});
+
+ChangePasswordForm.displayName = 'ChangePasswordForm';
 
 export default ChangePasswordForm;
