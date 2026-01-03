@@ -203,7 +203,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-50"
+            className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -211,34 +211,37 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
           >
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-green-50 to-emerald-50">
-                <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-2 rounded-lg">
-                    <Package className="w-6 h-6 text-white" />
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col">
+              {/* Header - Professional with green accent */}
+              <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-4 sm:px-6 sm:py-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="bg-white/15 p-2 rounded-lg flex-shrink-0">
+                      <Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-base sm:text-lg font-semibold text-white truncate">
+                        {pack ? 'Modifier le Pack' : 'Nouveau Pack'}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-green-50 hidden sm:block">
+                        Créer une offre groupée de livres
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      {pack ? 'Modifier le Pack' : 'Ajouter un Nouveau Pack'}
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Créer une offre spéciale ou un ensemble de livres groupés
-                    </p>
-                  </div>
+                  <button
+                    onClick={onClose}
+                    className="p-2 rounded-lg hover:bg-white/15 transition-colors flex-shrink-0"
+                    aria-label="Fermer"
+                  >
+                    <X className="w-5 h-5 text-white" />
+                  </button>
                 </div>
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-white/50 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
               </div>
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
                 {/* Pack Name */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -250,7 +253,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="ex: Pack Littérature Classique"
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all ${
                       errors.name
                         ? 'border-red-500 focus:ring-red-500'
                         : 'border-gray-300 focus:ring-green-500'
@@ -260,7 +263,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-sm mt-2"
+                      className="text-red-600 text-xs mt-1.5 font-medium"
                     >
                       {errors.name}
                     </motion.p>
@@ -278,7 +281,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                     onChange={handleInputChange}
                     placeholder="Décrivez ce qui rend ce pack spécial..."
                     rows={3}
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all resize-none ${
+                    className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none ${
                       errors.description
                         ? 'border-red-500 focus:ring-red-500'
                         : 'border-gray-300 focus:ring-green-500'
@@ -288,7 +291,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-sm mt-2"
+                      className="text-red-600 text-xs mt-1.5 font-medium"
                     >
                       {errors.description}
                     </motion.p>
@@ -308,7 +311,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                     placeholder="ex: 5000"
                     min="0"
                     step="0.01"
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all ${
                       errors.price
                         ? 'border-red-500 focus:ring-red-500'
                         : 'border-gray-300 focus:ring-green-500'
@@ -318,7 +321,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-sm mt-2"
+                      className="text-red-600 text-xs mt-1.5 font-medium"
                     >
                       {errors.price}
                     </motion.p>
@@ -330,24 +333,24 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Image du Pack <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex gap-4">
+                  <div className="flex gap-3">
                     {/* Image Preview */}
                     {imagePreview && (
                       <div className="flex-shrink-0">
                         <img
                           src={imagePreview}
                           alt="Aperçu du pack"
-                          className="w-32 h-32 object-cover rounded-xl border-2 border-gray-300"
+                          className="w-28 h-28 object-cover rounded-lg border border-gray-300"
                         />
                       </div>
                     )}
 
                     {/* Upload Button */}
                     <div className="flex-1">
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-50 transition-all">
-                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                        <span className="text-sm text-gray-500">Cliquez pour télécharger une image</span>
-                        <span className="text-xs text-gray-400 mt-1">Taille max: 5MB</span>
+                      <label className="flex flex-col items-center justify-center w-full h-28 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-all">
+                        <Upload className="w-7 h-7 text-gray-400 mb-1.5" />
+                        <span className="text-xs text-gray-500">Cliquer pour télécharger</span>
+                        <span className="text-xs text-gray-400 mt-0.5">Max: 5MB</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -361,7 +364,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-sm mt-2"
+                      className="text-red-600 text-xs mt-1.5 font-medium"
                     >
                       {errors.image}
                     </motion.p>
@@ -370,87 +373,90 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
 
                 {/* Book Selection */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Sélectionner les Livres <span className="text-red-500">*</span>
-                  </label>
-                  <p className="text-sm text-gray-500 mb-3">
-                    {formData.books.length} livre(s) sélectionné(s) (minimum 2 requis)
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Sélectionner les Livres <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-xs text-gray-500 font-medium">
+                      {formData.books.length} livre(s) (min: 2)
+                    </span>
+                  </div>
 
                   {/* Search Bar */}
-                  <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Rechercher des livres par titre ou auteur..."
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Rechercher par titre ou auteur..."
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
                   </div>
 
                   {/* Books Grid */}
-                  <div className="border border-gray-300 rounded-xl p-4 bg-gray-50 max-h-64 overflow-y-auto">
+                  <div className="border border-gray-300 rounded-lg p-3 sm:p-4 bg-gray-50 max-h-64 overflow-y-auto">
                     {filteredBooks.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
-                        Aucun livre trouvé correspondant à votre recherche
+                        <BookOpen className="w-10 h-10 mx-auto mb-2 text-gray-400" />
+                        <p className="text-sm">Aucun livre trouvé</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {filteredBooks.map((book) => {
                           const selected = isBookSelected(book.id);
                           return (
                             <div
                               key={book.id}
                               onClick={() => handleToggleBook(book)}
-                              className={`relative cursor-pointer rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
+                              className={`relative cursor-pointer rounded-lg border transition-all duration-200 ${
                                 selected
-                                  ? 'border-green-500 bg-green-50'
-                                  : 'border-gray-200 bg-white hover:border-green-300'
+                                  ? 'border-green-500 bg-green-50 shadow-sm'
+                                  : 'border-gray-200 bg-white hover:border-green-300 hover:shadow-sm'
                               }`}
                             >
                               {/* Selection Indicator */}
                               {selected && (
-                                <div className="absolute top-2 right-2 bg-green-600 text-white rounded-full p-1">
-                                  <Check className="w-4 h-4" />
+                                <div className="absolute top-1.5 right-1.5 bg-green-600 text-white rounded-full p-0.5 z-10 shadow-sm">
+                                  <Check className="w-3.5 h-3.5" />
                                 </div>
                               )}
 
                               {/* Book Card */}
                               {failedImages.has(book.id) ? (
-                                <div className="w-full h-32 bg-gray-200 rounded-t-lg flex items-center justify-center">
-                                  <BookOpen className="w-8 h-8 text-gray-400" />
+                                <div className="w-full h-28 bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg flex items-center justify-center">
+                                  <BookOpen className="w-7 h-7 text-gray-400" />
                                 </div>
                               ) : (
                                 <img
                                   src={getBookCoverUrl(book.id, failedImages.has(`${book.id}-placeholder`))}
                                   alt={book.title}
-                                  className="w-full h-32 object-cover rounded-t-lg"
+                                  className="w-full h-28 object-cover rounded-t-lg"
                                   onError={(e) => {
-                                    // Try placeholder if not already tried
                                     if (!failedImages.has(`${book.id}-placeholder`)) {
                                       setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
                                       e.target.src = getBookCoverUrl(book.id, true);
                                     } else {
-                                      // Both failed, show icon
                                       setFailedImages(prev => new Set(prev).add(book.id));
                                     }
                                   }}
                                 />
                               )}
-                              <div className="p-3">
-                                <h4 className="font-semibold text-sm text-gray-800 truncate" title={book.title}>
+                              <div className="p-2.5">
+                                <h4 className="font-semibold text-xs text-gray-800 truncate mb-0.5" title={book.title}>
                                   {book.title}
                                 </h4>
-                                <p className="text-xs text-gray-500 truncate" title={book.author?.name || book.author || 'Auteur inconnu'}>
+                                <p className="text-xs text-gray-500 truncate mb-1" title={book.author?.name || book.author || 'Auteur inconnu'}>
                                   {book.author?.name || book.author || 'Auteur inconnu'}
                                 </p>
-                                <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                                  {book.language || 'Langue inconnue'}
-                                </span>
-                                <p className="text-sm font-bold text-green-600 mt-1">
-                                  {book.price} DZD
-                                </p>
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="inline-block px-1.5 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded">
+                                    {book.language || 'N/A'}
+                                  </span>
+                                  <span className="text-xs font-semibold text-green-600">
+                                    {book.price} DZD
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           );
@@ -463,7 +469,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-sm mt-2"
+                      className="text-red-600 text-xs mt-1.5 font-medium"
                     >
                       {errors.books}
                     </motion.p>
@@ -473,21 +479,22 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                 {/* Selected Books Preview */}
                 {formData.books.length > 0 && (
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Aperçu des Livres Sélectionnés
+                    <label className="block text-sm font-semibold text-gray-700 mb-2.5">
+                      Livres Sélectionnés
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {formData.books.map((book) => (
                         <div
                           key={book.id}
-                          className="flex items-center gap-2 bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm"
+                          className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 px-2.5 py-1.5 rounded-lg text-xs"
                         >
-                          <span className="truncate max-w-[150px]">{book.title}</span>
+                          <span className="truncate max-w-[120px] sm:max-w-[160px] font-medium">{book.title}</span>
                           <button
                             onClick={() => handleToggleBook(book)}
-                            className="hover:bg-green-200 rounded-full p-0.5"
+                            className="hover:bg-green-100 rounded-full p-0.5 transition-colors"
+                            aria-label={`Retirer ${book.title}`}
                           >
-                            <X className="w-4 h-4" />
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}
@@ -497,36 +504,36 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
               </div>
 
               {/* Footer */}
-              <div className="flex flex-col gap-3 p-6 border-t bg-gray-50">
+              <div className="flex flex-col gap-2.5 px-4 py-4 sm:px-6 border-t bg-gray-50">
                 {/* Error Message */}
                 {errors.submit && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
+                    className="bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded-lg text-xs"
                   >
                     {errors.submit}
                   </motion.div>
                 )}
 
                 {/* Buttons */}
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-2.5">
                   <button
                     onClick={onClose}
                     disabled={isSubmitting || saving}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-5 py-2.5 text-sm border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Annuler
                   </button>
                   <button
                     onClick={handleSubmit}
                     disabled={isSubmitting || saving}
-                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2"
+                    className="px-5 py-2.5 text-sm bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {(isSubmitting || saving) && (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     )}
-                    {pack ? 'Mettre à Jour le Pack' : 'Créer le Pack'}
+                    {pack ? 'Mettre à Jour' : 'Créer le Pack'}
                   </button>
                 </div>
               </div>

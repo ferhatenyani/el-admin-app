@@ -63,34 +63,38 @@ const PackManager = ({ packs, setPacks, availableBooks, onDeleteRequest, loading
   };
 
   return (
-    <div className="space-y-3 sm:space-y-4 md:space-y-6">
+    <div className="space-y-6">
       {/* Add Pack Button */}
       <div className="flex justify-end">
         <button
           onClick={handleAddPack}
-          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105 text-sm sm:text-base"
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
         >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="hidden xs:inline">Ajouter un Pack</span>
-          <span className="xs:hidden">Ajouter</span>
+          <Plus className="w-4 h-4" />
+          <span className="hidden min-[400px]:inline">Ajouter un Pack</span>
+          <span className="min-[400px]:hidden">Ajouter</span>
         </button>
       </div>
 
       {/* Loading State */}
       {loading ? (
-        <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg sm:rounded-xl">
-          <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-blue-500 mb-2 sm:mb-3 animate-spin" />
-          <p className="text-gray-500 text-base sm:text-lg px-2">Chargement des packs...</p>
+        <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+          <Loader2 className="w-12 h-12 text-green-600 mb-3 animate-spin" />
+          <p className="text-gray-600 text-base font-medium">Chargement des packs...</p>
         </div>
       ) : packs.length === 0 ? (
-        <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg sm:rounded-xl border-2 border-dashed border-gray-300">
-          <Package className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-2 sm:mb-3" />
-          <p className="text-gray-500 text-base sm:text-lg px-2">Aucun pack de livres pour le moment</p>
-          <p className="text-gray-400 text-xs sm:text-sm px-2">Cliquez sur "Ajouter un Pack" pour créer votre premier pack de livres</p>
+        <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-green-50 rounded-lg p-4 mb-4">
+            <Package className="w-10 h-10 text-green-600" />
+          </div>
+          <p className="text-gray-800 text-base font-semibold mb-1.5">Aucun pack de livres</p>
+          <p className="text-gray-500 text-sm max-w-md text-center px-4">
+            Créez votre premier pack de livres groupés
+          </p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {paginatedPacks.map((pack) => (
               <PackCard
                 key={pack.id}
