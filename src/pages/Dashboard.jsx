@@ -125,7 +125,7 @@ const Dashboard = () => {
       lastUpdated: "Mis à jour il y a 1 heure",
       comparison: data.growth?.newUsers ? {
         period: "vs mois dernier",
-        change: `${data.growth.newUsers.isPositive ? '+' : '-'}${data.growth.newUsers.value}%`,
+        change: `${data.growth.newUsers.isPositive ? '+' : ''}${data.growth.newUsers.value}%`,
         isPositive: data.growth.newUsers.isPositive
       } : null
     };
@@ -143,7 +143,7 @@ const Dashboard = () => {
       lastUpdated: "Mis à jour il y a 30 minutes",
       comparison: data.growth?.orders ? {
         period: "vs mois dernier",
-        change: `${data.growth.orders.isPositive ? '+' : '-'}${data.growth.orders.value}%`,
+        change: `${data.growth.orders.isPositive ? '+' : ''}${data.growth.orders.value}%`,
         isPositive: data.growth.orders.isPositive
       } : null
     };
@@ -161,7 +161,7 @@ const Dashboard = () => {
       lastUpdated: "Mis à jour il y a 10 minutes",
       comparison: data.growth?.sales ? {
         period: "vs mois dernier",
-        change: `${data.growth.sales.isPositive ? '+' : '-'}${data.growth.sales.value}%`,
+        change: `${data.growth.sales.isPositive ? '+' : ''}${data.growth.sales.value}%`,
         isPositive: data.growth.sales.isPositive
       } : null
     };

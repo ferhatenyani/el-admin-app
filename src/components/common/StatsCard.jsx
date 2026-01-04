@@ -371,7 +371,7 @@ const StatsCard = memo(({
                 <TrendingDown className="w-3 h-3" />
               )}
               <span className="text-[11px] font-bold">
-                {growth.isPositive ? '+' : '-'}{growth.value}%
+                {growth.isPositive ? '+' : ''}{growth.value}%
               </span>
             </div>
             <span className="text-[11px] text-gray-500">
