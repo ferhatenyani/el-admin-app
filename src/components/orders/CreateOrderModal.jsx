@@ -269,6 +269,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
     }
 
     // Build order data matching backend structure
+    const totalAmount = calculateTotalAmount();
     const orderData = {
       fullName: formData.fullName.trim(),
       phone: formData.phone.trim(),
@@ -280,6 +281,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       shippingProvider: formData.shippingProvider,
       shippingMethod: formData.shippingMethod,
       shippingCost: parseFloat(formData.shippingCost) || 0,
+      totalAmount: totalAmount,
       orderItems: formData.orderItems.map(item => ({
         ...(item.itemType === ORDER_ITEM_TYPE.BOOK && { bookId: parseInt(item.itemId) }),
         ...(item.itemType === ORDER_ITEM_TYPE.PACK && { bookPackId: parseInt(item.itemId) }),
