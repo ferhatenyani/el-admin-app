@@ -52,6 +52,7 @@ const Orders = () => {
         customerEmail: order.email || order.customerEmail,
         date: order.createdAt || order.date,
         total: order.totalAmount || order.total,
+        status: order.status ? order.status.toLowerCase() : 'pending',
       }));
 
       // Client-side search filtering (since API doesn't support search)

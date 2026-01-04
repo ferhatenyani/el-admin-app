@@ -2,22 +2,27 @@ const statusConfig = {
   pending: {
     bgColor: 'bg-yellow-100',
     textColor: 'text-yellow-800',
-    label: 'Pending',
+    label: 'En attente',
+  },
+  confirmed: {
+    bgColor: 'bg-purple-100',
+    textColor: 'text-purple-800',
+    label: 'Confirmé',
   },
   shipped: {
     bgColor: 'bg-blue-100',
     textColor: 'text-blue-800',
-    label: 'Shipped',
+    label: 'Expédié',
   },
   delivered: {
     bgColor: 'bg-green-100',
     textColor: 'text-green-800',
-    label: 'Delivered',
+    label: 'Livré',
   },
   cancelled: {
     bgColor: 'bg-red-100',
     textColor: 'text-red-800',
-    label: 'Cancelled',
+    label: 'Annulé',
   },
 };
 
