@@ -1,10 +1,11 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, ShoppingCart, Users, X, LogOut, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const navItems = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
@@ -76,7 +77,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Logout Button - Sticky at bottom */}
         <div className="p-4 border-t border-gray-200 flex-shrink-0">
           <button
-            onClick={() => navigate('/admin/login')}
+            onClick={logout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
           >
             <LogOut className="w-5 h-5" />
@@ -135,7 +136,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="p-4 border-t border-gray-200 flex-shrink-0">
           <button
             onClick={() => {
-              navigate('/admin/login');
+              logout();
               window.innerWidth < 1024 && onClose();
             }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"

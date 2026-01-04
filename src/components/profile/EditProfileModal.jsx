@@ -16,6 +16,7 @@ const EditProfileModal = ({ isOpen, onClose, admin, onSaveProfile, onChangePassw
     profileImage: admin?.profileImage || ''
   });
   const [previewImage, setPreviewImage] = useState(admin?.profileImage || '');
+  const [profilePictureFile, setProfilePictureFile] = useState(null); // Track the actual File object
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const passwordFormRef = useRef(null);
@@ -32,6 +33,7 @@ const EditProfileModal = ({ isOpen, onClose, admin, onSaveProfile, onChangePassw
         profileImage: admin.profileImage || ''
       });
       setPreviewImage(admin.profileImage || '');
+      setProfilePictureFile(null); // Reset file on modal open
       setActiveTab(initialTab);
       setErrors({});
     }
@@ -62,6 +64,9 @@ const EditProfileModal = ({ isOpen, onClose, admin, onSaveProfile, onChangePassw
         return;
       }
 
+      // Store the actual file object
+      setProfilePictureFile(file);
+
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -76,6 +81,7 @@ const EditProfileModal = ({ isOpen, onClose, admin, onSaveProfile, onChangePassw
   const handleRemoveImage = () => {
     setPreviewImage('');
     setFormData(prev => ({ ...prev, profileImage: '' }));
+    setProfilePictureFile(null);
   };
 
   const validateForm = () => {
@@ -105,7 +111,8 @@ const EditProfileModal = ({ isOpen, onClose, admin, onSaveProfile, onChangePassw
     setIsSubmitting(true);
 
     try {
-      await onSaveProfile(formData);
+      // Pass formData and the actual file object
+      await onSaveProfile(formData, profilePictureFile);
 
       // Show success and close after delay
       setTimeout(() => {

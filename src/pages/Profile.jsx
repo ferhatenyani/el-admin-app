@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, CheckCircle } from 'lucide-react';
 import ProfileCard from '../components/profile/ProfileCard';
 import EditProfileModal from '../components/profile/EditProfileModal';
+import { getAdminProfile, updateAdminProfile, fetchAdminPictureBlob, changeAdminPassword } from '../services/adminApi';
 
 /**
  * Profile Page Component
@@ -15,26 +16,48 @@ const Profile = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Données admin fictives - dans une vraie app, cela viendrait d'une API ou du contexte d'authentification
+  // Fetch admin profile from backend
   useEffect(() => {
-    // Simuler la récupération des données admin depuis localStorage ou API
-    const mockAdmin = {
-      id: 1,
-      name: 'Administrateur',
-      email: 'admin@espritlivre.com',
-      role: 'Administrateur',
-      profileImage: '', // Vide pour l'avatar par défaut
-      joinedDate: '2024-01-15',
+    const fetchAdminProfile = async () => {
+      try {
+        const profileData = await getAdminProfile();
+
+        // Fetch profile picture if imageUrl exists
+        let profileImageBlob = '';
+        if (profileData.imageUrl) {
+          profileImageBlob = await fetchAdminPictureBlob();
+        }
+
+        // Transform backend data to frontend format
+        const adminProfile = {
+          id: profileData.id,
+          name: `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim() || 'Administrateur',
+          email: profileData.email,
+          role: 'Administrateur', // Backend doesn't return role, hardcoded for admin
+          profileImage: profileImageBlob,
+          joinedDate: profileData.createdDate ? new Date(profileData.createdDate).toISOString().split('T')[0] : '',
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phone: profileData.phone || '',
+        };
+
+        setAdmin(adminProfile);
+      } catch (error) {
+        console.error('Error loading admin profile:', error);
+        // Fallback to mock data if API fails
+        const mockAdmin = {
+          id: 1,
+          name: 'Administrateur',
+          email: 'admin@espritlivre.com',
+          role: 'Administrateur',
+          profileImage: '',
+          joinedDate: '2024-01-15',
+        };
+        setAdmin(mockAdmin);
+      }
     };
 
-    // Vérifier s'il y a des données sauvegardées dans localStorage
-    const savedProfile = localStorage.getItem('esprit_livre_admin_profile');
-    if (savedProfile) {
-      setAdmin(JSON.parse(savedProfile));
-    } else {
-      setAdmin(mockAdmin);
-      localStorage.setItem('esprit_livre_admin_profile', JSON.stringify(mockAdmin));
-    }
+    fetchAdminProfile();
   }, []);
 
   const handleEditClick = (tab = 'profile') => {
@@ -46,43 +69,127 @@ const Profile = () => {
     setIsEditModalOpen(false);
   };
 
-  const handleSaveProfile = async (updatedData) => {
-    // Appel API fictif - simuler un délai
-    await new Promise(resolve => setTimeout(resolve, 1000));
+  const handleSaveProfile = async (updatedData, profilePictureFile = null) => {
+    try {
+      // Split name into firstName and lastName
+      const nameParts = updatedData.name.trim().split(/\s+/);
+      let firstName = '';
+      let lastName = '';
 
-    // Mettre à jour les données admin
-    const updatedAdmin = {
-      ...admin,
-      ...updatedData
-    };
+      if (nameParts.length === 1) {
+        // Single word - put it in lastName
+        lastName = nameParts[0];
+      } else {
+        // Multiple words - first word is firstName, rest is lastName
+        firstName = nameParts[0];
+        lastName = nameParts.slice(1).join(' ');
+      }
 
-    setAdmin(updatedAdmin);
+      // Prepare API payload
+      const profilePayload = {
+        firstName,
+        lastName,
+        email: updatedData.email,
+        phone: admin.phone || '', // Include existing phone or empty string
+      };
 
-    // Sauvegarder dans localStorage
-    localStorage.setItem('esprit_livre_admin_profile', JSON.stringify(updatedAdmin));
+      console.log('Updating profile with payload:', profilePayload);
+      console.log('Profile picture file:', profilePictureFile ? profilePictureFile.name : 'none');
 
-    // Afficher le message de succès
-    setSuccessMessage('Profil mis à jour avec succès !');
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
+      // Call backend API with multipart data
+      await updateAdminProfile(profilePayload, profilePictureFile);
 
-    console.log('Profil mis à jour:', updatedData);
+      console.log('Profile update successful, refetching from server...');
+
+      // Refetch the profile from the backend to get the updated data
+      const refreshedProfile = await getAdminProfile();
+
+      // Fetch updated profile picture if it exists
+      let updatedProfileImage = '';
+      if (refreshedProfile.imageUrl) {
+        updatedProfileImage = await fetchAdminPictureBlob();
+      }
+
+      // Transform the refreshed data
+      const updatedAdmin = {
+        id: refreshedProfile.id,
+        name: `${refreshedProfile.firstName || ''} ${refreshedProfile.lastName || ''}`.trim() || 'Administrateur',
+        email: refreshedProfile.email,
+        role: 'Administrateur',
+        profileImage: updatedProfileImage,
+        joinedDate: refreshedProfile.createdDate ? new Date(refreshedProfile.createdDate).toISOString().split('T')[0] : '',
+        firstName: refreshedProfile.firstName,
+        lastName: refreshedProfile.lastName,
+        phone: refreshedProfile.phone || '',
+      };
+
+      setAdmin(updatedAdmin);
+
+      // Afficher le message de succès
+      setSuccessMessage('Profil mis à jour avec succès !');
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      console.error('Error details:', error.response?.data);
+
+      // Parse error message from backend response
+      let errorMsg = 'Erreur lors de la mise à jour du profil';
+
+      if (error.response?.data) {
+        const errorData = error.response.data;
+
+        // Check for the specific email exists error
+        if (errorData.message === 'error.emailexists') {
+          errorMsg = 'Cette adresse email est déjà utilisée par un autre compte';
+        } else if (errorData.detail) {
+          // Check if detail contains nested error information
+          if (errorData.detail.includes('error.emailexists')) {
+            errorMsg = 'Cette adresse email est déjà utilisée par un autre compte';
+          } else if (errorData.detail.includes('ProblemDetailWithCause')) {
+            // Try to extract the message from the nested problem detail
+            const messageMatch = errorData.detail.match(/message=([^,}]+)/);
+            if (messageMatch && messageMatch[1] === 'error.emailexists') {
+              errorMsg = 'Cette adresse email est déjà utilisée par un autre compte';
+            } else {
+              errorMsg = errorData.title || errorData.detail;
+            }
+          } else {
+            errorMsg = errorData.detail;
+          }
+        } else if (errorData.title) {
+          errorMsg = errorData.title;
+        }
+      }
+
+      setSuccessMessage(errorMsg);
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+      throw error; // Re-throw to let the modal handle it
+    }
   };
 
   const handleChangePassword = async (passwordData) => {
-    // Appel API fictif - simuler un délai
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      // Call the API to change password
+      await changeAdminPassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
 
-    // Dans une vraie app, vous enverriez ceci à votre backend
-    console.log('Changement de mot de passe demandé:', {
-      currentPassword: '***',
-      newPassword: '***'
-    });
-
-    // Afficher le message de succès
-    setSuccessMessage('Mot de passe modifié avec succès !');
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
+      // Afficher le message de succès
+      setSuccessMessage('Mot de passe modifié avec succès !');
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+    } catch (error) {
+      console.error('Error changing password:', error);
+      // Show error message
+      const errorMsg = error.response?.data?.detail || error.response?.data?.message || 'Erreur lors du changement de mot de passe';
+      setSuccessMessage(errorMsg);
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+      throw error; // Re-throw to let the modal handle it
+    }
   };
 
   if (!admin) {
