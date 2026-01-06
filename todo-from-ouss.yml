@@ -1,0 +1,20 @@
+# Oussama's tests produced these tasks
+Better search (dont refresh the page when searching bezzaf zzay):
+---
+Book - Books table author unknown:
+---
+Book - Remove Statut (active inactive) for books (creation):
+---
+Books - Statut active/rupture de stock becomes Disponibilite disponible/rupture de stock:
+---
+Marketting - Make Marketting searches use backend instead of static search:
+---
+Books - validators on create book:
+---
+Everything - wherever there are images limit it to 5 MB:
+---
+Category - view/update pic doesnt work the first time I need to refresh:
+---
+Auteur, Category - view/update I have to click twice on the x for the picture to be removed:
+---
+Book, Category, Auteur - 
