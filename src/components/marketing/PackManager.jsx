@@ -17,7 +17,7 @@ const PackManager = ({ availableBooks, onDeleteRequest }) => {
   // Pagination state
   const [packs, setPacks] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 

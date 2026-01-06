@@ -15,7 +15,7 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
     handlePageChange,
     handleItemsPerPageChange,
     totalItems
-  } = usePagination(orders, 5);
+  } = usePagination(orders, 20);
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
     { value: 'pending', label: 'En attente' },

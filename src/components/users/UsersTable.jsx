@@ -14,7 +14,7 @@ const UsersTable = ({ users, onViewUser, onToggleActive, searchQuery, onSearchCh
     handlePageChange,
     handleItemsPerPageChange,
     totalItems
-  } = usePagination(users, 5);
+  } = usePagination(users, 20);
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
     { value: 'active', label: 'Actif' },
