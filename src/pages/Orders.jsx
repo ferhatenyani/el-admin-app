@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 import OrdersTable from '../components/orders/OrdersTable';
 import OrderDetailsModal from '../components/common/OrderDetailsModal';
 import CreateOrderModal from '../components/orders/CreateOrderModal';
+import { useDebounce } from '../hooks/useDebounce';
 import * as ordersApi from '../services/ordersApi';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('date-desc');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -17,9 +17,12 @@ const Orders = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Debounce search query to reduce API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
   useEffect(() => {
     fetchOrders();
-  }, [sortBy, statusFilter, searchQuery]);
+  }, [sortBy, statusFilter, debouncedSearchQuery]);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -41,6 +44,11 @@ const Orders = () => {
         params.status = statusFilter.toUpperCase();
       }
 
+      // Add search parameter if present
+      if (debouncedSearchQuery) {
+        params.search = debouncedSearchQuery;
+      }
+
       const response = await ordersApi.getOrders(params);
       const data = response.content || response || [];
 
@@ -55,24 +63,10 @@ const Orders = () => {
         status: order.status ? order.status.toLowerCase() : 'pending',
       }));
 
-      // Client-side search filtering (since API doesn't support search)
-      let filteredData = transformedData;
-      if (searchQuery) {
-        filteredData = transformedData.filter(
-          (order) =>
-            (order.uniqueId && order.uniqueId.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (order.fullName && order.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (order.email && order.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (order.phone && order.phone.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
-      }
-
       setOrders(transformedData);
-      setFilteredOrders(filteredData);
     } catch (error) {
       console.error('Error fetching orders:', error);
       setOrders([]);
-      setFilteredOrders([]);
     } finally {
       setLoading(false);
     }
@@ -186,7 +180,7 @@ const Orders = () => {
       </div>
 
       <OrdersTable
-        orders={filteredOrders}
+        orders={orders}
         onViewOrder={handleViewOrder}
         sortBy={sortBy}
         onSortChange={setSortBy}

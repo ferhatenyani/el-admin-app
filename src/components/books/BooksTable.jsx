@@ -3,7 +3,7 @@ import { Edit, Trash2, Search, ChevronDown, ChevronUp, Plus, Download, BookOpen 
 import { formatCurrency } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getBookCoverUrl } from '../../services/booksApi';
 
 const statusColors = {
@@ -37,6 +37,13 @@ const BooksTable = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [failedImages, setFailedImages] = useState(new Set());
+
+  // Auto-expand when search query is present
+  useEffect(() => {
+    if (searchQuery && searchQuery.trim() !== '') {
+      setIsExpanded(true);
+    }
+  }, [searchQuery]);
 
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },

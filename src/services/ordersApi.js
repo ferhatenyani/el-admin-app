@@ -60,6 +60,7 @@ api.interceptors.response.use(
  * @param {number} params.page - Page number (0-indexed)
  * @param {number} params.size - Page size (default: 20)
  * @param {string} params.status - Filter by order status (PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED)
+ * @param {string} params.search - Search query for order number, customer name, email, or phone
  * @param {string} params.dateFrom - Filter by creation date from (ISO 8601 format)
  * @param {string} params.dateTo - Filter by creation date to (ISO 8601 format)
  * @param {number} params.minAmount - Minimum total amount filter
@@ -74,6 +75,7 @@ export const getOrders = async (params = {}, signal = null) => {
       page: params.page || 0,
       size: params.size || 20,
       ...(params.status && { status: params.status }),
+      ...(params.search && { search: params.search }),
       ...(params.dateFrom && { dateFrom: params.dateFrom }),
       ...(params.dateTo && { dateTo: params.dateTo }),
       ...(params.minAmount && { minAmount: params.minAmount }),
