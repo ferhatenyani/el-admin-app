@@ -67,7 +67,7 @@ export const getUsers = async (params = {}) => {
     queryParams.active = params.active;
   }
 
-  const response = await api.get('/api/admin', { params: queryParams });
+  const response = await api.get('/api/admin/users', { params: queryParams });
   return response.data;
 };
 
@@ -77,7 +77,7 @@ export const getUsers = async (params = {}) => {
  * @returns {Promise} Response with status 204
  */
 export const toggleUserActivation = async (userId) => {
-  const response = await api.patch(`/api/admin/${userId}/toggle`);
+  const response = await api.patch(`/api/admin/users/${userId}/toggle`);
   return response.data;
 };
 
@@ -86,7 +86,7 @@ export const toggleUserActivation = async (userId) => {
  * @returns {Promise} Blob response containing the Excel file
  */
 export const exportUsers = async () => {
-  const response = await api.get('/api/admin/export', {
+  const response = await api.get('/api/admin/users/export', {
     responseType: 'blob',
   });
   return response;
