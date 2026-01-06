@@ -183,12 +183,8 @@ const Profile = () => {
       setTimeout(() => setShowSuccessMessage(false), 3000);
     } catch (error) {
       console.error('Error changing password:', error);
-      // Show error message
-      const errorMsg = error.response?.data?.detail || error.response?.data?.message || 'Erreur lors du changement de mot de passe';
-      setSuccessMessage(errorMsg);
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
-      throw error; // Re-throw to let the modal handle it
+      // Re-throw to let the form handle error display
+      throw error;
     }
   };
 

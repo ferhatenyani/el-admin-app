@@ -136,8 +136,8 @@ const EditProfileModal = ({ isOpen, onClose, admin, onSaveProfile, onChangePassw
         setIsSubmitting(false);
       }, 1000);
     } catch (error) {
-      console.error('Error changing password:', error);
       setIsSubmitting(false);
+      throw error; // Re-throw to let ChangePasswordForm handle it
     }
   };
 
