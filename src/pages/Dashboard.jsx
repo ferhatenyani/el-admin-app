@@ -68,16 +68,20 @@ const Dashboard = () => {
         };
 
         // Transform backend OrderDTO to frontend format
-        const transformedOrders = orders.map(order => ({
-          id: order.id,
-          orderNumber: order.uniqueId || `#${order.id}`,
-          customer: order.fullName || (order.user ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() : null) || 'Guest',
-          date: order.createdAt,
-          total: Number(order.totalAmount) || 0,
-          status: mapStatus(order.status),
-          // Keep full order data for modal
-          ...order,
-        }));
+        const transformedOrders = orders.map(order => {
+          const mappedStatus = mapStatus(order.status);
+          return {
+            // Keep full order data for modal first
+            ...order,
+            // Then override with transformed frontend properties
+            id: order.id,
+            orderNumber: order.uniqueId || `#${order.id}`,
+            customer: order.fullName || (order.user ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() : null) || 'Guest',
+            date: order.createdAt,
+            total: Number(order.totalAmount) || 0,
+            status: mappedStatus,
+          };
+        });
 
         setRecentOrders(transformedOrders);
       } catch (error) {

@@ -4,46 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import { Eye, ShoppingBag, ArrowRight } from 'lucide-react';
 import OrderDetailsModal from '../common/OrderDetailsModal';
+import OrderStatusBadge from '../orders/OrderStatusBadge';
 
 /**
  * Modern RecentOrdersTable component with enhanced design
  * Features:
  * - Enhanced header with icon and description
- * - Improved status badges with icons
+ * - Consistent status badges with OrdersTable
  * - Better hover effects and transitions
  * - Modern action buttons with hover states
  * - Improved typography and spacing
  * - Responsive table design
  * - Staggered row animations
  */
-
-// Enhanced status configuration with icons and modern colors
-const statusConfig = {
-  pending: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    border: 'border-amber-200',
-    dot: 'bg-amber-400',
-  },
-  shipped: {
-    bg: 'bg-blue-50',
-    text: 'text-blue-700',
-    border: 'border-blue-200',
-    dot: 'bg-blue-400',
-  },
-  delivered: {
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-700',
-    border: 'border-emerald-200',
-    dot: 'bg-emerald-400',
-  },
-  cancelled: {
-    bg: 'bg-rose-50',
-    text: 'text-rose-700',
-    border: 'border-rose-200',
-    dot: 'bg-rose-400',
-  },
-};
 
 const RecentOrdersTable = ({ orders }) => {
   const navigate = useNavigate();
@@ -126,90 +99,74 @@ const RecentOrdersTable = ({ orders }) => {
 
           {/* Enhanced Table Body */}
           <tbody className="divide-y divide-gray-100">
-            {orders.map((order, index) => {
-              const status = statusConfig[order.status] || statusConfig.pending;
+            {orders.map((order, index) => (
+              <motion.tr
+                key={order.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  delay: 0.5 + index * 0.05,
+                  duration: 0.3
+                }}
+                className="hover:bg-gray-50/50 transition-colors duration-200 group"
+              >
+                {/* Order Number */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm font-semibold text-gray-900">
+                    {order.orderNumber}
+                  </span>
+                </td>
 
-              return (
-                <motion.tr
-                  key={order.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{
-                    delay: 0.5 + index * 0.05,
-                    duration: 0.3
-                  }}
-                  className="hover:bg-gray-50/50 transition-colors duration-200 group"
-                >
-                  {/* Order Number */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-semibold text-gray-900">
-                      {order.orderNumber}
-                    </span>
-                  </td>
+                {/* Customer */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm text-gray-700 font-medium">
+                    {order.customer}
+                  </span>
+                </td>
 
-                  {/* Customer */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-700 font-medium">
-                      {order.customer}
-                    </span>
-                  </td>
+                {/* Date */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm text-gray-600">
+                    {formatDateTime(order.date)}
+                  </span>
+                </td>
 
-                  {/* Date */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-600">
-                      {formatDateTime(order.date)}
-                    </span>
-                  </td>
+                {/* Total */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm font-bold text-gray-900">
+                    {formatCurrency(order.total)}
+                  </span>
+                </td>
 
-                  {/* Total */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-bold text-gray-900">
-                      {formatCurrency(order.total)}
-                    </span>
-                  </td>
+                {/* Status Badge - Using OrderStatusBadge component */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <OrderStatusBadge status={order.status} />
+                </td>
 
-                  {/* Enhanced Status Badge */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`
+                {/* Enhanced Action Button */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <motion.button
+                    onClick={() => handleViewOrder(order)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="
                       inline-flex items-center gap-2
-                      px-3 py-1.5
-                      ${status.bg} ${status.text}
-                      border ${status.border}
-                      rounded-full
+                      px-4 py-2
+                      bg-blue-50 text-blue-600
+                      hover:bg-blue-600 hover:text-white
+                      border border-blue-200
+                      rounded-lg
+                      font-semibold text-sm
                       transition-all duration-200
-                    `}>
-                      <span className={`w-2 h-2 rounded-full ${status.dot} animate-pulse`} />
-                      <span className="text-xs font-semibold capitalize">
-                        {order.status}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Enhanced Action Button */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <motion.button
-                      onClick={() => handleViewOrder(order)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="
-                        inline-flex items-center gap-2
-                        px-4 py-2
-                        bg-blue-50 text-blue-600
-                        hover:bg-blue-600 hover:text-white
-                        border border-blue-200
-                        rounded-lg
-                        font-semibold text-sm
-                        transition-all duration-200
-                        group/button
-                      "
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span>Voir</span>
-                    </motion.button>
-                  </td>
-                </motion.tr>
-              );
-            })}
+                      group/button
+                    "
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>Voir</span>
+                  </motion.button>
+                </td>
+              </motion.tr>
+            ))}
           </tbody>
         </table>
       </div>
