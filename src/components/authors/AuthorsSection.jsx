@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ChevronDown, ChevronUp, Users, UserCircle, Download } from 'lucide-react';
 import AuthorCard from './AuthorCard';
@@ -16,8 +16,9 @@ import * as authorsApi from '../../services/authorsApi';
  * - Mise en page en grille pour les cartes d'auteurs
  * - Fonctionnalité d'ajout/suppression d'auteurs
  * - Données mock avec gestion d'état local
+ * - Memoized to prevent unnecessary re-renders when parent state changes
  */
-const AuthorsSection = () => {
+const AuthorsSection = memo(() => {
   // State management for authors
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -324,6 +325,8 @@ const AuthorsSection = () => {
       />
     </div>
   );
-};
+});
+
+AuthorsSection.displayName = 'AuthorsSection';
 
 export default AuthorsSection;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ChevronDown, ChevronUp, FolderOpen, BookOpen, Download } from 'lucide-react';
 import CategoryCard from './CategoryCard';
@@ -17,8 +17,9 @@ import { getCategoryImageUrl } from '../../services/categoriesApi';
  * - Mise en page en grille pour les cartes de catégories
  * - Fonctionnalité d'ajout/suppression de catégories
  * - Données mock avec gestion d'état local
+ * - Memoized to prevent unnecessary re-renders when parent state changes
  */
-const CategoriesSection = () => {
+const CategoriesSection = memo(() => {
   // State management for categories
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -319,6 +320,8 @@ const CategoriesSection = () => {
       />
     </div>
   );
-};
+});
+
+CategoriesSection.displayName = 'CategoriesSection';
 
 export default CategoriesSection;

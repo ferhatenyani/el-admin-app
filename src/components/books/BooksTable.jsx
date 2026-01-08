@@ -80,6 +80,9 @@ const BooksTable = ({
               <div className="min-w-0 flex-1">
                 <h2 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 flex-wrap">
                   <span className="truncate">Tous les livres</span>
+                  {loading && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                  )}
                   <span className="text-xs sm:text-sm font-normal text-gray-500 flex-shrink-0">
                     ({totalCount})
                   </span>

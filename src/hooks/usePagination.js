@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 const usePagination = (items, initialItemsPerPage = 5) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,7 +22,7 @@ const usePagination = (items, initialItemsPerPage = 5) => {
   };
 
   // Reset to first page if current page becomes invalid
-  useMemo(() => {
+  useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(totalPages);
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ChevronDown, ChevronUp, Tag, Tags, Download } from 'lucide-react';
 import EtiquetteCard from './EtiquetteCard';
@@ -16,8 +16,9 @@ import * as etiquettesApi from '../../services/etiquettesApi';
  * - Grid layout for etiquette cards
  * - Add/edit/delete functionality
  * - Mock data with local state management
+ * - Memoized to prevent unnecessary re-renders when parent state changes
  */
-const EtiquettesSection = () => {
+const EtiquettesSection = memo(() => {
   // State management for etiquettes
   const [etiquettes, setEtiquettes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -315,6 +316,8 @@ const EtiquettesSection = () => {
       />
     </div>
   );
-};
+});
+
+EtiquettesSection.displayName = 'EtiquettesSection';
 
 export default EtiquettesSection;

@@ -331,15 +331,6 @@ const Books = () => {
     return true;
   });
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   // Error state with retry
   if (error && books.length === 0) {
     return (
@@ -395,7 +386,7 @@ const Books = () => {
         onStatusFilterChange={handleStatusFilterChange}
         onAddBook={handleAddBook}
         onExport={handleExport}
-        loading={filterLoading}
+        loading={loading || filterLoading}
         pagination={pagination}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
