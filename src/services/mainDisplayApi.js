@@ -102,8 +102,8 @@ const processMainDisplayData = (data) => {
 const transformToBackendFormat = (displayData) => {
   return {
     id: displayData.id,
-    nameEn: displayData.nameEn || displayData.name,
-    nameFr: displayData.nameFr || displayData.name,
+    nameEn: displayData.nameEn,
+    nameFr: displayData.nameFr,
     type: 'MAIN_DISPLAY',
     active: displayData.active !== false,
     imageUrl: displayData.imageUrl || '',
@@ -214,7 +214,10 @@ export const getMainDisplayById = async (id) => {
 
 /**
  * Create a new main display section
- * @param {Object} displayData - Main display data (nameEn, nameFr, books)
+ * @param {Object} displayData - Main display data
+ * @param {string} displayData.nameEn - English name (required)
+ * @param {string} displayData.nameFr - French name (required)
+ * @param {Array} displayData.books - Array of selected books
  * @param {File} imageFile - Image file (optional)
  * @returns {Promise} Created main display data
  */
@@ -245,6 +248,9 @@ export const createMainDisplay = async (displayData, imageFile = null) => {
  * Update an existing main display section
  * @param {number} id - Main display ID
  * @param {Object} displayData - Updated main display data
+ * @param {string} displayData.nameEn - English name (required)
+ * @param {string} displayData.nameFr - French name (required)
+ * @param {Array} displayData.books - Array of selected books
  * @param {File} imageFile - New image file (optional)
  * @returns {Promise} Updated main display data
  */

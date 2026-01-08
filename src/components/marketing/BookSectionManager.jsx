@@ -131,8 +131,8 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
       if (editingSection) {
         // Update existing section
         await updateMainDisplay(editingSection.id, {
-          nameEn: sectionData.name,
-          nameFr: sectionData.name,
+          nameEn: sectionData.nameEn,
+          nameFr: sectionData.nameFr,
           active: true,
         });
 
@@ -154,8 +154,8 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
       } else {
         // Create new section
         const newSection = await createMainDisplay({
-          nameEn: sectionData.name,
-          nameFr: sectionData.name,
+          nameEn: sectionData.nameEn,
+          nameFr: sectionData.nameFr,
           active: true,
         });
 

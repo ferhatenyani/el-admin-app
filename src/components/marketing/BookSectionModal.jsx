@@ -5,7 +5,8 @@ import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
 
 const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, saving }) => {
-  const [sectionName, setSectionName] = useState('');
+  const [nameEn, setNameEn] = useState('');
+  const [nameFr, setNameFr] = useState('');
   const [selectedBooks, setSelectedBooks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [errors, setErrors] = useState({});
@@ -20,10 +21,12 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
   // Initialize form data when editing
   useEffect(() => {
     if (section) {
-      setSectionName(section.name || '');
+      setNameEn(section.nameEn || '');
+      setNameFr(section.nameFr || '');
       setSelectedBooks(section.books || []);
     } else {
-      setSectionName('');
+      setNameEn('');
+      setNameFr('');
       setSelectedBooks([]);
     }
     setErrors({});
@@ -83,8 +86,12 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
   const validateForm = () => {
     const newErrors = {};
 
-    if (!sectionName.trim()) {
-      newErrors.name = 'Le nom de la section est requis';
+    if (!nameEn.trim()) {
+      newErrors.nameEn = 'Le nom en anglais est requis';
+    }
+
+    if (!nameFr.trim()) {
+      newErrors.nameFr = 'Le nom en français est requis';
     }
 
     if (selectedBooks.length === 0) {
@@ -98,7 +105,8 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
   const handleSubmit = () => {
     if (validateForm()) {
       onSave({
-        name: sectionName,
+        nameEn,
+        nameFr,
         books: selectedBooks
       });
     }
@@ -157,34 +165,67 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-                {/* Section Name Input */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nom de la Section <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={sectionName}
-                    onChange={(e) => {
-                      setSectionName(e.target.value);
-                      setErrors({ ...errors, name: '' });
-                    }}
-                    placeholder="ex: Nos Nouveautés, Meilleures Ventes..."
-                    className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                      errors.name
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-blue-500'
-                    }`}
-                  />
-                  {errors.name && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-red-600 text-xs mt-1.5 font-medium"
-                    >
-                      {errors.name}
-                    </motion.p>
-                  )}
+                {/* Section Name Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* English Name Input */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Nom en Anglais <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={nameEn}
+                      onChange={(e) => {
+                        setNameEn(e.target.value);
+                        setErrors({ ...errors, nameEn: '' });
+                      }}
+                      placeholder="ex: New Releases, Best Sellers..."
+                      className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                        errors.nameEn
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                    />
+                    {errors.nameEn && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-red-600 text-xs mt-1.5 font-medium"
+                      >
+                        {errors.nameEn}
+                      </motion.p>
+                    )}
+                  </div>
+
+                  {/* French Name Input */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Nom en Français <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={nameFr}
+                      onChange={(e) => {
+                        setNameFr(e.target.value);
+                        setErrors({ ...errors, nameFr: '' });
+                      }}
+                      placeholder="ex: Nos Nouveautés, Meilleures Ventes..."
+                      className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                        errors.nameFr
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                    />
+                    {errors.nameFr && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-red-600 text-xs mt-1.5 font-medium"
+                      >
+                        {errors.nameFr}
+                      </motion.p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Book Selection */}
