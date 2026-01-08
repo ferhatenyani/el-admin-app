@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm run dev:*)",
-      "Bash(dir \"C:\\\\Users\\\\MyHomehP\\\\Desktop\\\\projects\\\\EL\\\\api\" /s /b)"
+      "Bash(dir \"C:\\\\Users\\\\MyHomehP\\\\Desktop\\\\projects\\\\EL\\\\api\" /s /b)",
+      "Bash(dir \"c:\\\\Users\\\\MyHomehP\\\\Desktop\\\\projects\\\\EL\\\\el-admin-app\\\\src\\\\components\" /b)"
     ]
   }
 }

@@ -4,7 +4,9 @@ import { motion } from 'framer-motion';
 import OrdersTable from '../components/orders/OrdersTable';
 import OrderDetailsModal from '../components/common/OrderDetailsModal';
 import CreateOrderModal from '../components/orders/CreateOrderModal';
+import ToastContainer from '../components/common/Toast';
 import { useDebounce } from '../hooks/useDebounce';
+import { useToast } from '../hooks/useToast';
 import * as ordersApi from '../services/ordersApi';
 
 const Orders = () => {
@@ -23,6 +25,9 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Toast notifications
+  const { toasts, removeToast, success, error } = useToast();
 
   // Ref to track pagination without causing re-renders
   const paginationRef = useRef(pagination);
@@ -160,9 +165,11 @@ const Orders = () => {
       });
 
       fetchOrders();
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      alert('Erreur lors de la mise à jour du statut de la commande: ' + (error.response?.data?.detail || error.message));
+      success('Le statut de la commande a été mis à jour avec succès');
+    } catch (err) {
+      console.error('Error updating order status:', err);
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || 'Une erreur est survenue';
+      error(errorMessage, 'Erreur lors de la mise à jour');
     }
   };
 
@@ -171,10 +178,11 @@ const Orders = () => {
       await ordersApi.createOrder(orderData);
       setIsCreateModalOpen(false);
       fetchOrders();
-      alert('Commande créée avec succès!');
-    } catch (error) {
-      console.error('Error creating order:', error);
-      alert('Erreur lors de la création de la commande: ' + (error.response?.data?.message || error.message));
+      success('La commande a été créée avec succès');
+    } catch (err) {
+      console.error('Error creating order:', err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
+      error(errorMessage, 'Erreur lors de la création');
     }
   };
 
@@ -205,9 +213,11 @@ const Orders = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error exporting orders:', error);
-      alert('Erreur lors de l\'export des commandes');
+      success('Les commandes ont été exportées avec succès');
+    } catch (err) {
+      console.error('Error exporting orders:', err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
+      error(errorMessage, 'Erreur lors de l\'export');
     }
   };
 
@@ -277,6 +287,8 @@ const Orders = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateOrder}
       />
+
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };
