@@ -30,8 +30,10 @@ const UsersTable = ({
   ];
 
   const sortOptions = [
-    { value: 'date', label: 'Trier par date' },
-    { value: 'name', label: 'Trier par nom' }
+    { value: 'createdDate,desc', label: 'Date (récent)' },
+    { value: 'createdDate,asc', label: 'Date (ancien)' },
+    { value: 'lastName,asc', label: 'Nom (A-Z)' },
+    { value: 'lastName,desc', label: 'Nom (Z-A)' }
   ];
 
   return (
@@ -61,12 +63,12 @@ const UsersTable = ({
               />
             </div>
 
-            <div className="min-w-[150px]">
+            <div className="min-w-[160px]">
               <CustomSelect
                 value={sortBy}
                 onChange={onSortChange}
                 options={sortOptions}
-                placeholder="Trier par date"
+                placeholder="Trier"
               />
             </div>
           </div>

@@ -19,7 +19,7 @@ const Users = () => {
   const [initialLoad, setInitialLoad] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [sortBy, setSortBy] = useState('date');
+  const [sortBy, setSortBy] = useState('createdDate,desc'); // Format: "field,direction"
   const [statusFilter, setStatusFilter] = useState('all');
   const [error, setError] = useState(null);
 
@@ -71,6 +71,11 @@ const Users = () => {
         params.active = false;
       }
 
+      // Add sort parameter (format: "field,direction")
+      if (sortBy) {
+        params.sort = sortBy;
+      }
+
       const response = await getUsers(params, abortControllerRef.current.signal);
 
       // Handle Spring Data Page response
@@ -95,7 +100,7 @@ const Users = () => {
       setLoading(false);
       setInitialLoad(false);
     }
-  }, [pagination.page, pagination.size, debouncedSearchQuery, statusFilter]);
+  }, [pagination.page, pagination.size, debouncedSearchQuery, statusFilter, sortBy]);
 
   /**
    * Initial load and refetch when dependencies change
@@ -219,16 +224,7 @@ const Users = () => {
     }
   };
 
-  // Apply client-side sorting
-  const sortedUsers = [...users].sort((a, b) => {
-    if (sortBy === 'date') {
-      return new Date(b.createdDate || 0) - new Date(a.createdDate || 0);
-    } else if (sortBy === 'name') {
-      const getFullName = (user) => `${user.firstName || ''} ${user.lastName || ''}`;
-      return getFullName(a).localeCompare(getFullName(b));
-    }
-    return 0;
-  });
+  // No client-side sorting needed - all sorting is done server-side
 
   // Error state with retry
   if (error && users.length === 0 && !loading) {
@@ -294,7 +290,7 @@ const Users = () => {
       )}
 
       <UsersTable
-        users={sortedUsers}
+        users={users}
         onViewUser={handleViewUser}
         onToggleActive={handleToggleActive}
         searchQuery={searchQuery}
