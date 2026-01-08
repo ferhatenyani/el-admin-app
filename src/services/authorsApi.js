@@ -57,7 +57,7 @@ api.interceptors.response.use(
 const processAuthorData = (data) => {
   if (Array.isArray(data)) {
     return data.map(author => {
-      const pictureUrl = author.id ? `${API_BASE_URL}/api/authors/${author.id}/picture` : null;
+      const pictureUrl = author.id ? `${API_BASE_URL}/api/authors/${author.id}/picture?t=${Date.now()}` : null;
       return {
         ...author,
         profilePictureUrl: pictureUrl,
@@ -67,7 +67,7 @@ const processAuthorData = (data) => {
   }
 
   if (data && typeof data === 'object') {
-    const pictureUrl = data.id ? `${API_BASE_URL}/api/authors/${data.id}/picture` : null;
+    const pictureUrl = data.id ? `${API_BASE_URL}/api/authors/${data.id}/picture?t=${Date.now()}` : null;
     return {
       ...data,
       profilePictureUrl: pictureUrl,
