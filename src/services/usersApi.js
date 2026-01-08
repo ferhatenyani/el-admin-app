@@ -54,21 +54,38 @@ api.interceptors.response.use(
  * @param {number} params.page - Page number (0-indexed)
  * @param {number} params.size - Page size (default: 20)
  * @param {boolean} params.active - Filter by activation status (optional)
+ * @param {string} params.search - Search query (searches name, email)
+ * @param {AbortSignal} signal - Abort signal for cancellation
  * @returns {Promise} Response with users data
  */
-export const getUsers = async (params = {}) => {
-  const queryParams = {
-    page: params.page || 0,
-    size: params.size || 20,
-  };
+export const getUsers = async (params = {}, signal = null) => {
+  try {
+    const queryParams = {
+      page: params.page || 0,
+      size: params.size || 20,
+    };
 
-  // Add active filter if provided
-  if (params.active !== undefined && params.active !== null) {
-    queryParams.active = params.active;
+    // Add active filter if provided
+    if (params.active !== undefined && params.active !== null) {
+      queryParams.active = params.active;
+    }
+
+    // Add search parameter if provided
+    if (params.search) {
+      queryParams.search = params.search;
+    }
+
+    const response = await api.get('/api/admin/users', {
+      params: queryParams,
+      signal,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isCancel(error)) {
+      throw new Error('REQUEST_CANCELLED');
+    }
+    throw error;
   }
-
-  const response = await api.get('/api/admin/users', { params: queryParams });
-  return response.data;
 };
 
 /**

@@ -1,60 +1,68 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import UsersTable from '../components/users/UsersTable';
 import UserDetailsModal from '../components/users/UserDetailsModal';
 import { getUsers, toggleUserActivation, exportUsers } from '../services/usersApi';
+import { useDebounce } from '../hooks/useDebounce';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 20,
+    totalElements: 0,
+    totalPages: 0,
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState('date');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
+  const [error, setError] = useState(null);
 
+  // Ref for request cancellation
+  const abortControllerRef = useRef(null);
+
+  // Debounce search query to reduce API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Reset to page 0 when search query changes
   useEffect(() => {
-    fetchUsers();
-  }, [statusFilter, currentPage]);
-
-  useEffect(() => {
-    let result = [...users];
-
-    // Apply search query (client-side filtering)
-    if (searchQuery) {
-      result = result.filter(
-        (user) => {
-          const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
-          const email = (user.email || '').toLowerCase();
-          const query = searchQuery.toLowerCase();
-          return fullName.includes(query) || email.includes(query);
-        }
-      );
+    if (pagination.page !== 0) {
+      setPagination(prev => ({ ...prev, page: 0 }));
     }
+  }, [debouncedSearchQuery]);
 
-    // Apply sorting (client-side)
-    if (sortBy === 'date') {
-      result.sort((a, b) => new Date(b.createdDate || 0) - new Date(a.createdDate || 0));
-    } else if (sortBy === 'name') {
-      const getFullName = (user) => `${user.firstName || ''} ${user.lastName || ''}`;
-      result.sort((a, b) => getFullName(a).localeCompare(getFullName(b)));
-    }
-
-    setFilteredUsers(result);
-  }, [searchQuery, users, sortBy]);
-
-  const fetchUsers = async () => {
-    setLoading(true);
+  /**
+   * Fetch users with current filters and pagination
+   * Uses AbortController to cancel in-flight requests
+   */
+  const fetchUsers = useCallback(async () => {
     try {
+      // Cancel any pending request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+
+      setLoading(true);
+      setError(null);
+
+      // Build query parameters
       const params = {
-        page: currentPage,
-        size: 100, // Fetch all users for client-side filtering
+        page: pagination.page,
+        size: pagination.size,
       };
+
+      // Add search query if present
+      if (debouncedSearchQuery) {
+        params.search = debouncedSearchQuery;
+      }
 
       // Apply server-side active filter if not 'all'
       if (statusFilter === 'active') {
@@ -63,25 +71,107 @@ const Users = () => {
         params.active = false;
       }
 
-      const response = await getUsers(params);
+      const response = await getUsers(params, abortControllerRef.current.signal);
 
       // Handle Spring Data Page response
       const usersData = response.content || [];
       setUsers(usersData);
-      setFilteredUsers(usersData);
-      setTotalPages(response.totalPages || 0);
-      setTotalElements(response.totalElements || 0);
-    } catch (error) {
-      console.error('Error fetching users:', error);
+      setPagination({
+        page: response.number || response.page || 0,
+        size: response.size || 20,
+        totalElements: response.totalElements || 0,
+        totalPages: response.totalPages || 0,
+      });
+    } catch (err) {
+      // Ignore cancelled requests
+      if (err.message === 'REQUEST_CANCELLED') {
+        return;
+      }
+
+      console.error('Error fetching users:', err);
+      setError(err.response?.data?.message || 'Failed to load users. Please try again.');
       setUsers([]);
-      setFilteredUsers([]);
     } finally {
       setLoading(false);
+      setInitialLoad(false);
+    }
+  }, [pagination.page, pagination.size, debouncedSearchQuery, statusFilter]);
+
+  /**
+   * Initial load and refetch when dependencies change
+   */
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  /**
+   * Clean up abort controller on unmount
+   */
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  /**
+   * Handle search query changes
+   */
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+  };
+
+  /**
+   * Handle sort changes
+   * Reset to page 0 when sort changes
+   */
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    if (pagination.page !== 0) {
+      setPagination(prev => ({ ...prev, page: 0 }));
     }
   };
 
+  /**
+   * Handle status filter changes
+   */
+  const handleStatusFilterChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    if (pagination.page !== 0) {
+      setPagination(prev => ({ ...prev, page: 0 }));
+    }
+  };
+
+  /**
+   * Handle page changes
+   */
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  /**
+   * Handle page size changes
+   */
+  const handlePageSizeChange = (newSize) => {
+    setPagination(prev => ({ ...prev, size: newSize, page: 0 }));
+  };
+
+  /**
+   * Handle view user - Transform user data to match modal expected structure
+   */
   const handleViewUser = (user) => {
-    setSelectedUser(user);
+    // Transform user data to match UserDetailsModal expected structure
+    const transformedUser = {
+      ...user,
+      name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.login || user.email,
+      joinedDate: user.createdDate,
+      active: user.activated !== false,
+      totalOrders: 0, // Default values as backend doesn't provide these yet
+      totalSpent: 0,
+    };
+
+    setSelectedUser(transformedUser);
     setIsModalOpen(true);
   };
 
@@ -129,7 +219,39 @@ const Users = () => {
     }
   };
 
-  if (loading) {
+  // Apply client-side sorting
+  const sortedUsers = [...users].sort((a, b) => {
+    if (sortBy === 'date') {
+      return new Date(b.createdDate || 0) - new Date(a.createdDate || 0);
+    } else if (sortBy === 'name') {
+      const getFullName = (user) => `${user.firstName || ''} ${user.lastName || ''}`;
+      return getFullName(a).localeCompare(getFullName(b));
+    }
+    return 0;
+  });
+
+  // Error state with retry
+  if (error && users.length === 0 && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <div className="text-red-600 text-center">
+          <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-lg font-semibold">Error Loading Users</p>
+          <p className="text-sm text-gray-600 mt-2">{error}</p>
+        </div>
+        <button
+          onClick={() => fetchUsers()}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (initialLoad && loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -156,16 +278,35 @@ const Users = () => {
         </motion.button>
       </div>
 
+      {/* Error banner (non-blocking) */}
+      {error && users.length > 0 && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+          >
+            <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+            </svg>
+          </button>
+        </div>
+      )}
+
       <UsersTable
-        users={filteredUsers}
+        users={sortedUsers}
         onViewUser={handleViewUser}
         onToggleActive={handleToggleActive}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
         sortBy={sortBy}
-        onSortChange={setSortBy}
+        onSortChange={handleSortChange}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        onStatusFilterChange={handleStatusFilterChange}
+        loading={loading}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
 
       <UserDetailsModal
