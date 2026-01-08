@@ -26,6 +26,13 @@ const PackManager = ({ availableBooks, onDeleteRequest }) => {
     setIsExpanded(!isExpanded);
   };
 
+  // Auto-expand when search query is present
+  useEffect(() => {
+    if (searchQuery && searchQuery.trim() !== '') {
+      setIsExpanded(true);
+    }
+  }, [searchQuery]);
+
   // Debounce search query to reduce API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -133,6 +140,9 @@ const PackManager = ({ availableBooks, onDeleteRequest }) => {
               <div className="min-w-0 flex-1">
                 <h2 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 flex-wrap">
                   <span className="truncate">Packs de Livres</span>
+                  {loading && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-600 border-t-transparent"></div>
+                  )}
                   <span className="text-xs sm:text-sm font-normal text-gray-500 flex-shrink-0">
                     ({totalItems})
                   </span>
