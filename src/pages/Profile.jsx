@@ -125,6 +125,9 @@ const Profile = () => {
 
       setAdmin(updatedAdmin);
 
+      // Dispatch event to notify other components (like Topbar) that profile was updated
+      window.dispatchEvent(new Event('profileUpdated'));
+
       // Afficher le message de succès
       setSuccessMessage('Profil mis à jour avec succès !');
       setShowSuccessMessage(true);
