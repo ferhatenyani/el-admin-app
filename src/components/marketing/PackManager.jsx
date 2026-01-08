@@ -100,17 +100,17 @@ const PackManager = ({ availableBooks, onDeleteRequest }) => {
     onDeleteRequest('pack', pack, fetchPacks);
   };
 
-  const handleSavePack = async (packData, coverImage) => {
+  const handleSavePack = async (packData) => {
     try {
       setSaving(true);
       let result;
 
       if (editingPack) {
         // Update existing pack
-        result = await updatePack(editingPack.id, packData, coverImage);
+        result = await updatePack(editingPack.id, packData);
       } else {
         // Create new pack
-        result = await createPack(packData, coverImage);
+        result = await createPack(packData);
       }
 
       // Refresh the list after save

@@ -94,9 +94,9 @@ const transformToBackendFormat = (packData) => {
     id: packData.id,
     title: packData.name || packData.title, // Frontend uses 'name', backend uses 'title'
     description: packData.description,
-    coverUrl: packData.coverUrl || '', // Backend requires this field
+    coverUrl: '', // Always send empty string
     price: parseFloat(packData.price),
-    books: packData.books || [],
+    books: (packData.books || []).map(book => ({ id: book.id })), // Only send book IDs
   };
 };
 
@@ -205,12 +205,11 @@ export const getPackById = async (id) => {
 };
 
 /**
- * Create a new book pack with cover image
+ * Create a new book pack
  * @param {Object} packData - Pack data (name, description, price, books)
- * @param {File} coverImage - Cover image file
  * @returns {Promise} Created pack data
  */
-export const createPack = async (packData, coverImage) => {
+export const createPack = async (packData) => {
   const formData = new FormData();
 
   // Transform to backend format
@@ -222,10 +221,9 @@ export const createPack = async (packData, coverImage) => {
   });
   formData.append('bookPack', packBlob);
 
-  // Add cover image (required for creation)
-  if (coverImage) {
-    formData.append('coverImage', coverImage);
-  }
+  // Add empty file as coverImage to satisfy backend requirement
+  const emptyFile = new File([''], '', { type: 'application/octet-stream' });
+  formData.append('coverImage', emptyFile);
 
   // Interceptor will auto-detect FormData and remove Content-Type header
   const response = await api.post('/api/book-packs', formData);
@@ -237,10 +235,9 @@ export const createPack = async (packData, coverImage) => {
  * Update an existing book pack
  * @param {number} id - Pack ID
  * @param {Object} packData - Updated pack data
- * @param {File} coverImage - New cover image file (optional)
  * @returns {Promise} Updated pack data
  */
-export const updatePack = async (id, packData, coverImage = null) => {
+export const updatePack = async (id, packData) => {
   const formData = new FormData();
 
   // Transform to backend format and ensure ID is set
@@ -251,11 +248,6 @@ export const updatePack = async (id, packData, coverImage = null) => {
     type: 'application/json'
   });
   formData.append('bookPack', packBlob);
-
-  // Add cover image only if provided
-  if (coverImage) {
-    formData.append('coverImage', coverImage);
-  }
 
   // Interceptor will auto-detect FormData and remove Content-Type header
   const response = await api.put(`/api/book-packs/${id}`, formData);
