@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Download, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import OrdersTable from '../components/orders/OrdersTable';
@@ -9,7 +9,14 @@ import * as ordersApi from '../services/ordersApi';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 20,
+    totalElements: 0,
+    totalPages: 0,
+  });
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [sortBy, setSortBy] = useState('date-desc');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,14 +24,25 @@ const Orders = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Ref to track pagination without causing re-renders
+  const paginationRef = useRef(pagination);
+
+  // Update ref when pagination changes
+  useEffect(() => {
+    paginationRef.current = pagination;
+  }, [pagination]);
+
   // Debounce search query to reduce API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
+  // Reset to page 0 when search query changes
   useEffect(() => {
-    fetchOrders();
-  }, [sortBy, statusFilter, debouncedSearchQuery]);
+    if (pagination.page !== 0) {
+      setPagination(prev => ({ ...prev, page: 0 }));
+    }
+  }, [debouncedSearchQuery]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       // Parse sortBy to get field and direction
@@ -34,8 +52,8 @@ const Orders = () => {
         : `totalAmount,${sortDirection}`;
 
       const params = {
-        page: 0,
-        size: 1000,
+        page: paginationRef.current.page,
+        size: paginationRef.current.size,
         sort: sortParam,
       };
 
@@ -64,12 +82,65 @@ const Orders = () => {
       }));
 
       setOrders(transformedData);
+
+      // Update pagination info from response - only update if values changed
+      setPagination(prev => {
+        const newPagination = {
+          page: response.number ?? response.page ?? prev.page,
+          size: response.size ?? prev.size,
+          totalElements: response.totalElements ?? data.length,
+          totalPages: response.totalPages ?? 1,
+        };
+
+        // Only update if values actually changed to prevent unnecessary re-renders
+        if (
+          prev.page === newPagination.page &&
+          prev.size === newPagination.size &&
+          prev.totalElements === newPagination.totalElements &&
+          prev.totalPages === newPagination.totalPages
+        ) {
+          return prev;
+        }
+
+        return newPagination;
+      });
     } catch (error) {
       console.error('Error fetching orders:', error);
       setOrders([]);
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
+  }, [debouncedSearchQuery, statusFilter, sortBy]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+  };
+
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    if (pagination.page !== 0) {
+      setPagination(prev => ({ ...prev, page: 0 }));
+    }
+  };
+
+  const handleStatusFilterChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    if (pagination.page !== 0) {
+      setPagination(prev => ({ ...prev, page: 0 }));
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPagination(prev => ({ ...prev, size: newSize, page: 0 }));
   };
 
   const handleViewOrder = (order) => {
@@ -140,7 +211,7 @@ const Orders = () => {
     }
   };
 
-  if (loading) {
+  if (initialLoad && loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -183,11 +254,15 @@ const Orders = () => {
         orders={orders}
         onViewOrder={handleViewOrder}
         sortBy={sortBy}
-        onSortChange={setSortBy}
+        onSortChange={handleSortChange}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        onStatusFilterChange={handleStatusFilterChange}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
+        loading={loading}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
 
       <OrderDetailsModal

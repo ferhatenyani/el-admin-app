@@ -4,18 +4,24 @@ import { formatCurrency, formatDateTime } from '../../utils/format';
 import OrderStatusBadge from './OrderStatusBadge';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
-import usePagination from '../../hooks/usePagination';
 
-const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, onStatusFilterChange, searchQuery, onSearchChange }) => {
-  const {
-    currentPage,
-    itemsPerPage,
-    totalPages,
-    paginatedItems: paginatedOrders,
-    handlePageChange,
-    handleItemsPerPageChange,
-    totalItems
-  } = usePagination(orders, 20);
+const OrdersTable = ({
+  orders,
+  onViewOrder,
+  sortBy,
+  onSortChange,
+  statusFilter,
+  onStatusFilterChange,
+  searchQuery,
+  onSearchChange,
+  loading = false,
+  pagination = null,
+  onPageChange = null,
+  onPageSizeChange = null
+}) => {
+  // Use orders directly (server-side pagination)
+  const displayOrders = orders || [];
+  const totalCount = pagination?.totalElements || orders.length;
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
     { value: 'pending', label: 'En attente' },
@@ -71,125 +77,140 @@ const OrdersTable = ({ orders, onViewOrder, sortBy, onSortChange, statusFilter, 
         </div>
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+            <p className="text-sm text-gray-500">Chargement...</p>
+          </div>
+        </div>
+      )}
+
       {/* Desktop table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Numéro de commande
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Client
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Statut
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {paginatedOrders.map((order) => (
-              <motion.tr
-                key={order.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="hover:bg-gray-200 transition-colors duration-150 cursor-pointer"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {order.orderNumber}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{order.customer}</div>
-                  <div className="text-xs text-gray-500">{order.customerEmail}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {formatDateTime(order.date)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {formatCurrency(order.total)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <OrderStatusBadge status={order.status} />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <button
-                    onClick={() => onViewOrder(order)}
-                    className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Voir
-                  </button>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {!loading && (
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Numéro de commande
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Client
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Statut
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {displayOrders.map((order) => (
+                <motion.tr
+                  key={order.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="hover:bg-gray-200 transition-colors duration-150 cursor-pointer"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {order.orderNumber}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{order.customer}</div>
+                    <div className="text-xs text-gray-500">{order.customerEmail}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {formatDateTime(order.date)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {formatCurrency(order.total)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <OrderStatusBadge status={order.status} />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <button
+                      onClick={() => onViewOrder(order)}
+                      className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Voir
+                    </button>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Mobile cards */}
-      <div className="md:hidden p-4 space-y-4">
-        {paginatedOrders.map((order) => (
-          <motion.div
-            key={order.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gray-50 rounded-lg p-4 space-y-3"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-medium text-gray-900">{order.orderNumber}</h3>
-                <p className="text-sm text-gray-600 mt-1">{order.customer}</p>
-                <p className="text-xs text-gray-500">{order.customerEmail}</p>
-              </div>
-              <OrderStatusBadge status={order.status} />
-            </div>
-
-            <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-              <div>
-                <p className="text-xs text-gray-500">Total</p>
-                <p className="text-sm font-medium text-gray-900">{formatCurrency(order.total)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Date</p>
-                <p className="text-sm text-gray-600">{formatDateTime(order.date)}</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onViewOrder(order)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      {!loading && (
+        <div className="md:hidden p-4 space-y-4">
+          {displayOrders.map((order) => (
+            <motion.div
+              key={order.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gray-50 rounded-lg p-4 space-y-3"
             >
-              <Eye className="w-4 h-4" />
-              Voir les détails
-            </button>
-          </motion.div>
-        ))}
-      </div>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-medium text-gray-900">{order.orderNumber}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{order.customer}</p>
+                  <p className="text-xs text-gray-500">{order.customerEmail}</p>
+                </div>
+                <OrderStatusBadge status={order.status} />
+              </div>
 
-      {orders.length === 0 && (
+              <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                <div>
+                  <p className="text-xs text-gray-500">Total</p>
+                  <p className="text-sm font-medium text-gray-900">{formatCurrency(order.total)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Date</p>
+                  <p className="text-sm text-gray-600">{formatDateTime(order.date)}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => onViewOrder(order)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                <Eye className="w-4 h-4" />
+                Voir les détails
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && displayOrders.length === 0 && (
         <div className="p-12 text-center">
           <p className="text-gray-500">Aucune commande trouvée</p>
         </div>
       )}
 
       {/* Pagination */}
-      {orders.length > 0 && (
+      {!loading && displayOrders.length > 0 && pagination && onPageChange && (
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          itemsPerPage={itemsPerPage}
-          totalItems={totalItems}
-          onItemsPerPageChange={handleItemsPerPageChange}
+          currentPage={pagination.page + 1}
+          totalPages={pagination.totalPages}
+          onPageChange={(page) => onPageChange(page - 1)}
+          itemsPerPage={pagination.size}
+          totalItems={pagination.totalElements}
+          onItemsPerPageChange={onPageSizeChange}
         />
       )}
     </div>
