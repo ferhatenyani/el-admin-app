@@ -5,6 +5,7 @@ import PackCard from './PackCard';
 import PackModal from './PackModal';
 import Pagination from '../common/Pagination';
 import { createPack, updatePack, getPacks } from '../../services/packsApi';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const PackManager = ({ availableBooks, onDeleteRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +26,9 @@ const PackManager = ({ availableBooks, onDeleteRequest }) => {
     setIsExpanded(!isExpanded);
   };
 
+  // Debounce search query to reduce API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
   // Fetch packs from API
   const fetchPacks = useCallback(async () => {
     try {
@@ -32,7 +36,7 @@ const PackManager = ({ availableBooks, onDeleteRequest }) => {
       const response = await getPacks({
         page: currentPage,
         size: itemsPerPage,
-        search: searchQuery || undefined,
+        search: debouncedSearchQuery || undefined,
       });
 
       const packsData = response.content || response;
@@ -51,20 +55,20 @@ const PackManager = ({ availableBooks, onDeleteRequest }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchQuery]);
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
 
   // Fetch packs on mount and when dependencies change
   useEffect(() => {
     fetchPacks();
   }, [fetchPacks]);
 
-  // Reset to page 0 when search query changes
+  // Reset to page 0 when debounced search query changes
   useEffect(() => {
     if (currentPage !== 0) {
       setCurrentPage(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page - 1);

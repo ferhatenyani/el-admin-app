@@ -6,6 +6,7 @@ import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, getMainDisplays } from '../../services/mainDisplayApi';
 import { getBookCoverUrl } from '../../services/booksApi';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +28,9 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
     setIsExpanded(!isExpanded);
   };
 
+  // Debounce search query to reduce API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
   // Fetch sections from API
   const fetchSections = useCallback(async () => {
     try {
@@ -34,7 +38,7 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
       const response = await getMainDisplays({
         page: currentPage,
         size: itemsPerPage,
-        search: searchQuery || undefined,
+        search: debouncedSearchQuery || undefined,
         includeBooks: true,
       });
 
@@ -54,20 +58,20 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchQuery]);
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
 
   // Fetch sections on mount and when dependencies change
   useEffect(() => {
     fetchSections();
   }, [fetchSections]);
 
-  // Reset to page 0 when search query changes
+  // Reset to page 0 when debounced search query changes
   useEffect(() => {
     if (currentPage !== 0) {
       setCurrentPage(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page - 1);
