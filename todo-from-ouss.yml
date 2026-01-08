@@ -17,4 +17,4 @@ Category - view/update pic doesnt work the first time I need to refresh:
 ---
 Auteur, Category - view/update I have to click twice on the x for the picture to be removed:
 ---
-Book, Category, Auteur - 
+Book - Make the selects searcheable (author, Category ..etc) use the same component we use in the user app:
