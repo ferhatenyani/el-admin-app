@@ -73,18 +73,21 @@ const normalizeImageUrl = (imageUrl) => {
 };
 
 /**
- * Process book data to normalize image URLs and transform author
+ * Process book data to add cover image URL with cache-busting timestamp
  * @param {Object|Array} data - Single book or array of books
- * @returns {Object|Array} Processed data with normalized structure
+ * @returns {Object|Array} Processed data with image URLs
  */
 const processBookData = (data) => {
-  const transformBook = (book) => ({
-    ...book,
-    coverImageUrl: normalizeImageUrl(book.coverImageUrl),
-    image: normalizeImageUrl(book.coverImageUrl), // Add image field for compatibility
-    // Author already has 'name' property from backend, keep as-is
-    author: book.author || null,
-  });
+  const transformBook = (book) => {
+    const coverImageUrl = book.id ? `${API_BASE_URL}/api/books/${book.id}/cover?t=${Date.now()}` : null;
+    return {
+      ...book,
+      coverImageUrl, // Add coverImageUrl with cache-busting timestamp
+      imageUrl: coverImageUrl, // Add imageUrl alias for UploadImageInput compatibility
+      // Author already has 'name' property from backend, keep as-is
+      author: book.author || null,
+    };
+  };
 
   if (Array.isArray(data)) {
     return data.map(transformBook);
@@ -279,10 +282,13 @@ export const removeTagsFromBook = async (bookId, tagIds) => {
  * Get book cover image URL
  * @param {number} id - The book ID
  * @param {boolean} placeholder - Return placeholder if cover not found (default: false)
- * @returns {string} Cover image URL
+ * @returns {string} Cover image URL with cache-busting timestamp
  */
 export const getBookCoverUrl = (id, placeholder = false) => {
-  return `${API_BASE_URL}/api/books/${id}/cover${placeholder ? '?placeholder=true' : ''}`;
+  const baseUrl = `${API_BASE_URL}/api/books/${id}/cover`;
+  const separator = placeholder ? '&' : '?';
+  const placeholderParam = placeholder ? '?placeholder=true' : '';
+  return `${baseUrl}${placeholderParam}${separator}t=${Date.now()}`;
 };
 
 export default {

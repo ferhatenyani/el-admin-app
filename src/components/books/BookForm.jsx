@@ -112,9 +112,19 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
       const backendLang = initialData.language || '';
       const formLang = LANGUAGE_CODE_TO_FORM[backendLang] || backendLang;
 
+      // Extract nested properties from full book object
       const normalizedData = {
-        ...initialData,
-        language: formLang
+        id: initialData.id,
+        title: initialData.title || '',
+        authorId: initialData.author?.id || initialData.authorId || null,
+        categoryId: initialData.tags?.find(t => t.type === 'CATEGORY')?.id || initialData.categoryId || null,
+        etiquetteId: initialData.tags?.find(t => t.type === 'ETIQUETTE')?.id || initialData.etiquetteId || null,
+        language: formLang,
+        price: initialData.price || '',
+        stockQuantity: initialData.stockQuantity || '',
+        description: initialData.description || '',
+        coverImage: null, // Don't prefill file input
+        imageUrl: initialData.imageUrl || initialData.coverImageUrl || null, // For existing image preview
       };
       setFormData(normalizedData);
     } else {
@@ -335,7 +345,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       <UploadImageInput
                         value={formData.coverImage}
                         onChange={(file) => setFormData((prev) => ({ ...prev, coverImage: file }))}
-                        existingImageUrl={initialData?.id ? getBookCoverUrl(initialData.id) : null}
+                        existingImageUrl={initialData?.imageUrl}
                       />
                     </div>
                   </div>

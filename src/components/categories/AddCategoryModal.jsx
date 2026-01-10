@@ -9,7 +9,7 @@ import useScrollLock from '../../hooks/useScrollLock';
  * AddCategoryModal Component
  * Formulaire modal pour ajouter une nouvelle catégorie avec noms anglais/français et image
  */
-const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null, getCategoryImageUrl }) => {
+const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
   const [formData, setFormData] = useState({
     nameEn: '',
     nameFr: '',
@@ -181,7 +181,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null, getCa
                       value={formData.imageUrl}
                       onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
                       label="Télécharger l'image de la catégorie"
-                      existingImageUrl={initialData?.id ? getCategoryImageUrl(initialData.id) : null}
+                      existingImageUrl={initialData?.imageUrl}
                       aspectRatio="horizontal"
                     />
                     <p className="mt-2 text-xs text-gray-500">

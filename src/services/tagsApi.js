@@ -68,23 +68,25 @@ const normalizeImageUrl = (imageUrl) => {
 };
 
 /**
- * Process tag data to normalize image URLs
+ * Process tag data to add image URL with cache-busting timestamp
  * @param {Object|Array} data - Single tag or array of tags
- * @returns {Object|Array} Processed data with normalized image URLs
+ * @returns {Object|Array} Processed data with image URLs
  */
 const processTagData = (data) => {
-  if (Array.isArray(data)) {
-    return data.map(tag => ({
+  const transformTag = (tag) => {
+    const imageUrl = tag.id ? `${API_BASE_URL}/api/tags/${tag.id}/image?t=${Date.now()}` : null;
+    return {
       ...tag,
-      imageUrl: normalizeImageUrl(tag.imageUrl)
-    }));
+      imageUrl // Add imageUrl with cache-busting timestamp
+    };
+  };
+
+  if (Array.isArray(data)) {
+    return data.map(transformTag);
   }
 
   if (data && typeof data === 'object') {
-    return {
-      ...data,
-      imageUrl: normalizeImageUrl(data.imageUrl)
-    };
+    return transformTag(data);
   }
 
   return data;

@@ -186,24 +186,11 @@ const Books = () => {
    */
   const handleEditBook = async (book) => {
     try {
-      // Fetch latest book data from API
+      // Fetch latest book data from API (includes imageUrl from processBookData)
       const latestBook = await booksApi.getBookById(book.id);
 
-      // Transform backend data to form format
-      const formData = {
-        id: latestBook.id,
-        title: latestBook.title,
-        authorId: latestBook.author?.id || null,
-        categoryId: latestBook.tags?.find(t => t.type === 'CATEGORY')?.id || null,
-        etiquetteId: latestBook.tags?.find(t => t.type === 'ETIQUETTE')?.id || null,
-        language: latestBook.language || '',
-        price: latestBook.price || '',
-        stockQuantity: latestBook.stockQuantity || '',
-        description: latestBook.description || '',
-        coverImage: null, // Don't prefill image (keep existing on backend)
-      };
-
-      setEditingBook(formData);
+      // Pass entire book object to form (like categories and authors do)
+      setEditingBook(latestBook);
       setIsFormOpen(true);
     } catch (err) {
       console.error('Error fetching book for edit:', err);

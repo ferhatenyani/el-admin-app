@@ -65,10 +65,13 @@ export const deleteCategory = async (id) => {
  * Get category image URL
  * @param {number} id - The category ID
  * @param {boolean} placeholder - Return placeholder if image not found (default: false)
- * @returns {string} Category image URL
+ * @returns {string} Category image URL with cache-busting timestamp
  */
 export const getCategoryImageUrl = (id, placeholder = false) => {
-  return `${API_BASE_URL}/api/tags/${id}/image${placeholder ? '?placeholder=true' : ''}`;
+  const baseUrl = `${API_BASE_URL}/api/tags/${id}/image`;
+  const separator = placeholder ? '&' : '?';
+  const placeholderParam = placeholder ? '?placeholder=true' : '';
+  return `${baseUrl}${placeholderParam}${separator}t=${Date.now()}`;
 };
 
 export default {
