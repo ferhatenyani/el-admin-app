@@ -34,10 +34,11 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
   }, [section, isOpen]);
 
   // Filter books based on search query
-  const filteredBooks = (availableBooks || []).filter(book =>
-    book?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book?.author?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredBooks = (availableBooks || []).filter(book => {
+    const authorName = typeof book?.author === 'string' ? book.author : book?.author?.name || '';
+    return book?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      authorName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const handleToggleBook = (book) => {
     const isSelected = selectedBooks.some(b => b.id === book.id);
@@ -333,8 +334,8 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
                                   <h4 className="font-semibold text-xs text-gray-800 truncate mb-0.5" title={book.title}>
                                     {book.title}
                                   </h4>
-                                  <p className="text-xs text-gray-500 truncate mb-1" title={book.author}>
-                                    {book.author}
+                                  <p className="text-xs text-gray-500 truncate mb-1" title={book.author?.name || book.author}>
+                                    {book.author?.name || book.author}
                                   </p>
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="inline-block px-1.5 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded">
