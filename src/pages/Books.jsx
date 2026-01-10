@@ -195,11 +195,11 @@ const Books = () => {
         title: latestBook.title,
         authorId: latestBook.author?.id || null,
         categoryId: latestBook.tags?.find(t => t.type === 'CATEGORY')?.id || null,
+        etiquetteId: latestBook.tags?.find(t => t.type === 'ETIQUETTE')?.id || null,
         language: latestBook.language || '',
         price: latestBook.price || '',
         stockQuantity: latestBook.stockQuantity || '',
         description: latestBook.description || '',
-        active: latestBook.active !== false,
         coverImage: null, // Don't prefill image (keep existing on backend)
       };
 
@@ -277,7 +277,7 @@ const Books = () => {
    * Handle book form submission (create or update)
    * Uses differential update - only updates the changed item
    */
-  const handleSubmitForm = async (bookData, coverImage = null, categoryId = null) => {
+  const handleSubmitForm = async (bookData, coverImage = null, categoryId = null, etiquetteId = null) => {
     try {
       let savedBook;
 
@@ -285,9 +285,14 @@ const Books = () => {
         // Update existing book
         savedBook = await booksApi.updateBook(editingBook.id, bookData, coverImage);
 
-        // Update category tag if changed
-        if (categoryId) {
-          await booksApi.addTagsToBook(savedBook.id, [categoryId]);
+        // Collect tag IDs to add
+        const tagIdsToAdd = [];
+        if (categoryId) tagIdsToAdd.push(categoryId);
+        if (etiquetteId) tagIdsToAdd.push(etiquetteId);
+
+        // Add tags if any are selected
+        if (tagIdsToAdd.length > 0) {
+          await booksApi.addTagsToBook(savedBook.id, tagIdsToAdd);
           // Refetch to get updated tags
           savedBook = await booksApi.getBookById(savedBook.id);
         }
@@ -299,9 +304,14 @@ const Books = () => {
         // Create new book
         savedBook = await booksApi.createBook(bookData, coverImage);
 
-        // Assign category tag if selected
-        if (categoryId) {
-          await booksApi.addTagsToBook(savedBook.id, [categoryId]);
+        // Collect tag IDs to add
+        const tagIdsToAdd = [];
+        if (categoryId) tagIdsToAdd.push(categoryId);
+        if (etiquetteId) tagIdsToAdd.push(etiquetteId);
+
+        // Add tags if any are selected
+        if (tagIdsToAdd.length > 0) {
+          await booksApi.addTagsToBook(savedBook.id, tagIdsToAdd);
           // Refetch to get updated tags
           savedBook = await booksApi.getBookById(savedBook.id);
         }

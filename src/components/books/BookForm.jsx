@@ -7,6 +7,7 @@ import CustomSelect from '../common/CustomSelect';
 import useScrollLock from '../../hooks/useScrollLock';
 import * as authorsApi from '../../services/authorsApi';
 import * as tagsApi from '../../services/tagsApi';
+import * as etiquettesApi from '../../services/etiquettesApi';
 import { getBookCoverUrl } from '../../services/booksApi';
 
 // Language code mapping: Backend codes ↔ Form values
@@ -31,12 +32,13 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     price: '',
     stockQuantity: '',
     description: '',
-    active: true,
+    etiquetteId: null,
     coverImage: null,
   });
 
   const [authors, setAuthors] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [etiquettes, setEtiquettes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -52,16 +54,18 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
       setError(null);
 
       try {
-        const [authorsRes, categoriesRes] = await Promise.all([
+        const [authorsRes, categoriesRes, etiquettesRes] = await Promise.all([
           authorsApi.getAuthors({ page: 0, size: 100 }),
-          tagsApi.getTagsByType('CATEGORY', { page: 0, size: 100 })
+          tagsApi.getTagsByType('CATEGORY', { page: 0, size: 100 }),
+          etiquettesApi.getEtiquettes({ page: 0, size: 100 })
         ]);
 
         setAuthors(authorsRes.content || authorsRes);
         setCategories(categoriesRes.content || categoriesRes);
+        setEtiquettes(etiquettesRes.content || etiquettesRes);
       } catch (err) {
         console.error('Error fetching form data:', err);
-        setError('Failed to load authors and categories');
+        setError('Failed to load authors, categories, and etiquettes');
       } finally {
         setLoading(false);
       }
@@ -94,9 +98,12 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     { value: 'ARABIC', label: 'Arabe' }
   ];
 
-  const statusOptions = [
-    { value: true, label: 'Actif' },
-    { value: false, label: 'Inactif' }
+  const etiquetteOptions = [
+    { value: '', label: 'Sélectionnez une étiquette' },
+    ...etiquettes.map(etiquette => ({
+      value: etiquette.id,
+      label: etiquette.nameFr || etiquette.nameEn
+    }))
   ];
 
   useEffect(() => {
@@ -119,7 +126,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         price: '',
         stockQuantity: '',
         description: '',
-        active: true,
+        etiquetteId: null,
         coverImage: null,
       });
     }
@@ -142,7 +149,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
       price: parseFloat(formData.price),
       stockQuantity: parseInt(formData.stockQuantity, 10),
       language: backendLanguage,
-      active: formData.active,
+      active: true,
       description: formData.description || '',
     };
 
@@ -151,8 +158,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
       bookData.author = { id: formData.authorId };
     }
 
-    // Pass book data, cover image, and categoryId separately
-    onSubmit(bookData, formData.coverImage, formData.categoryId);
+    // Pass book data, cover image, categoryId, and etiquetteId separately
+    onSubmit(bookData, formData.coverImage, formData.categoryId, formData.etiquetteId);
   };
 
   const modalContent = (
@@ -292,16 +299,16 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       />
                     </div>
 
-                    {/* Status */}
+                    {/* Etiquette */}
                     <div>
                       <label className="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">
-                        Statut *
+                        Étiquette
                       </label>
                       <CustomSelect
-                        value={formData.active}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, active: value }))}
-                        options={statusOptions}
-                        placeholder="Sélectionnez un statut"
+                        value={formData.etiquetteId}
+                        onChange={(value) => setFormData((prev) => ({ ...prev, etiquetteId: value }))}
+                        options={etiquetteOptions}
+                        placeholder="Sélectionnez une étiquette"
                       />
                     </div>
 
