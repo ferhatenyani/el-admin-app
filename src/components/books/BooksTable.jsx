@@ -47,7 +47,7 @@ const BooksTable = ({
 
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
-    { value: 'active', label: 'Actif' },
+    { value: 'active', label: 'Disponible' },
     { value: 'out_of_stock', label: 'Rupture de stock' }
   ];
 
@@ -250,7 +250,7 @@ const BooksTable = ({
                       {displayBooks.map((book) => {
                         // Determine status based on stock quantity
                         const status = book.stockQuantity === 0 ? 'out_of_stock' : 'active';
-                        const statusLabel = status === 'active' ? 'Actif' : 'Rupture de stock';
+                        const statusLabel = status === 'active' ? 'Disponible' : 'Rupture de stock';
 
                         return (
                           <motion.tr
@@ -338,7 +338,7 @@ const BooksTable = ({
                 {displayBooks.map((book) => {
                   // Determine status based on stock quantity
                   const status = book.stockQuantity === 0 ? 'out_of_stock' : 'active';
-                  const statusLabel = status === 'active' ? 'Actif' : 'Rupture';
+                  const statusLabel = status === 'active' ? 'Disponible' : 'Rupture';
 
                   return (
                     <motion.div
