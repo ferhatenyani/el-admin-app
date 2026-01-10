@@ -1,5 +1,5 @@
 # Oussama's tests produced these tasks
-Better search (dont refresh the page when searching bezzaf zzay):
+Better search (dont refresh the page when searching bezzaf zzay): done
 ---
 Book - Books table author unknown:
 ---
@@ -7,7 +7,7 @@ Book - Remove Statut (active inactive) for books (creation):
 ---
 Books - Statut active/rupture de stock becomes Disponibilite disponible/rupture de stock:
 ---
-Marketting - Make Marketting searches use backend instead of static search:
+Marketting - Make Marketting searches use backend instead of static search: done
 ---
 Books - validators on create book:
 ---

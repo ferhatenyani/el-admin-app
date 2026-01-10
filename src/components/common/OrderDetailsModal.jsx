@@ -23,30 +23,35 @@ const statusConfig = {
     text: 'text-amber-700',
     border: 'border-amber-200',
     dot: 'bg-amber-400',
+    label: 'En attente',
   },
   confirmed: {
     bg: 'bg-indigo-50',
     text: 'text-indigo-700',
     border: 'border-indigo-200',
     dot: 'bg-indigo-400',
+    label: 'Confirmé',
   },
   shipped: {
     bg: 'bg-blue-50',
     text: 'text-blue-700',
     border: 'border-blue-200',
     dot: 'bg-blue-400',
+    label: 'Expédié',
   },
   delivered: {
     bg: 'bg-emerald-50',
     text: 'text-emerald-700',
     border: 'border-emerald-200',
     dot: 'bg-emerald-400',
+    label: 'Livré',
   },
   cancelled: {
     bg: 'bg-rose-50',
     text: 'text-rose-700',
     border: 'border-rose-200',
     dot: 'bg-rose-400',
+    label: 'Annulé',
   },
 };
 
@@ -302,7 +307,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                       `}>
                         <span className={`w-2.5 h-2.5 rounded-full ${statusConfig[order.status]?.dot} animate-pulse`} />
                         <span className="text-sm font-bold capitalize">
-                          {order.status}
+                          {statusConfig[order.status]?.label || order.status}
                         </span>
                       </div>
                     </div>
