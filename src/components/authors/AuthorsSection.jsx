@@ -243,7 +243,8 @@ const AuthorsSection = memo(() => {
                   </div>
                 ) : authors.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
+                    {/* Centered flexbox container */}
+                    <div className="flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-5 lg:gap-6">
                       {paginatedAuthors.map((author, index) => (
                         <AuthorCard
                           key={author.id}
