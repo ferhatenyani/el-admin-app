@@ -470,6 +470,20 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       <UploadImageInput
                         value={formData.coverImage}
                         onChange={(file) => {
+                          if (file) {
+                            // Validate file type
+                            if (!file.type.startsWith('image/')) {
+                              setErrors((prev) => ({ ...prev, coverImage: 'Veuillez sélectionner un fichier image valide' }));
+                              return;
+                            }
+
+                            // Validate file size (max 5MB)
+                            if (file.size > 5 * 1024 * 1024) {
+                              setErrors((prev) => ({ ...prev, coverImage: 'La taille de l\'image doit être inférieure à 5MB' }));
+                              return;
+                            }
+                          }
+
                           setFormData((prev) => ({ ...prev, coverImage: file }));
                           if (errors.coverImage) {
                             setErrors((prev) => ({ ...prev, coverImage: '' }));

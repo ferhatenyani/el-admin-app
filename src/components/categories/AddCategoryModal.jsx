@@ -179,7 +179,26 @@ const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => 
                     </label>
                     <UploadImageInput
                       value={formData.imageUrl}
-                      onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
+                      onChange={(file) => {
+                        if (file) {
+                          // Validate file type
+                          if (!file.type.startsWith('image/')) {
+                            setErrors((prev) => ({ ...prev, imageUrl: 'Veuillez sélectionner un fichier image valide' }));
+                            return;
+                          }
+
+                          // Validate file size (max 5MB)
+                          if (file.size > 5 * 1024 * 1024) {
+                            setErrors((prev) => ({ ...prev, imageUrl: 'La taille de l\'image doit être inférieure à 5MB' }));
+                            return;
+                          }
+                        }
+
+                        setFormData((prev) => ({ ...prev, imageUrl: file }));
+                        if (errors.imageUrl) {
+                          setErrors((prev) => ({ ...prev, imageUrl: '' }));
+                        }
+                      }}
                       label="Télécharger l'image de la catégorie"
                       existingImageUrl={initialData?.imageUrl}
                       aspectRatio="horizontal"
@@ -187,6 +206,15 @@ const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => 
                     <p className="mt-2 text-xs text-gray-500">
                       Téléchargez une image ou fournissez une URL pour cette catégorie
                     </p>
+                    {errors.imageUrl && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-1 text-sm text-red-600"
+                      >
+                        {errors.imageUrl}
+                      </motion.p>
+                    )}
                   </div>
                 </div>
 
