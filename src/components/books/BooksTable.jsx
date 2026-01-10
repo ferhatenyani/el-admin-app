@@ -73,7 +73,7 @@ const BooksTable = ({
   const totalCount = pagination?.totalElements || books.length;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
       {/* Barre d'en-tête avec gradient */}
       <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-6">
@@ -212,7 +212,7 @@ const BooksTable = ({
 
             {/* Desktop table */}
             {!loading && displayBooks.length > 0 && (
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto overflow-y-hidden">
                 <div className="min-w-[800px]">
                   <table className="w-full">
                     <thead className="bg-gray-50">

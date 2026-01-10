@@ -37,7 +37,7 @@ const UsersTable = ({
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-200">
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Tous les utilisateurs</h2>
 
@@ -87,7 +87,7 @@ const UsersTable = ({
 
       {/* Desktop table */}
       {!loading && (
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-hidden">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
