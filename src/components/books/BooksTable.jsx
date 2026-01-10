@@ -62,6 +62,12 @@ const BooksTable = ({
     setIsExpanded(!isExpanded);
   };
 
+  const handleFilterClick = () => {
+    if (!isExpanded) {
+      setIsExpanded(true);
+    }
+  };
+
   // Use server-side pagination if provided, otherwise show all books
   const displayBooks = books || [];
   const totalCount = pagination?.totalElements || books.length;
@@ -154,6 +160,7 @@ const BooksTable = ({
                 onChange={onStatusFilterChange}
                 options={statusOptions}
                 placeholder="Statuts"
+                onOpen={handleFilterClick}
               />
             </div>
 
@@ -163,6 +170,7 @@ const BooksTable = ({
                 onChange={onSortChange}
                 options={sortOptions}
                 placeholder="Trier"
+                onOpen={handleFilterClick}
               />
             </div>
           </div>

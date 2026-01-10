@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, X } from 'lucide-react';
 
-const CustomSelect = ({ value, onChange, options, placeholder = "Select option" }) => {
+const CustomSelect = ({ value, onChange, options, placeholder = "Select option", onOpen }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -30,7 +30,12 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option" 
         className={`flex items-center bg-white rounded-lg border-2 transition-all duration-200 cursor-pointer ${
           isOpen ? 'border-blue-500 shadow-md' : 'border-gray-300 hover:border-gray-400'
         }`}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!isOpen && onOpen) {
+            onOpen();
+          }
+          setIsOpen(!isOpen);
+        }}
       >
         <div className="flex items-center flex-1 h-11 px-4 overflow-hidden">
           <span className={`text-sm truncate ${selectedOption ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
@@ -41,6 +46,9 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option" 
           type="button"
           onClick={(e) => {
             e.stopPropagation();
+            if (!isOpen && onOpen) {
+              onOpen();
+            }
             setIsOpen(!isOpen);
           }}
           className="h-11 px-3 hover:bg-gray-100 rounded-r-lg transition-colors flex items-center flex-shrink-0"
