@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Trash2, Edit2, User, MoreVertical } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * AuthorCard Component
@@ -9,6 +9,24 @@ import { useState } from 'react';
  */
 const AuthorCard = ({ author, onDelete, onEdit, index = 0 }) => {
   const [showActions, setShowActions] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowActions(false);
+      }
+    };
+
+    if (showActions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showActions]);
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -47,7 +65,7 @@ const AuthorCard = ({ author, onDelete, onEdit, index = 0 }) => {
           </div>
 
           {/* Discreet action menu button */}
-          <div className="absolute -top-3 -right-20">
+          <div className="absolute -top-3 -right-20" ref={dropdownRef}>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}

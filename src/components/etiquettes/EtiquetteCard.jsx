@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Trash2, Edit2, Tag, MoreVertical } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * EtiquetteCard Component
@@ -9,6 +9,24 @@ import { useState } from 'react';
  */
 const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0 }) => {
   const [showActions, setShowActions] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowActions(false);
+      }
+    };
+
+    if (showActions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showActions]);
 
   // Ensure color is a valid hex value, fallback to default if not
   const displayColor = etiquette.colorHex || '#FFFFFF';
@@ -65,7 +83,7 @@ const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0 }) => {
         </div>
 
         {/* Discreet action menu button */}
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}

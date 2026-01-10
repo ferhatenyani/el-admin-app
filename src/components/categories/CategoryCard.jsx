@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Trash2, Edit2, Languages, MoreVertical, FolderOpen } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * CategoryCard Component
@@ -11,6 +11,24 @@ const CategoryCard = ({ category, onDelete, onEdit, index = 0, getCategoryImageU
   const [showActions, setShowActions] = useState(false);
   const [failedImage, setFailedImage] = useState(false);
   const [triedPlaceholder, setTriedPlaceholder] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowActions(false);
+      }
+    };
+
+    if (showActions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showActions]);
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -61,7 +79,7 @@ const CategoryCard = ({ category, onDelete, onEdit, index = 0, getCategoryImageU
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* Discreet action menu button */}
-        <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
+        <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2" ref={dropdownRef}>
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
