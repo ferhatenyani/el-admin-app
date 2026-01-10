@@ -5,7 +5,9 @@ import CategoriesSection from '../components/categories/CategoriesSection';
 import EtiquettesSection from '../components/etiquettes/EtiquettesSection';
 import AuthorsSection from '../components/authors/AuthorsSection';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
+import ToastContainer from '../components/common/Toast';
 import { useDebounce } from '../hooks/useDebounce';
+import { useToast } from '../hooks/useToast';
 import * as booksApi from '../services/booksApi';
 
 const Books = () => {
@@ -27,6 +29,9 @@ const Books = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState(null);
+
+  // Toast notifications
+  const { toasts, removeToast, success, error: showError } = useToast();
 
   // Refs for request cancellation
   const abortControllerRef = useRef(null);
@@ -202,6 +207,8 @@ const Books = () => {
       setIsFormOpen(true);
     } catch (err) {
       console.error('Error fetching book for edit:', err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
+      showError(errorMessage, 'Erreur lors du chargement');
       setError('Failed to load book details. Please try again.');
     }
   };
@@ -246,8 +253,12 @@ const Books = () => {
         // If last item on first page, refetch to get accurate count
         fetchBooks();
       }
+
+      success('Le livre a été supprimé avec succès');
     } catch (err) {
       console.error('Error deleting book:', err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
+      showError(errorMessage, 'Erreur lors de la suppression');
       setError(err.response?.data?.message || 'Failed to delete book. Please try again.');
       // Revert optimistic update by refetching
       fetchBooks();
@@ -283,6 +294,7 @@ const Books = () => {
 
         // Differential update - replace only the updated book
         setBooks(books.map(b => b.id === savedBook.id ? savedBook : b));
+        success('Le livre a été mis à jour avec succès');
       } else {
         // Create new book
         savedBook = await booksApi.createBook(bookData, coverImage);
@@ -302,12 +314,15 @@ const Books = () => {
           ...prev,
           totalElements: prev.totalElements + 1,
         }));
+        success('Le livre a été créé avec succès');
       }
 
       setIsFormOpen(false);
       setEditingBook(null);
     } catch (err) {
       console.error('Error saving book:', err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
+      showError(errorMessage, editingBook ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
       throw err; // Let form handle error display
     }
   };
@@ -417,6 +432,8 @@ const Books = () => {
         onCancel={cancelDeleteBook}
         itemName={bookToDelete?.title || "ce livre"}
       />
+
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

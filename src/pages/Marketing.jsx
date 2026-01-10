@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import BookSectionManager from '../components/marketing/BookSectionManager';
 import PackManager from '../components/marketing/PackManager';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
+import ToastContainer from '../components/common/Toast';
 import { deletePack } from '../services/packsApi';
 import { getBooks } from '../services/booksApi';
 import { deleteMainDisplay } from '../services/mainDisplayApi';
+import { useToast } from '../hooks/useToast';
 
 
 const Marketing = () => {
@@ -16,6 +18,9 @@ const Marketing = () => {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [deleteType, setDeleteType] = useState(null); // 'section' or 'pack'
   const [onDeleteSuccess, setOnDeleteSuccess] = useState(null);
+
+  // Toast notifications
+  const { toasts, removeToast, success, error } = useToast();
 
   // Fetch available books from API on mount (for modals)
   useEffect(() => {
@@ -47,18 +52,21 @@ const Marketing = () => {
       if (deleteType === 'section') {
         // Call API to delete main display section
         await deleteMainDisplay(itemToDelete.id);
+        success('La section a été supprimée avec succès');
       } else if (deleteType === 'pack') {
         // Call API to delete pack
         await deletePack(itemToDelete.id);
+        success('Le pack a été supprimé avec succès');
       }
 
       // Call success callback to refresh the component
       if (onDeleteSuccess) {
         onDeleteSuccess();
       }
-    } catch (error) {
-      console.error('Error deleting item:', error);
-      alert('Une erreur est survenue lors de la suppression. Veuillez réessayer.');
+    } catch (err) {
+      console.error('Error deleting item:', err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
+      error(errorMessage, 'Erreur lors de la suppression');
       return;
     }
 
@@ -111,6 +119,8 @@ const Marketing = () => {
         onCancel={cancelDelete}
         itemName={getItemName()}
       />
+
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };
