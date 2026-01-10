@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Upload, Languages } from 'lucide-react';
+import { X } from 'lucide-react';
 import UploadImageInput from '../common/UploadImageInput';
 import useScrollLock from '../../hooks/useScrollLock';
 
@@ -9,7 +9,7 @@ import useScrollLock from '../../hooks/useScrollLock';
  * AddCategoryModal Component
  * Formulaire modal pour ajouter une nouvelle catégorie avec noms anglais/français et image
  */
-const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
+const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null, getCategoryImageUrl }) => {
   const [formData, setFormData] = useState({
     nameEn: '',
     nameFr: '',
@@ -181,7 +181,8 @@ const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => 
                       value={formData.imageUrl}
                       onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
                       label="Télécharger l'image de la catégorie"
-                      existingImageUrl={initialData?.imageUrl}
+                      existingImageUrl={initialData?.id ? getCategoryImageUrl(initialData.id) : null}
+                      aspectRatio="horizontal"
                     />
                     <p className="mt-2 text-xs text-gray-500">
                       Téléchargez une image ou fournissez une URL pour cette catégorie

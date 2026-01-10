@@ -309,6 +309,7 @@ const CategoriesSection = memo(() => {
         }}
         onSubmit={handleSubmitCategory}
         initialData={editingCategory}
+        getCategoryImageUrl={getCategoryImageUrl}
       />
 
       {/* Modal de confirmation de suppression */}
