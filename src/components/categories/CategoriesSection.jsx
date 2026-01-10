@@ -236,17 +236,16 @@ const CategoriesSection = memo(() => {
                   </div>
                 ) : categories.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-6 2xl:gap-7">
                       {paginatedCategories.map((category, index) => (
-                        <div key={category.id} className="max-w-xs sm:max-w-none mx-auto sm:mx-0 w-full">
-                          <CategoryCard
-                            category={category}
-                            onDelete={handleDeleteCategory}
-                            onEdit={handleEditCategory}
-                            index={index}
-                            getCategoryImageUrl={getCategoryImageUrl}
-                          />
-                        </div>
+                        <CategoryCard
+                          key={category.id}
+                          category={category}
+                          onDelete={handleDeleteCategory}
+                          onEdit={handleEditCategory}
+                          index={index}
+                          getCategoryImageUrl={getCategoryImageUrl}
+                        />
                       ))}
                     </div>
 
