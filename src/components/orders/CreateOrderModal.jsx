@@ -10,7 +10,6 @@ import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE } fro
 
 // Wilaya options (48 wilayas of Algeria)
 const WILAYA_OPTIONS = [
-  { value: '', label: 'Sélectionnez une wilaya' },
   { value: 'Adrar', label: '01 - Adrar' },
   { value: 'Chlef', label: '02 - Chlef' },
   { value: 'Laghouat', label: '03 - Laghouat' },
@@ -100,7 +99,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
   const [books, setBooks] = useState([]);
   const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -148,13 +147,78 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
         shippingCost: 0,
         orderItems: [],
       });
-      setError(null);
+      setErrors({});
     }
   }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error for this field when user types
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Full name validation
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Le nom complet est requis';
+    } else if (formData.fullName.trim().length < 2) {
+      newErrors.fullName = 'Le nom doit contenir au moins 2 caractères';
+    }
+
+    // Phone validation (Algerian format: 10 digits starting with 0)
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Le numéro de téléphone est requis';
+    } else if (!/^0\d{9}$/.test(formData.phone.trim())) {
+      newErrors.phone = 'Le numéro doit contenir 10 chiffres et commencer par 0 (ex: 0555123456)';
+    }
+
+    // Email validation (optional, but must be valid if provided)
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      newErrors.email = 'Veuillez entrer une adresse email valide';
+    }
+
+    // Wilaya validation
+    if (!formData.wilaya) {
+      newErrors.wilaya = 'La wilaya est requise';
+    }
+
+    // City validation
+    if (!formData.city.trim()) {
+      newErrors.city = 'La ville est requise';
+    }
+
+    // Street address validation (required for home delivery)
+    if (formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && !formData.streetAddress.trim()) {
+      newErrors.streetAddress = 'L\'adresse est requise pour la livraison à domicile';
+    }
+
+    // Order items validation
+    if (formData.orderItems.length === 0) {
+      newErrors.orderItems = 'Au moins un article est requis';
+      return setErrors(newErrors), false;
+    }
+
+    // Validate each order item
+    formData.orderItems.forEach((item, index) => {
+      if (!item.itemId) {
+        const itemTypeName = item.itemType === ORDER_ITEM_TYPE.PACK ? 'pack' : 'livre';
+        newErrors[`orderItem_${index}_itemId`] = `Sélectionnez un ${itemTypeName}`;
+      }
+      if (!item.quantity || item.quantity < 1) {
+        newErrors[`orderItem_${index}_quantity`] = 'Quantité minimale: 1';
+      }
+      if (!item.unitPrice || item.unitPrice <= 0) {
+        newErrors[`orderItem_${index}_unitPrice`] = 'Prix requis';
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleAddOrderItem = () => {
@@ -221,51 +285,9 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError(null);
 
-    // Validation
-    if (!formData.fullName.trim()) {
-      setError('Le nom complet est requis');
+    if (!validateForm()) {
       return;
-    }
-    if (!formData.phone.trim()) {
-      setError('Le numéro de téléphone est requis');
-      return;
-    }
-    if (!formData.wilaya) {
-      setError('La wilaya est requise');
-      return;
-    }
-    if (!formData.city.trim()) {
-      setError('La ville est requise');
-      return;
-    }
-    if (formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && !formData.streetAddress.trim()) {
-      setError('L\'adresse est requise pour la livraison à domicile');
-      return;
-    }
-    if (formData.orderItems.length === 0) {
-      setError('Au moins un article est requis');
-      return;
-    }
-
-    // Validate order items
-    for (let i = 0; i < formData.orderItems.length; i++) {
-      const item = formData.orderItems[i];
-
-      if (!item.itemId) {
-        const itemTypeName = item.itemType === ORDER_ITEM_TYPE.PACK ? 'pack' : 'livre';
-        setError(`Veuillez sélectionner un ${itemTypeName} pour l'article ${i + 1}`);
-        return;
-      }
-      if (!item.quantity || item.quantity < 1) {
-        setError(`La quantité doit être au moins 1 pour l'article ${i + 1}`);
-        return;
-      }
-      if (!item.unitPrice || item.unitPrice <= 0) {
-        setError(`Le prix unitaire doit être supérieur à 0 pour l'article ${i + 1}`);
-        return;
-      }
     }
 
     // Build order data matching backend structure
@@ -336,11 +358,15 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
 
               {/* Scrollable Form Content */}
               <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6">
-                {/* Error Message */}
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                    {error}
-                  </div>
+                {/* Global Error Message (for orderItems) */}
+                {errors.orderItems && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"
+                  >
+                    {errors.orderItems}
+                  </motion.div>
                 )}
 
                 {/* Customer Information Section */}
@@ -359,9 +385,21 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                        required
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+                          errors.fullName
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
+                        }`}
                       />
+                      {errors.fullName && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.fullName}
+                        </motion.p>
+                      )}
                     </div>
 
                     <div>
@@ -374,9 +412,21 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         value={formData.phone}
                         onChange={handleChange}
                         placeholder="0555123456"
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                        required
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+                          errors.phone
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
+                        }`}
                       />
+                      {errors.phone && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.phone}
+                        </motion.p>
+                      )}
                     </div>
 
                     <div>
@@ -388,8 +438,21 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+                          errors.email
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
+                        }`}
                       />
+                      {errors.email && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.email}
+                        </motion.p>
+                      )}
                     </div>
 
                     <div>
@@ -398,10 +461,24 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                       </label>
                       <CustomSelect
                         value={formData.wilaya}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, wilaya: value }))}
+                        onChange={(value) => {
+                          setFormData((prev) => ({ ...prev, wilaya: value }));
+                          if (errors.wilaya) {
+                            setErrors((prev) => ({ ...prev, wilaya: '' }));
+                          }
+                        }}
                         options={WILAYA_OPTIONS}
                         placeholder="Sélectionnez une wilaya"
                       />
+                      {errors.wilaya && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.wilaya}
+                        </motion.p>
+                      )}
                     </div>
 
                     <div>
@@ -413,9 +490,21 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         name="city"
                         value={formData.city}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                        required
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+                          errors.city
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
+                        }`}
                       />
+                      {errors.city && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.city}
+                        </motion.p>
+                      )}
                     </div>
 
                     <div>
@@ -440,9 +529,21 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         name="streetAddress"
                         value={formData.streetAddress}
                         onChange={handleChange}
-                        required={formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+                          errors.streetAddress
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
+                        }`}
                       />
+                      {errors.streetAddress && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.streetAddress}
+                        </motion.p>
+                      )}
                     </div>
                   </div>
                 </div>

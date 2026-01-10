@@ -40,7 +40,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
   const [categories, setCategories] = useState([]);
   const [etiquettes, setEtiquettes] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -75,36 +75,26 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
   }, [isOpen]);
 
   // Build dropdown options from API data
-  const authorOptions = [
-    { value: '', label: 'Sélectionnez un auteur' },
-    ...authors.map(author => ({
-      value: author.id,
-      label: author.name
-    }))
-  ];
+  const authorOptions = authors.map(author => ({
+    value: author.id,
+    label: author.name
+  }));
 
-  const categoryOptions = [
-    { value: '', label: 'Sélectionnez une catégorie' },
-    ...categories.map(category => ({
-      value: category.id,
-      label: category.nameFr
-    }))
-  ];
+  const categoryOptions = categories.map(category => ({
+    value: category.id,
+    label: category.nameFr
+  }));
 
   const languageOptions = [
-    { value: '', label: 'Sélectionnez une langue' },
     { value: 'FRENCH', label: 'Français' },
     { value: 'ENGLISH', label: 'Anglais' },
     { value: 'ARABIC', label: 'Arabe' }
   ];
 
-  const etiquetteOptions = [
-    { value: '', label: 'Sélectionnez une étiquette' },
-    ...etiquettes.map(etiquette => ({
-      value: etiquette.id,
-      label: etiquette.nameFr || etiquette.nameEn
-    }))
-  ];
+  const etiquetteOptions = etiquettes.map(etiquette => ({
+    value: etiquette.id,
+    label: etiquette.nameFr || etiquette.nameEn
+  }));
 
   useEffect(() => {
     if (initialData) {
@@ -140,27 +130,84 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         coverImage: null,
       });
     }
+    setErrors({});
   }, [initialData, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error for this field when user types
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Title validation
+    if (!formData.title.trim()) {
+      newErrors.title = 'Le titre est requis';
+    } else if (formData.title.trim().length < 2) {
+      newErrors.title = 'Le titre doit contenir au moins 2 caractères';
+    }
+
+    // Author validation
+    if (!formData.authorId) {
+      newErrors.authorId = 'Veuillez sélectionner un auteur';
+    }
+
+    // Category validation
+    if (!formData.categoryId) {
+      newErrors.categoryId = 'Veuillez sélectionner une catégorie';
+    }
+
+    // Language validation
+    if (!formData.language) {
+      newErrors.language = 'Veuillez sélectionner une langue';
+    }
+
+    // Price validation
+    if (!formData.price) {
+      newErrors.price = 'Le prix est requis';
+    } else if (parseFloat(formData.price) <= 0) {
+      newErrors.price = 'Le prix doit être supérieur à 0';
+    }
+
+    // Stock validation
+    if (formData.stockQuantity === '' || formData.stockQuantity === null) {
+      newErrors.stockQuantity = 'La quantité en stock est requise';
+    } else if (parseInt(formData.stockQuantity, 10) < 0) {
+      newErrors.stockQuantity = 'La quantité ne peut pas être négative';
+    }
+
+    // Cover image validation (required)
+    if (!formData.coverImage && !initialData?.imageUrl) {
+      newErrors.coverImage = 'Veuillez télécharger une image de couverture';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
 
     // Convert form language value back to backend code
     const backendLanguage = LANGUAGE_FORM_TO_CODE[formData.language] || formData.language;
 
     // Build book data object matching backend structure
     const bookData = {
-      title: formData.title,
+      title: formData.title.trim(),
       price: parseFloat(formData.price),
       stockQuantity: parseInt(formData.stockQuantity, 10),
       language: backendLanguage,
       active: true,
-      description: formData.description || '',
+      description: formData.description.trim() || '',
     };
 
     // Add author reference if selected
@@ -228,10 +275,22 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         name="title"
                         value={formData.title}
                         onChange={handleChange}
-                        required
                         placeholder="Entrez le titre du livre"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                          errors.title
+                            ? 'border-red-300 focus:ring-red-500'
+                            : 'border-gray-300 focus:ring-blue-500'
+                        }`}
                       />
+                      {errors.title && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.title}
+                        </motion.p>
+                      )}
                     </div>
 
                     {/* Author */}
@@ -241,11 +300,25 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       </label>
                       <CustomSelect
                         value={formData.authorId}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, authorId: value }))}
+                        onChange={(value) => {
+                          setFormData((prev) => ({ ...prev, authorId: value }));
+                          if (errors.authorId) {
+                            setErrors((prev) => ({ ...prev, authorId: '' }));
+                          }
+                        }}
                         options={authorOptions}
                         placeholder="Sélectionnez un auteur"
-                        required
+                        error={errors.authorId}
                       />
+                      {errors.authorId && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.authorId}
+                        </motion.p>
+                      )}
                     </div>
 
                     {/* Category */}
@@ -255,11 +328,25 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       </label>
                       <CustomSelect
                         value={formData.categoryId}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, categoryId: value }))}
+                        onChange={(value) => {
+                          setFormData((prev) => ({ ...prev, categoryId: value }));
+                          if (errors.categoryId) {
+                            setErrors((prev) => ({ ...prev, categoryId: '' }));
+                          }
+                        }}
                         options={categoryOptions}
                         placeholder="Sélectionnez une catégorie"
-                        required
+                        error={errors.categoryId}
                       />
+                      {errors.categoryId && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.categoryId}
+                        </motion.p>
+                      )}
                     </div>
 
                     {/* Language */}
@@ -269,11 +356,25 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       </label>
                       <CustomSelect
                         value={formData.language}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, language: value }))}
+                        onChange={(value) => {
+                          setFormData((prev) => ({ ...prev, language: value }));
+                          if (errors.language) {
+                            setErrors((prev) => ({ ...prev, language: '' }));
+                          }
+                        }}
                         options={languageOptions}
                         placeholder="Sélectionnez une langue"
-                        required
+                        error={errors.language}
                       />
+                      {errors.language && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.language}
+                        </motion.p>
+                      )}
                     </div>
 
                     {/* Price */}
@@ -287,10 +388,22 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         name="price"
                         value={formData.price}
                         onChange={handleChange}
-                        required
                         placeholder="0.00"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                          errors.price
+                            ? 'border-red-300 focus:ring-red-500'
+                            : 'border-gray-300 focus:ring-blue-500'
+                        }`}
                       />
+                      {errors.price && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.price}
+                        </motion.p>
+                      )}
                     </div>
 
                     {/* Stock */}
@@ -303,10 +416,22 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         name="stockQuantity"
                         value={formData.stockQuantity}
                         onChange={handleChange}
-                        required
                         placeholder="0"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                          errors.stockQuantity
+                            ? 'border-red-300 focus:ring-red-500'
+                            : 'border-gray-300 focus:ring-blue-500'
+                        }`}
                       />
+                      {errors.stockQuantity && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.stockQuantity}
+                        </motion.p>
+                      )}
                     </div>
 
                     {/* Etiquette */}
@@ -340,13 +465,27 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                     {/* Cover Image */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">
-                        Image de couverture
+                        Image de couverture *
                       </label>
                       <UploadImageInput
                         value={formData.coverImage}
-                        onChange={(file) => setFormData((prev) => ({ ...prev, coverImage: file }))}
+                        onChange={(file) => {
+                          setFormData((prev) => ({ ...prev, coverImage: file }));
+                          if (errors.coverImage) {
+                            setErrors((prev) => ({ ...prev, coverImage: '' }));
+                          }
+                        }}
                         existingImageUrl={initialData?.imageUrl}
                       />
+                      {errors.coverImage && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.coverImage}
+                        </motion.p>
+                      )}
                     </div>
                   </div>
                 </div>
