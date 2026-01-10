@@ -82,9 +82,8 @@ const processBookData = (data) => {
     ...book,
     coverImageUrl: normalizeImageUrl(book.coverImageUrl),
     image: normalizeImageUrl(book.coverImageUrl), // Add image field for compatibility
-    author: typeof book.author === 'object' && book.author !== null
-      ? `${book.author.firstName || ''} ${book.author.lastName || ''}`.trim()
-      : book.author || 'Unknown Author',
+    // Author already has 'name' property from backend, keep as-is
+    author: book.author || null,
   });
 
   if (Array.isArray(data)) {
