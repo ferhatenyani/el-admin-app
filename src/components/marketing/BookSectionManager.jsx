@@ -28,6 +28,13 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
     setIsExpanded(!isExpanded);
   };
 
+  // Auto-expand when search query is present
+  useEffect(() => {
+    if (searchQuery && searchQuery.trim() !== '') {
+      setIsExpanded(true);
+    }
+  }, [searchQuery]);
+
   // Debounce search query to reduce API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
