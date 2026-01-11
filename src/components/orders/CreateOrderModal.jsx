@@ -110,7 +110,6 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       if (!isOpen) return;
 
       setLoading(true);
-      setError(null);
 
       try {
         const [booksResponse, packsResponse] = await Promise.all([
@@ -121,7 +120,6 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
         setPacks(packsResponse.content || packsResponse);
       } catch (err) {
         console.error('Error fetching books and packs:', err);
-        setError('Failed to load books and packs');
       } finally {
         setLoading(false);
       }
