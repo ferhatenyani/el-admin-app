@@ -41,6 +41,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
   const [etiquettes, setEtiquettes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [error, setError] = useState(null);
   const [imageRemoved, setImageRemoved] = useState(false);
 
   // Lock background scroll when modal is open

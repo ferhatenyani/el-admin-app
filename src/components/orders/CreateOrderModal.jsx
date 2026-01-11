@@ -588,7 +588,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         onChange={handleChange}
                         min="0"
                         step="0.01"
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 leading-tight"
                       />
                     </div>
                   </div>
@@ -619,8 +619,21 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     <div className="space-y-3 sm:space-y-4">
                       {formData.orderItems.map((item, index) => (
                         <div key={index} className="p-4 sm:p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-gray-200 hover:border-blue-300 transition-all duration-200">
-                          <div className="flex items-start gap-2 sm:gap-4">
-                            <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
+                          {/* Delete Button - Positioned at top right, aligned with first row end on lg+ */}
+                          <div className="flex justify-end mb-2 lg:mb-1">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveOrderItem(index)}
+                              className="p-2 sm:p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110"
+                              title="Supprimer l'article"
+                            >
+                              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-3 sm:space-y-4">
+                            {/* First Row on lg+: Type d'article | Quantité | Prix unitaire (3 equal columns) */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                               {/* Item Type Selection */}
                               <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
@@ -634,84 +647,67 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                                 />
                               </div>
 
-                              {/* Book/Pack Selection + Quantity + Price */}
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {/* Conditional Book or Pack Dropdown */}
-                                <div className="md:col-span-1">
-                                  <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
-                                    {item.itemType === ORDER_ITEM_TYPE.PACK ? 'Pack' : 'Livre'} <span className="text-red-500">*</span>
-                                  </label>
-                                  {item.itemType === ORDER_ITEM_TYPE.BOOK ? (
-                                    <CustomSelect
-                                      value={item.itemId || ''}
-                                      onChange={(value) => handleOrderItemChange(index, 'itemId', value)}
-                                      options={[
-                                        { value: '', label: 'Sélectionnez un livre' },
-                                        ...books.map((book) => ({
-                                          value: book.id,
-                                          label: `${book.title} - ${book.price} DZD`
-                                        }))
-                                      ]}
-                                      placeholder="Sélectionnez un livre"
-                                    />
-                                  ) : (
-                                    <CustomSelect
-                                      value={item.itemId || ''}
-                                      onChange={(value) => handleOrderItemChange(index, 'itemId', value)}
-                                      options={[
-                                        { value: '', label: 'Sélectionnez un pack' },
-                                        ...packs.map((pack) => ({
-                                          value: pack.id,
-                                          label: `${pack.name} - ${pack.price} DZD`
-                                        }))
-                                      ]}
-                                      placeholder="Sélectionnez un pack"
-                                    />
-                                  )}
-                                </div>
+                              {/* Quantity */}
+                              <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                                  Quantité <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) => handleOrderItemChange(index, 'quantity', e.target.value)}
+                                  min="1"
+                                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 leading-tight"
+                                  required
+                                />
+                              </div>
 
-                                {/* Quantity */}
-                                <div>
-                                  <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
-                                    Quantité <span className="text-red-500">*</span>
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={item.quantity}
-                                    onChange={(e) => handleOrderItemChange(index, 'quantity', e.target.value)}
-                                    min="1"
-                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                                    required
-                                  />
-                                </div>
-
-                                {/* Unit Price */}
-                                <div>
-                                  <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
-                                    Prix unitaire (DZD) <span className="text-red-500">*</span>
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={item.unitPrice}
-                                    onChange={(e) => handleOrderItemChange(index, 'unitPrice', e.target.value)}
-                                    min="0"
-                                    step="0.01"
-                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                                    required
-                                  />
-                                </div>
+                              {/* Unit Price */}
+                              <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                                  Prix unitaire (DZD) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="number"
+                                  value={item.unitPrice}
+                                  onChange={(e) => handleOrderItemChange(index, 'unitPrice', e.target.value)}
+                                  min="0"
+                                  step="0.01"
+                                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 leading-tight"
+                                  required
+                                />
                               </div>
                             </div>
 
-                            {/* Delete Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveOrderItem(index)}
-                              className="mt-6 sm:mt-8 p-2 sm:p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110 flex-shrink-0"
-                              title="Supprimer l'article"
-                            >
-                              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                            </button>
+                            {/* Second Row: Book/Pack Selection (full width) */}
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                                {item.itemType === ORDER_ITEM_TYPE.PACK ? 'Pack' : 'Livre'} <span className="text-red-500">*</span>
+                              </label>
+                              {item.itemType === ORDER_ITEM_TYPE.BOOK ? (
+                                <CustomSelect
+                                  value={item.itemId || ''}
+                                  onChange={(value) => handleOrderItemChange(index, 'itemId', value)}
+                                  options={books.map((book) => ({
+                                    value: book.id,
+                                    label: `${book.title} - ${book.price} DZD`
+                                  }))}
+                                  placeholder="Rechercher un livre..."
+                                  alwaysVisibleSearch={true}
+                                />
+                              ) : (
+                                <CustomSelect
+                                  value={item.itemId || ''}
+                                  onChange={(value) => handleOrderItemChange(index, 'itemId', value)}
+                                  options={packs.map((pack) => ({
+                                    value: pack.id,
+                                    label: `${pack.name} - ${pack.price} DZD`
+                                  }))}
+                                  placeholder="Rechercher un pack..."
+                                  alwaysVisibleSearch={true}
+                                />
+                              )}
+                            </div>
                           </div>
 
                           {/* Item Total */}
