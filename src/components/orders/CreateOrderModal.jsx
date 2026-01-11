@@ -467,6 +467,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         }}
                         options={WILAYA_OPTIONS}
                         placeholder="Sélectionnez une wilaya"
+                        alwaysVisibleSearch={true}
                       />
                       {errors.wilaya && (
                         <motion.p

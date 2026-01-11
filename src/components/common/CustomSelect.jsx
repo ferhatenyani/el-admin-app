@@ -5,6 +5,7 @@ import { ChevronDown, X, Search } from 'lucide-react';
 const CustomSelect = ({ value, onChange, options, placeholder = "Select option", onOpen, searchable = false, alwaysVisibleSearch = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
 
@@ -32,9 +33,8 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option",
   const handleSelect = (optionValue) => {
     onChange(optionValue);
     setIsOpen(false);
-    if (!alwaysVisibleSearch) {
-      setSearchQuery('');
-    }
+    setSearchQuery('');
+    setIsTyping(false);
   };
 
   const selectedOption = options.find(opt => opt.value === value);
@@ -56,18 +56,27 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option",
             <input
               ref={searchInputRef}
               type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={isTyping ? searchQuery : (searchQuery || (selectedOption && selectedOption.value !== '' ? selectedOption.label : ''))}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsTyping(true);
+              }}
               onFocus={() => {
                 if (!isOpen && onOpen) {
                   onOpen();
                 }
                 setIsOpen(true);
               }}
+              onBlur={() => {
+                // Reset typing state when input loses focus
+                if (!searchQuery) {
+                  setIsTyping(false);
+                }
+              }}
               placeholder={placeholder}
               className={`w-full pl-9 pr-10 py-3 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
                 isOpen ? 'border-blue-500 focus:ring-blue-500 shadow-md' : 'border-gray-300 focus:ring-blue-500 hover:border-gray-400'
-              }`}
+              } ${selectedOption && selectedOption.value !== '' && !isTyping && searchQuery === '' ? 'text-gray-900 font-medium' : 'text-gray-900'}`}
             />
             <button
               type="button"
@@ -81,13 +90,6 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option",
               />
             </button>
           </div>
-          {selectedOption && selectedOption.value !== '' && searchQuery === '' && (
-            <div className="absolute left-9 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <span className="text-sm text-gray-700 font-medium truncate">
-                {selectedOption.label}
-              </span>
-            </div>
-          )}
         </div>
       ) : (
         // Traditional select mode

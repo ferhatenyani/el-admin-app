@@ -312,6 +312,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         options={authorOptions}
                         placeholder="Sélectionnez un auteur"
                         error={errors.authorId}
+                        alwaysVisibleSearch={true}
                       />
                       {errors.authorId && (
                         <motion.p
@@ -340,6 +341,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         options={categoryOptions}
                         placeholder="Sélectionnez une catégorie"
                         error={errors.categoryId}
+                        alwaysVisibleSearch={true}
                       />
                       {errors.categoryId && (
                         <motion.p
@@ -368,6 +370,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         options={languageOptions}
                         placeholder="Sélectionnez une langue"
                         error={errors.language}
+                        alwaysVisibleSearch={true}
                       />
                       {errors.language && (
                         <motion.p
@@ -447,6 +450,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         onChange={(value) => setFormData((prev) => ({ ...prev, etiquetteId: value }))}
                         options={etiquetteOptions}
                         placeholder="Sélectionnez une étiquette"
+                        alwaysVisibleSearch={true}
                       />
                     </div>
 
