@@ -17,6 +17,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => 
   });
 
   const [errors, setErrors] = useState({});
+  const [imageRemoved, setImageRemoved] = useState(false);
 
   // Verrouiller le défilement de l'arrière-plan lorsque le modal est ouvert
   useScrollLock(isOpen);
@@ -33,6 +34,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => 
       });
     }
     setErrors({});
+    setImageRemoved(false); // Reset image removal state when modal opens/closes
   }, [initialData, isOpen]);
 
   const handleChange = (e) => {
@@ -192,6 +194,12 @@ const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => 
                             setErrors((prev) => ({ ...prev, imageUrl: 'La taille de l\'image doit être inférieure à 5MB' }));
                             return;
                           }
+
+                          // Reset imageRemoved when new file is selected
+                          setImageRemoved(false);
+                        } else {
+                          // Mark image as removed when null is passed
+                          setImageRemoved(true);
                         }
 
                         setFormData((prev) => ({ ...prev, imageUrl: file }));
@@ -200,7 +208,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSubmit, initialData = null }) => 
                         }
                       }}
                       label="Télécharger l'image de la catégorie"
-                      existingImageUrl={initialData?.imageUrl}
+                      existingImageUrl={!imageRemoved ? initialData?.imageUrl : null}
                       aspectRatio="horizontal"
                     />
                     <p className="mt-2 text-xs text-gray-500">

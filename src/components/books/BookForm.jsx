@@ -41,6 +41,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
   const [etiquettes, setEtiquettes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [imageRemoved, setImageRemoved] = useState(false);
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -131,6 +132,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
       });
     }
     setErrors({});
+    setImageRemoved(false); // Reset image removal state when modal opens/closes
   }, [initialData, isOpen]);
 
   const handleChange = (e) => {
@@ -482,6 +484,12 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                               setErrors((prev) => ({ ...prev, coverImage: 'La taille de l\'image doit être inférieure à 5MB' }));
                               return;
                             }
+
+                            // Reset imageRemoved when new file is selected
+                            setImageRemoved(false);
+                          } else {
+                            // Mark image as removed when null is passed
+                            setImageRemoved(true);
                           }
 
                           setFormData((prev) => ({ ...prev, coverImage: file }));
@@ -489,7 +497,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                             setErrors((prev) => ({ ...prev, coverImage: '' }));
                           }
                         }}
-                        existingImageUrl={initialData?.imageUrl}
+                        existingImageUrl={!imageRemoved ? initialData?.imageUrl : null}
                       />
                       {errors.coverImage && (
                         <motion.p

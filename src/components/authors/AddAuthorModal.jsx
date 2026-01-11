@@ -16,6 +16,7 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [imageRemoved, setImageRemoved] = useState(false);
 
   // Verrouiller le défilement de l'arrière-plan lorsque le modal est ouvert
   useScrollLock(isOpen);
@@ -35,6 +36,7 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
       });
     }
     setErrors({});
+    setImageRemoved(false); // Reset image removal state when modal opens/closes
   }, [initialData, isOpen]);
 
   const handleChange = (e) => {
@@ -162,6 +164,12 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                             setErrors((prev) => ({ ...prev, imageUrl: 'La taille de l\'image doit être inférieure à 5MB' }));
                             return;
                           }
+
+                          // Reset imageRemoved when new file is selected
+                          setImageRemoved(false);
+                        } else {
+                          // Mark image as removed when null is passed
+                          setImageRemoved(true);
                         }
 
                         setFormData((prev) => ({ ...prev, imageUrl: file }));
@@ -170,7 +178,7 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                         }
                       }}
                       label="Télécharger l'image de l'auteur"
-                      existingImageUrl={initialData?.imageUrl}
+                      existingImageUrl={!imageRemoved ? initialData?.imageUrl : null}
                     />
                     <p className="mt-2 text-xs text-gray-500">
                       Téléchargez une image ou fournissez une URL pour cet auteur
