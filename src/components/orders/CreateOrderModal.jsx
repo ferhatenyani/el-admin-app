@@ -8,7 +8,7 @@ import * as packsApi from '../../services/packsApi';
 import CustomSelect from '../common/CustomSelect';
 import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE } from '../../services/ordersApi';
 
-// Wilaya options (48 wilayas of Algeria)
+// Wilaya options (69 wilayas and communes of Algeria)
 const WILAYA_OPTIONS = [
   { value: 'Adrar', label: '01 - Adrar' },
   { value: 'Chlef', label: '02 - Chlef' },
@@ -58,6 +58,27 @@ const WILAYA_OPTIONS = [
   { value: 'Aïn Témouchent', label: '46 - Aïn Témouchent' },
   { value: 'Ghardaïa', label: '47 - Ghardaïa' },
   { value: 'Relizane', label: '48 - Relizane' },
+  { value: "El M'Ghair", label: "49 - El M'Ghair" },
+  { value: 'El Meniaa', label: '50 - El Meniaa' },
+  { value: 'Ouled Djellal', label: '51 - Ouled Djellal' },
+  { value: 'Bordj Baji Mokhtar', label: '52 - Bordj Baji Mokhtar' },
+  { value: 'Béni Abbès', label: '53 - Béni Abbès' },
+  { value: 'Timimoun', label: '54 - Timimoun' },
+  { value: 'Touggourt', label: '55 - Touggourt' },
+  { value: 'Djanet', label: '56 - Djanet' },
+  { value: 'In Salah', label: '57 - In Salah' },
+  { value: 'In Guezzam', label: '58 - In Guezzam' },
+  { value: 'Aflou', label: '59 - Aflou' },
+  { value: 'Barika', label: '60 - Barika' },
+  { value: 'El Kantara', label: '61 - El Kantara' },
+  { value: 'Bir El Ater', label: '62 - Bir El Ater' },
+  { value: 'El Aricha', label: '63 - El Aricha' },
+  { value: 'Ksar Chellala', label: '64 - Ksar Chellala' },
+  { value: 'Aïn Oussera', label: '65 - Aïn Oussera' },
+  { value: 'Messaad', label: '66 - Messaad' },
+  { value: 'Ksar El Boukhari', label: '67 - Ksar El Boukhari' },
+  { value: 'Boussaâda', label: '68 - Boussaâda' },
+  { value: 'El Abiodh Sidi Cheikh', label: '69 - El Abiodh Sidi Cheikh' },
 ];
 
 const SHIPPING_PROVIDER_OPTIONS = [
