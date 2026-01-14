@@ -1,6 +1,6 @@
 import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, ChevronDown, ChevronUp, Users, UserCircle, Download } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Users, UserCircle } from 'lucide-react';
 import AuthorCard from './AuthorCard';
 import AddAuthorModal from './AddAuthorModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
@@ -142,12 +142,6 @@ const AuthorsSection = memo(() => {
     setIsExpanded(!isExpanded);
   };
 
-  // Gérer l'export
-  const handleExport = () => {
-    console.log('Export déclenché pour les auteurs');
-    // TODO: Implémenter la logique d'export
-  };
-
   return (
     <div className="space-y-4">
       {/* En-tête de section avec bouton de réduction */}
@@ -158,46 +152,31 @@ const AuthorsSection = memo(() => {
       >
         {/* Barre d'en-tête */}
         <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border-b border-gray-200">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-6">
-            <div className="flex items-center gap-2 sm:gap-4 flex-1 w-full sm:w-auto">
-              {/* Icône et Titre */}
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                <div className="p-2 sm:p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
-                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 flex-wrap">
-                    <span className="truncate">Auteurs</span>
-                    <span className="text-xs sm:text-sm font-normal text-gray-500 flex-shrink-0">
-                      ({authors.length})
-                    </span>
-                  </h2>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5 hidden xs:block">
-                    Gérez les auteurs de vos livres
-                  </p>
-                </div>
+          <div className="flex items-center justify-between gap-2 sm:gap-3 p-2 sm:p-4">
+            {/* Icône et Titre */}
+            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
+              <div className="p-1.5 sm:p-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg shadow-lg flex-shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm sm:text-lg font-bold text-gray-900 flex items-center gap-1 flex-wrap">
+                  <span className="truncate">Auteurs</span>
+                  <span className="text-xs font-normal text-gray-500 flex-shrink-0">
+                    ({authors.length})
+                  </span>
+                </h2>
               </div>
             </div>
 
             {/* Boutons d'action */}
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleExport}
-                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-lg shadow-green-500/30 font-medium transition-all text-xs sm:text-sm"
-              >
-                <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden xs:inline">Exporter</span>
-              </motion.button>
-
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleAddAuthor}
-                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/30 font-medium transition-all text-xs sm:text-sm"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/30 font-medium transition-all text-xs sm:text-sm"
               >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span className="hidden xs:inline">Ajouter</span>
               </motion.button>
 
@@ -205,13 +184,13 @@ const AuthorsSection = memo(() => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleExpand}
-                className="p-2 sm:p-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
+                className="p-1.5 sm:p-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
                 title={isExpanded ? 'Réduire' : 'Développer'}
               >
                 {isExpanded ? (
-                  <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 )}
               </motion.button>
             </div>

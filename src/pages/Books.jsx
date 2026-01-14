@@ -330,15 +330,6 @@ const Books = () => {
     }
   };
 
-  /**
-   * Handle export functionality
-   * TODO: Implement actual export logic
-   */
-  const handleExport = () => {
-    console.log('Export triggered for books');
-    // TODO: Implement export logic
-  };
-
 
   // Error state with retry
   if (error && books.length === 0) {
@@ -394,7 +385,6 @@ const Books = () => {
         statusFilter={statusFilter}
         onStatusFilterChange={handleStatusFilterChange}
         onAddBook={handleAddBook}
-        onExport={handleExport}
         loading={loading || filterLoading}
         pagination={pagination}
         onPageChange={handlePageChange}
