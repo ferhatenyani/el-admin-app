@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Eye, Search } from 'lucide-react';
+import { Eye, Search, Trash2 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import OrderStatusBadge from './OrderStatusBadge';
 import CustomSelect from '../common/CustomSelect';
@@ -8,6 +8,7 @@ import Pagination from '../common/Pagination';
 const OrdersTable = ({
   orders,
   onViewOrder,
+  onDelete,
   sortBy,
   onSortChange,
   statusFilter,
@@ -138,13 +139,20 @@ const OrdersTable = ({
                     <OrderStatusBadge status={order.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button
-                      onClick={() => onViewOrder(order)}
-                      className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Voir
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onViewOrder(order)}
+                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(order)}
+                        className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </motion.tr>
               ))}
@@ -183,13 +191,22 @@ const OrdersTable = ({
                 </div>
               </div>
 
-              <button
-                onClick={() => onViewOrder(order)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                <Eye className="w-4 h-4" />
-                Voir les détails
-              </button>
+              <div className="flex gap-2 pt-2 border-t border-gray-200">
+                <button
+                  onClick={() => onViewOrder(order)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  <Eye className="w-4 h-4" />
+                  Voir
+                </button>
+                <button
+                  onClick={() => onDelete(order)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Supprimer
+                </button>
+              </div>
             </motion.div>
           ))}
         </div>

@@ -181,6 +181,17 @@ export const updateOrderStatus = async (id, status) => {
 };
 
 /**
+ * Soft delete an order (sets active=false or similar)
+ * Only admins can delete orders
+ * @param {number} id - Order ID
+ * @returns {Promise} Success response
+ */
+export const deleteOrder = async (id) => {
+  const response = await api.delete(`/api/orders/${id}`);
+  return response.data;
+};
+
+/**
  * Export all orders to Excel (admin only)
  * @returns {Promise} Blob response containing the Excel file
  */
@@ -231,6 +242,7 @@ export default {
   getOrderById,
   createOrder,
   updateOrder,
+  deleteOrder,
   getCurrentUserOrders,
   updateOrderStatus,
   exportOrders,

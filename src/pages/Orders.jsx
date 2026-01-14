@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import OrdersTable from '../components/orders/OrdersTable';
 import OrderDetailsModal from '../components/common/OrderDetailsModal';
 import CreateOrderModal from '../components/orders/CreateOrderModal';
+import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
 import ToastContainer from '../components/common/Toast';
 import { useDebounce } from '../hooks/useDebounce';
 import { useToast } from '../hooks/useToast';
@@ -25,6 +26,8 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Toast notifications
   const { toasts, removeToast, success, error } = useToast();
@@ -186,6 +189,32 @@ const Orders = () => {
     }
   };
 
+  const handleDelete = (order) => {
+    setOrderToDelete(order);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!orderToDelete) return;
+
+    try {
+      await ordersApi.deleteOrder(orderToDelete.id);
+      setIsDeleteModalOpen(false);
+      setOrderToDelete(null);
+      fetchOrders();
+      success('La commande a été supprimée avec succès');
+    } catch (err) {
+      console.error('Error deleting order:', err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
+      error(errorMessage, 'Erreur lors de la suppression');
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setOrderToDelete(null);
+  };
+
   const handleExport = async () => {
     try {
       const response = await ordersApi.exportOrders();
@@ -263,6 +292,7 @@ const Orders = () => {
       <OrdersTable
         orders={orders}
         onViewOrder={handleViewOrder}
+        onDelete={handleDelete}
         sortBy={sortBy}
         onSortChange={handleSortChange}
         statusFilter={statusFilter}
@@ -286,6 +316,13 @@ const Orders = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateOrder}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        itemName={orderToDelete ? `la commande ${orderToDelete.orderNumber}` : 'cet élément'}
       />
 
       <ToastContainer toasts={toasts} onClose={removeToast} />
