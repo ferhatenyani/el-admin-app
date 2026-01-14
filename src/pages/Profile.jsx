@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, CheckCircle } from 'lucide-react';
+import { Sparkles, CheckCircle, LogOut } from 'lucide-react';
 import ProfileCard from '../components/profile/ProfileCard';
 import EditProfileModal from '../components/profile/EditProfileModal';
 import { getAdminProfile, updateAdminProfile, fetchAdminPictureBlob, changeAdminPassword } from '../services/adminApi';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Profile Page Component
  * Displays and allows editing of admin profile information
  */
 const Profile = () => {
+  const { logout } = useAuth();
   const [admin, setAdmin] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [modalInitialTab, setModalInitialTab] = useState('profile');
@@ -303,54 +305,20 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Section Conseils de Sécurité - Full Width */}
+        {/* Logout Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.25 }}
-          className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-5 sm:p-6"
+          className="mt-8 flex justify-center"
         >
-          <div className="flex items-start gap-3 mb-4">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Sparkles className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-gray-900">Bonnes Pratiques de Sécurité</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Suivez ces recommandations pour garantir la sécurité de votre compte
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-4">
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Photo professionnelle</p>
-                <p className="text-xs text-gray-600 mt-0.5">Utilisez une image claire et professionnelle</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Email à jour</p>
-                <p className="text-xs text-gray-600 mt-0.5">Maintenez votre adresse email actuelle</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Mot de passe fort</p>
-                <p className="text-xs text-gray-600 mt-0.5">Combinez lettres, chiffres et symboles</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Changements réguliers</p>
-                <p className="text-xs text-gray-600 mt-0.5">Renouvelez vos identifiants périodiquement</p>
-              </div>
-            </div>
-          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow-sm hover:shadow-md text-sm sm:text-base font-medium"
+          >
+            <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Déconnexion</span>
+          </button>
         </motion.div>
       </div>
 

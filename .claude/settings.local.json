@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npm run dev:*)",
       "Bash(dir \"C:\\\\Users\\\\MyHomehP\\\\Desktop\\\\projects\\\\EL\\\\api\" /s /b)",
-      "Bash(dir \"c:\\\\Users\\\\MyHomehP\\\\Desktop\\\\projects\\\\EL\\\\el-admin-app\\\\src\\\\components\" /b)"
+      "Bash(dir \"c:\\\\Users\\\\MyHomehP\\\\Desktop\\\\projects\\\\EL\\\\el-admin-app\\\\src\\\\components\" /b)",
+      "Bash(ipconfig:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command \"\\(Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_InterfaceAlias -notlike ''*Loopback*'' -and $_IPAddress -notlike ''169.254.*''}\\).IPAddress\")"
     ]
   }
 }
