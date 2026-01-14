@@ -24,24 +24,24 @@ const UsersTable = ({
   const totalCount = pagination?.totalElements || users.length;
 
   const statusOptions = [
-    { value: 'all', label: 'Tous les statuts' },
+    { value: 'all', label: 'Tous' },
     { value: 'active', label: 'Actif' },
     { value: 'inactive', label: 'Inactif' }
   ];
 
   const sortOptions = [
-    { value: 'createdDate,desc', label: 'Date (récent)' },
-    { value: 'createdDate,asc', label: 'Date (ancien)' },
+    { value: 'createdDate,desc', label: '+ récents' },
+    { value: 'createdDate,asc', label: '+ anciens' },
     { value: 'lastName,asc', label: 'Nom (A-Z)' },
     { value: 'lastName,desc', label: 'Nom (Z-A)' }
   ];
 
   return (
     <div className="bg-white rounded-lg border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Tous les utilisateurs</h2>
+      <div className="p-3 sm:p-6 border-b border-gray-200">
+        <h2 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Tous les utilisateurs</h2>
 
-        <div className="flex flex-col sm:flex-row justify-between gap-3 items-stretch sm:items-center">
+        <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-3 items-stretch sm:items-center">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -53,17 +53,17 @@ const UsersTable = ({
             />
           </div>
 
-          <div className="flex gap-3 sm:ml-auto">
-            <div className="min-w-[140px]">
+          <div className="flex gap-2 sm:gap-3 sm:ml-auto min-w-0">
+            <div className="flex-1 sm:flex-none sm:min-w-[140px] min-w-0">
               <CustomSelect
                 value={statusFilter}
                 onChange={onStatusFilterChange}
                 options={statusOptions}
-                placeholder="Tous les statuts"
+                placeholder="Tous"
               />
             </div>
 
-            <div className="min-w-[160px]">
+            <div className="flex-1 sm:flex-none sm:min-w-[160px] min-w-0">
               <CustomSelect
                 value={sortBy}
                 onChange={onSortChange}

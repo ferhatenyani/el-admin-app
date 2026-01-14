@@ -45,16 +45,16 @@ const BooksTable = ({
   }, [searchQuery]);
 
   const statusOptions = [
-    { value: 'all', label: 'Tous les statuts' },
-    { value: 'available', label: 'Disponible' },
-    { value: 'out_of_stock', label: 'Rupture de stock' }
+    { value: 'all', label: 'Tous' },
+    { value: 'available', label: 'En stock' },
+    { value: 'out_of_stock', label: 'Hors stock' }
   ];
 
   const sortOptions = [
-    { value: 'date_desc', label: 'Plus récent' },
-    { value: 'date_asc', label: 'Plus ancien' },
-    { value: 'title', label: 'Trier par titre' },
-    { value: 'price', label: 'Trier par prix' }
+    { value: 'date_desc', label: '+ récents' },
+    { value: 'date_asc', label: '+ anciens' },
+    { value: 'title', label: 'Par titre' },
+    { value: 'price', label: 'Par prix' }
   ];
 
   const toggleExpand = () => {
@@ -137,8 +137,8 @@ const BooksTable = ({
             />
           </div>
 
-          <div className="flex gap-2 sm:gap-3 sm:ml-auto">
-            <div className="flex-1 sm:flex-none sm:min-w-[140px]">
+          <div className="flex gap-2 sm:gap-3 sm:ml-auto min-w-0">
+            <div className="flex-1 sm:flex-none sm:min-w-[140px] min-w-0">
               <CustomSelect
                 value={statusFilter}
                 onChange={onStatusFilterChange}
@@ -148,7 +148,7 @@ const BooksTable = ({
               />
             </div>
 
-            <div className="flex-1 sm:flex-none sm:min-w-[150px]">
+            <div className="flex-1 sm:flex-none sm:min-w-[150px] min-w-0">
               <CustomSelect
                 value={sortBy}
                 onChange={onSortChange}
