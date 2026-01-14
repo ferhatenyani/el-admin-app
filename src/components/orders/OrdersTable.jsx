@@ -191,20 +191,20 @@ const OrdersTable = ({
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-gray-200">
+              <div className="flex gap-2 pt-3 border-t border-gray-200">
                 <button
                   onClick={() => onViewOrder(order)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  <Eye className="w-4 h-4" />
-                  Voir
+                  <Eye className="w-4 h-4 flex-shrink-0" />
+                  <span>Voir</span>
                 </button>
                 <button
                   onClick={() => onDelete(order)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" />
-                  Supprimer
+                  <Trash2 className="w-4 h-4 flex-shrink-0" />
+                  <span>Supprimer</span>
                 </button>
               </div>
             </motion.div>

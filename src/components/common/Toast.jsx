@@ -40,29 +40,30 @@ const Toast = ({ toast, onClose }) => {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, x: 300, scale: 0.9 }}
       transition={{ duration: 0.1 }}
-      className={`${style.bg} ${style.border} border rounded-lg shadow-lg p-4 mb-3 min-w-[320px] max-w-md`}
+      className={`${style.bg} ${style.border} border rounded-lg shadow-lg p-3 sm:p-4 mb-2 sm:mb-3 w-full min-w-[280px] max-w-[calc(100vw-2rem)] sm:max-w-md`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2 sm:gap-3">
         <div className={`${style.icon} flex-shrink-0 mt-0.5`}>
           {icons[toast.type]}
         </div>
 
         <div className="flex-1 min-w-0">
           {toast.title && (
-            <h3 className={`${style.title} font-semibold text-sm mb-1`}>
+            <h3 className={`${style.title} font-semibold text-xs sm:text-sm mb-0.5 sm:mb-1 break-words`}>
               {toast.title}
             </h3>
           )}
-          <p className={`${style.text} text-sm`}>
+          <p className={`${style.text} text-xs sm:text-sm break-words`}>
             {toast.message}
           </p>
         </div>
 
         <button
           onClick={() => onClose(toast.id)}
-          className={`${style.icon} hover:opacity-70 transition-opacity flex-shrink-0`}
+          className={`${style.icon} hover:opacity-70 transition-opacity flex-shrink-0 p-0.5`}
+          aria-label="Close notification"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
       </div>
     </motion.div>
@@ -71,7 +72,7 @@ const Toast = ({ toast, onClose }) => {
 
 const ToastContainer = ({ toasts, onClose }) => {
   return (
-    <div className="fixed top-4 right-4 z-50 pointer-events-none">
+    <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50 pointer-events-none max-w-[calc(100vw-1rem)] sm:max-w-md">
       <div className="pointer-events-auto">
         <AnimatePresence>
           {toasts.map((toast) => (
