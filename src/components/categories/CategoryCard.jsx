@@ -87,10 +87,10 @@ const CategoryCard = ({ category, onDelete, onEdit, index = 0, getCategoryImageU
               e.stopPropagation();
               setShowActions(!showActions);
             }}
-            className="p-0.5 sm:p-1 bg-white/95 backdrop-blur-sm text-gray-700 rounded-full shadow-md hover:bg-white transition-all duration-200"
+            className="p-1.5 sm:p-2 bg-white/95 backdrop-blur-sm text-gray-700 rounded-full shadow-md hover:bg-white transition-all duration-200"
             title="Actions"
           >
-            <MoreVertical className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+            <MoreVertical className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </motion.button>
 
           {/* Dropdown menu */}

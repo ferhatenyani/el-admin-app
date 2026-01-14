@@ -91,7 +91,7 @@ const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0 }) => {
               e.stopPropagation();
               setShowActions(!showActions);
             }}
-            className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-all duration-200"
+            className="p-2 bg-white/95 backdrop-blur-sm text-gray-700 rounded-full shadow-md hover:bg-white transition-all duration-200"
             title="Actions"
           >
             <MoreVertical className="w-4 h-4" />
