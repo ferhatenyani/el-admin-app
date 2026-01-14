@@ -98,25 +98,25 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
                 {/* Stats Card */}
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Statistiques</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 bg-blue-600 rounded-lg">
-                          <ShoppingBag className="w-5 h-5 text-white" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 sm:p-5 border border-blue-200">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                        <div className="p-1.5 sm:p-2 bg-blue-600 rounded-lg flex-shrink-0">
+                          <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                         </div>
-                        <p className="text-sm font-bold text-blue-700 uppercase tracking-wide">Commandes totales</p>
+                        <p className="text-xs sm:text-sm font-bold text-blue-700 uppercase tracking-wide">Commandes totales</p>
                       </div>
-                      <p className="text-3xl font-extrabold text-blue-900">{user.totalOrders}</p>
+                      <p className="text-2xl sm:text-3xl font-extrabold text-blue-900">{user.totalOrders}</p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-5 border border-emerald-200">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 bg-emerald-600 rounded-lg">
-                          <DollarSign className="w-5 h-5 text-white" />
+                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 sm:p-5 border border-emerald-200">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                        <div className="p-1.5 sm:p-2 bg-emerald-600 rounded-lg flex-shrink-0">
+                          <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                         </div>
-                        <p className="text-sm font-bold text-emerald-700 uppercase tracking-wide">Total dépensé</p>
+                        <p className="text-xs sm:text-sm font-bold text-emerald-700 uppercase tracking-wide">Total dépensé</p>
                       </div>
-                      <p className="text-3xl font-extrabold text-emerald-900">{formatCurrency(user.totalSpent)}</p>
+                      <p className="text-2xl sm:text-3xl font-extrabold text-emerald-900">{formatCurrency(user.totalSpent)}</p>
                     </div>
                   </div>
                 </div>
