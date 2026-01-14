@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { getBookCoverUrl } from '../../services/booksApi';
 
 const statusColors = {
-  active: 'bg-green-100 text-green-800',
+  available: 'bg-green-100 text-green-800',
   out_of_stock: 'bg-red-100 text-red-800',
 };
 
@@ -47,7 +47,7 @@ const BooksTable = ({
 
   const statusOptions = [
     { value: 'all', label: 'Tous les statuts' },
-    { value: 'active', label: 'Disponible' },
+    { value: 'available', label: 'Disponible' },
     { value: 'out_of_stock', label: 'Rupture de stock' }
   ];
 
@@ -249,8 +249,8 @@ const BooksTable = ({
                     <tbody className="divide-y divide-gray-200">
                       {displayBooks.map((book) => {
                         // Determine status based on stock quantity
-                        const status = book.stockQuantity === 0 ? 'out_of_stock' : 'active';
-                        const statusLabel = status === 'active' ? 'Disponible' : 'Rupture de stock';
+                        const status = book.stockQuantity === 0 ? 'out_of_stock' : 'available';
+                        const statusLabel = status === 'available' ? 'Disponible' : 'Rupture de stock';
 
                         return (
                           <motion.tr
@@ -337,8 +337,8 @@ const BooksTable = ({
               <div className="md:hidden p-3 sm:p-4 space-y-3 sm:space-y-4">
                 {displayBooks.map((book) => {
                   // Determine status based on stock quantity
-                  const status = book.stockQuantity === 0 ? 'out_of_stock' : 'active';
-                  const statusLabel = status === 'active' ? 'Disponible' : 'Rupture';
+                  const status = book.stockQuantity === 0 ? 'out_of_stock' : 'available';
+                  const statusLabel = status === 'available' ? 'Disponible' : 'Rupture';
 
                   return (
                     <motion.div

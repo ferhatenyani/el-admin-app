@@ -72,6 +72,11 @@ const Books = () => {
         params.search = debouncedSearchQuery;
       }
 
+      // Add status filter if not 'all'
+      if (statusFilter && statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+
       // Map frontend sortBy to backend sort format
       if (sortBy === 'title') {
         params.sort = 'title,asc';
@@ -106,7 +111,7 @@ const Books = () => {
       setLoading(false);
       setFilterLoading(false);
     }
-  }, [pagination.page, pagination.size, debouncedSearchQuery, sortBy]);
+  }, [pagination.page, pagination.size, debouncedSearchQuery, sortBy, statusFilter]);
 
   /**
    * Initial load and refetch when dependencies change
@@ -150,12 +155,13 @@ const Books = () => {
 
   /**
    * Handle status filter changes
-   * Note: Current backend doesn't have status filter in books endpoint
-   * This is kept for UI consistency
+   * Reset to page 0 when status filter changes
    */
   const handleStatusFilterChange = (newStatus) => {
     setStatusFilter(newStatus);
-    // If backend supports status filtering, add it to fetchBooks params
+    if (pagination.page !== 0) {
+      setPagination(prev => ({ ...prev, page: 0 }));
+    }
   };
 
   /**
@@ -333,15 +339,6 @@ const Books = () => {
     // TODO: Implement export logic
   };
 
-  // Apply client-side status filter
-  // Note: Backend doesn't support status filtering, so we filter by stockQuantity on frontend
-  const filteredBooks = books.filter(book => {
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'active' && book.stockQuantity === 0) return false;
-      if (statusFilter === 'out_of_stock' && book.stockQuantity > 0) return false;
-    }
-    return true;
-  });
 
   // Error state with retry
   if (error && books.length === 0) {
@@ -387,7 +384,7 @@ const Books = () => {
       )}
 
       <BooksTable
-        books={filteredBooks}
+        books={books}
         onEdit={handleEditBook}
         onDelete={handleDeleteBook}
         searchQuery={searchQuery}
