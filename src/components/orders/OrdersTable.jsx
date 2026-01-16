@@ -185,7 +185,7 @@ const OrdersTable = ({
 
       {/* Desktop table */}
       {!loading && (
-        <div className="hidden md:block overflow-x-auto overflow-y-hidden">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
