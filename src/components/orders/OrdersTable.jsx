@@ -215,7 +215,7 @@ const OrdersTable = ({
                   key={order.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="hover:bg-gray-200 transition-colors duration-150 cursor-pointer"
+                  className="hover:bg-gray-100 transition-colors duration-150 cursor-pointer"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {order.orderNumber}
