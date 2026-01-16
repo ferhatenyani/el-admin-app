@@ -1,14 +1,97 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, Search, Trash2 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
-import OrderStatusBadge from './OrderStatusBadge';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
+
+// Status options for inline editing (same as OrderDetailsModal)
+const statusOptions = [
+  { value: 'pending', label: 'En attente' },
+  { value: 'confirmed', label: 'Confirmé' },
+  { value: 'shipped', label: 'Expédié' },
+  { value: 'delivered', label: 'Livré' },
+  { value: 'cancelled', label: 'Annulé' }
+];
+
+// Inline status select component for table rows
+const InlineStatusSelect = ({ order, onUpdateStatus }) => {
+  const [selectedStatus, setSelectedStatus] = useState(order?.status || 'pending');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleStatusChange = async (newStatus) => {
+    if (newStatus !== order.status && onUpdateStatus) {
+      setIsUpdating(true);
+      setSelectedStatus(newStatus);
+      try {
+        await onUpdateStatus(order.id, newStatus);
+      } catch (error) {
+        // Revert on error
+        setSelectedStatus(order.status);
+      } finally {
+        setIsUpdating(false);
+      }
+    }
+  };
+
+  return (
+    <div className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
+      <CustomSelect
+        value={selectedStatus}
+        onChange={handleStatusChange}
+        options={statusOptions}
+        placeholder="Sélectionner un statut"
+      />
+      {isUpdating && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-lg">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Mobile status select with badge styling
+const MobileStatusSelect = ({ order, onUpdateStatus }) => {
+  const [selectedStatus, setSelectedStatus] = useState(order?.status || 'pending');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleStatusChange = async (newStatus) => {
+    if (newStatus !== order.status && onUpdateStatus) {
+      setIsUpdating(true);
+      setSelectedStatus(newStatus);
+      try {
+        await onUpdateStatus(order.id, newStatus);
+      } catch (error) {
+        setSelectedStatus(order.status);
+      } finally {
+        setIsUpdating(false);
+      }
+    }
+  };
+
+  return (
+    <div className="relative min-w-[130px]" onClick={(e) => e.stopPropagation()}>
+      <CustomSelect
+        value={selectedStatus}
+        onChange={handleStatusChange}
+        options={statusOptions}
+        placeholder="Statut"
+      />
+      {isUpdating && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-lg">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const OrdersTable = ({
   orders,
   onViewOrder,
   onDelete,
+  onUpdateStatus,
   sortBy,
   onSortChange,
   statusFilter,
@@ -23,7 +106,9 @@ const OrdersTable = ({
   // Use orders directly (server-side pagination)
   const displayOrders = orders || [];
   const totalCount = pagination?.totalElements || orders.length;
-  const statusOptions = [
+
+  // Filter status options (includes 'all' option)
+  const filterStatusOptions = [
     { value: 'all', label: 'Tous les statuts' },
     { value: 'pending', label: 'En attente' },
     { value: 'confirmed', label: 'Confirmé' },
@@ -61,7 +146,7 @@ const OrdersTable = ({
               <CustomSelect
                 value={statusFilter}
                 onChange={onStatusFilterChange}
-                options={statusOptions}
+                options={filterStatusOptions}
                 placeholder="Tous les statuts"
               />
             </div>
@@ -136,7 +221,7 @@ const OrdersTable = ({
                     {formatCurrency(order.total)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <OrderStatusBadge status={order.status} />
+                    <InlineStatusSelect order={order} onUpdateStatus={onUpdateStatus} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center gap-2">
@@ -171,13 +256,13 @@ const OrdersTable = ({
               animate={{ opacity: 1, y: 0 }}
               className="bg-gray-50 rounded-lg p-4 space-y-3"
             >
-              <div className="flex justify-between items-start">
-                <div>
+              <div className="flex justify-between items-start gap-2">
+                <div className="min-w-0 flex-1">
                   <h3 className="font-medium text-gray-900">{order.orderNumber}</h3>
                   <p className="text-sm text-gray-600 mt-1">{order.customer}</p>
                   <p className="text-xs text-gray-500">{order.customerEmail}</p>
                 </div>
-                <OrderStatusBadge status={order.status} />
+                <MobileStatusSelect order={order} onUpdateStatus={onUpdateStatus} />
               </div>
 
               <div className="flex justify-between items-center pt-2 border-t border-gray-200">
