@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, Search, Trash2 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
@@ -19,8 +19,13 @@ const InlineStatusSelect = ({ order, onUpdateStatus }) => {
   const [selectedStatus, setSelectedStatus] = useState(order?.status || 'pending');
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Sync local state with order.status when it changes
+  useEffect(() => {
+    setSelectedStatus(order?.status || 'pending');
+  }, [order?.status]);
+
   const handleStatusChange = async (newStatus) => {
-    if (newStatus !== order.status && onUpdateStatus) {
+    if (newStatus !== selectedStatus && onUpdateStatus) {
       setIsUpdating(true);
       setSelectedStatus(newStatus);
       try {
@@ -56,8 +61,13 @@ const MobileStatusSelect = ({ order, onUpdateStatus }) => {
   const [selectedStatus, setSelectedStatus] = useState(order?.status || 'pending');
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Sync local state with order.status when it changes
+  useEffect(() => {
+    setSelectedStatus(order?.status || 'pending');
+  }, [order?.status]);
+
   const handleStatusChange = async (newStatus) => {
-    if (newStatus !== order.status && onUpdateStatus) {
+    if (newStatus !== selectedStatus && onUpdateStatus) {
       setIsUpdating(true);
       setSelectedStatus(newStatus);
       try {

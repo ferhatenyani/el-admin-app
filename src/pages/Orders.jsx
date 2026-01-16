@@ -293,6 +293,7 @@ const Orders = () => {
         orders={orders}
         onViewOrder={handleViewOrder}
         onDelete={handleDelete}
+        onUpdateStatus={handleUpdateStatus}
         sortBy={sortBy}
         onSortChange={handleSortChange}
         statusFilter={statusFilter}
