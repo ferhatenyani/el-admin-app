@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, User, Package } from 'lucide-react';
+import { X, Plus, Trash2, User, Package, MapPin } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
 import * as booksApi from '../../services/booksApi';
 import * as packsApi from '../../services/packsApi';
 import CustomSelect from '../common/CustomSelect';
+import RelayPointSelect from './RelayPointSelect';
 import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE } from '../../services/ordersApi';
 
 // Wilaya options (69 wilayas and communes of Algeria)
@@ -112,6 +113,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
     shippingProvider: SHIPPING_PROVIDER.YALIDINE,
     shippingMethod: SHIPPING_METHOD.HOME_DELIVERY,
     shippingCost: 0,
+    relayPointId: null,
 
     // Order items
     orderItems: [],
@@ -164,6 +166,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
         shippingProvider: SHIPPING_PROVIDER.YALIDINE,
         shippingMethod: SHIPPING_METHOD.HOME_DELIVERY,
         shippingCost: 0,
+        relayPointId: null,
         orderItems: [],
       });
       setErrors({});
@@ -214,6 +217,11 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
     // Street address validation (required for home delivery)
     if (formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && !formData.streetAddress.trim()) {
       newErrors.streetAddress = 'L\'adresse est requise pour la livraison à domicile';
+    }
+
+    // Relay point validation (required for point de retrait)
+    if (formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER && !formData.relayPointId) {
+      newErrors.relayPointId = 'Le point de retrait est requis';
     }
 
     // Order items validation
@@ -322,6 +330,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       shippingProvider: formData.shippingProvider,
       shippingMethod: formData.shippingMethod,
       shippingCost: parseFloat(formData.shippingCost) || 0,
+      relayPointId: formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER ? formData.relayPointId : null,
       totalAmount: totalAmount,
       orderItems: formData.orderItems.map(item => ({
         ...(item.itemType === ORDER_ITEM_TYPE.BOOK && { bookId: parseInt(item.itemId) }),
@@ -593,7 +602,12 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                       </label>
                       <CustomSelect
                         value={formData.shippingMethod}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, shippingMethod: value }))}
+                        onChange={(value) => setFormData((prev) => ({
+                          ...prev,
+                          shippingMethod: value,
+                          // Clear relay point when switching away from point de retrait
+                          relayPointId: value === SHIPPING_METHOD.SHIPPING_PROVIDER ? prev.relayPointId : null
+                        }))}
                         options={SHIPPING_METHOD_OPTIONS}
                         placeholder="Sélectionnez une méthode"
                       />
@@ -614,6 +628,37 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                       />
                     </div>
                   </div>
+
+                  {/* Relay Point Selection - Only shown for Point de retrait */}
+                  {formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-blue-600" />
+                        Point de retrait <span className="text-red-500">*</span>
+                      </label>
+                      <RelayPointSelect
+                        value={formData.relayPointId}
+                        onChange={(value) => {
+                          setFormData((prev) => ({ ...prev, relayPointId: value }));
+                          if (errors.relayPointId) {
+                            setErrors((prev) => ({ ...prev, relayPointId: '' }));
+                          }
+                        }}
+                        provider={formData.shippingProvider}
+                        wilaya={formData.wilaya}
+                        error={!!errors.relayPointId}
+                      />
+                      {errors.relayPointId && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.relayPointId}
+                        </motion.p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Order Items Section */}

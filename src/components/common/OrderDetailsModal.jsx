@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Package } from 'lucide-react';
+import { X, Package, MapPin } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import useScrollLock from '../../hooks/useScrollLock';
 import CustomSelect from './CustomSelect';
+import { getRelayPointById } from '../../services/relayPointsApi';
 
 /**
  * Reusable OrderDetailsModal component
@@ -57,9 +58,42 @@ const statusConfig = {
 
 const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
   const [selectedStatus, setSelectedStatus] = useState(order?.status || 'pending');
+  const [relayPoint, setRelayPoint] = useState(null);
+  const [loadingRelayPoint, setLoadingRelayPoint] = useState(false);
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
+
+  // Fetch relay point details if order has relayPointId
+  useEffect(() => {
+    const fetchRelayPoint = async () => {
+      if (!order?.relayPointId) {
+        setRelayPoint(null);
+        return;
+      }
+
+      // Check if relay point data is already included in order
+      if (order.relayPoint) {
+        setRelayPoint(order.relayPoint);
+        return;
+      }
+
+      setLoadingRelayPoint(true);
+      try {
+        const data = await getRelayPointById(order.relayPointId);
+        setRelayPoint(data);
+      } catch (err) {
+        console.error('Error fetching relay point:', err);
+        setRelayPoint(null);
+      } finally {
+        setLoadingRelayPoint(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchRelayPoint();
+    }
+  }, [isOpen, order?.relayPointId, order?.relayPoint]);
 
   if (!order) return null;
 
@@ -207,6 +241,48 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                       <span className="text-xs sm:text-sm text-gray-600 font-medium flex-shrink-0">Frais de livraison</span>
                       <span className="text-xs sm:text-sm font-bold text-green-600 break-words xs:text-right">{formatCurrency(order.shippingCost || 0)}</span>
                     </div>
+                    {/* Relay Point Display - Only shown for Point de retrait orders */}
+                    {order.shippingMethod === 'SHIPPING_PROVIDER' && (order.relayPointId || relayPoint) && (
+                      <>
+                        <div className="border-t border-gray-200"></div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <span className="text-xs sm:text-sm text-gray-600 font-medium">Point de retrait</span>
+                          </div>
+                          {loadingRelayPoint ? (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 animate-pulse">
+                              <div className="h-4 bg-blue-200 rounded w-3/4 mb-2"></div>
+                              <div className="h-3 bg-blue-200 rounded w-full mb-1"></div>
+                              <div className="h-3 bg-blue-200 rounded w-1/2"></div>
+                            </div>
+                          ) : relayPoint ? (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                              <div className="text-xs sm:text-sm font-bold text-blue-900">
+                                {relayPoint.name}
+                              </div>
+                              <div className="text-xs text-blue-700 mt-1">
+                                {relayPoint.address}
+                              </div>
+                              <div className="text-xs text-blue-600 mt-0.5">
+                                {relayPoint.commune}, {relayPoint.wilaya}
+                              </div>
+                              {relayPoint.phone && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                  Tel: {relayPoint.phone}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                              <span className="text-xs sm:text-sm text-gray-500">
+                                Point de retrait: {order.relayPointId}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
