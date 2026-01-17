@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, Search, Trash2 } from 'lucide-react';
+import { Eye, ExternalLink, Search, Trash2, Truck } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
@@ -215,7 +215,7 @@ const OrdersTable = ({
                   key={order.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="hover:bg-gray-100 transition-colors duration-150 cursor-pointer"
+                  className="hover:bg-gray-100 transition-colors duration-150 cursor-default"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {order.orderNumber}
@@ -237,13 +237,53 @@ const OrdersTable = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => onViewOrder(order)}
-                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 cursor-pointer"
+                        title="Voir les détails"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
+                      {order.shippingLabelUrl ? (
+                        <a
+                          href={order.shippingLabelUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 cursor-pointer"
+                          title="Voir le bordereau d'expédition"
+                        >
+                          <Truck className="w-4 h-4" />
+                        </a>
+                      ) : (
+                        <span
+                          className="text-gray-300 p-1 rounded cursor-default"
+                          title="Bordereau non disponible"
+                        >
+                          <Truck className="w-4 h-4" />
+                        </span>
+                      )}
+                      {order.trackingNumber ? (
+                        <a
+                          href={`https://yalidine.app/app/colis/modifier-ecommerce.php?&id=${order.trackingNumber}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50 cursor-pointer"
+                          title="Modifier sur Yalidine"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      ) : (
+                        <span
+                          className="text-gray-300 p-1 rounded cursor-default"
+                          title="Lien Yalidine non disponible"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </span>
+                      )}
                       <button
                         onClick={() => onDelete(order)}
-                        className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                        className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 cursor-pointer"
+                        title="Supprimer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -294,6 +334,46 @@ const OrdersTable = ({
                   <Eye className="w-4 h-4 flex-shrink-0" />
                   <span>Voir</span>
                 </button>
+                {order.shippingLabelUrl ? (
+                  <a
+                    href={order.shippingLabelUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Truck className="w-4 h-4 flex-shrink-0" />
+                    <span>Bordereau</span>
+                  </a>
+                ) : (
+                  <span
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-default"
+                    title="Bordereau non disponible"
+                  >
+                    <Truck className="w-4 h-4 flex-shrink-0" />
+                    <span>Bordereau</span>
+                  </span>
+                )}
+                {order.trackingNumber ? (
+                  <a
+                    href={`https://yalidine.app/app/colis/modifier-ecommerce.php?&id=${order.trackingNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                    <span>Yalidine</span>
+                  </a>
+                ) : (
+                  <span
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-default"
+                    title="Lien Yalidine non disponible"
+                  >
+                    <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                    <span>Yalidine</span>
+                  </span>
+                )}
                 <button
                   onClick={() => onDelete(order)}
                   className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"

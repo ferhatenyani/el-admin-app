@@ -162,17 +162,35 @@ const Orders = () => {
       const fullOrder = await ordersApi.getOrderById(orderId);
 
       // Send all fields as-is from the API response, only updating the status
-      await ordersApi.updateOrder(orderId, {
+      const updatedOrder = await ordersApi.updateOrder(orderId, {
         ...fullOrder,
         status: status.toUpperCase(),
       });
 
       fetchOrders();
-      success('Le statut de la commande a été mis à jour avec succès');
+
+      // Build success message based on status and tracking info
+      if (status.toLowerCase() === 'confirmed' || status.toLowerCase() === 'shipped') {
+        const trackingInfo = updatedOrder.trackingNumber || updatedOrder.providerOrderId;
+
+        if (trackingInfo) {
+          success(`Statut mis à jour avec succès. Numéro de suivi: ${trackingInfo}`);
+        } else if (!updatedOrder.shippingLabelUrl) {
+          // Parcel creation failed - no shipping label URL
+          error('La création du colis chez le transporteur a échoué', 'Attention');
+        } else {
+          success('Le statut de la commande a été mis à jour avec succès');
+        }
+      } else {
+        success('Le statut de la commande a été mis à jour avec succès');
+      }
+
+      return updatedOrder;
     } catch (err) {
       console.error('Error updating order status:', err);
       const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || 'Une erreur est survenue';
       error(errorMessage, 'Erreur lors de la mise à jour');
+      throw err;
     }
   };
 
