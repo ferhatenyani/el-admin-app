@@ -55,8 +55,10 @@ api.interceptors.response.use(
 /**
  * Wilaya mapping for API compatibility
  * Maps wilaya names to their IDs for API calls
+ * Updated: December 2025 - 69 Wilayas (including 11 new wilayas added November 16, 2025)
  */
 export const WILAYA_ID_MAP = {
+  // Original 58 Wilayas (1-58)
   'Adrar': 1,
   'Chlef': 2,
   'Laghouat': 3,
@@ -90,7 +92,7 @@ export const WILAYA_ID_MAP = {
   'Oran': 31,
   'El Bayadh': 32,
   'Illizi': 33,
-  'Bordj Bou Arreridj': 34,
+  'Bordj Bou Arréridj': 34,
   'Boumerdès': 35,
   'El Tarf': 36,
   'Tindouf': 37,
@@ -100,21 +102,33 @@ export const WILAYA_ID_MAP = {
   'Souk Ahras': 41,
   'Tipaza': 42,
   'Mila': 43,
-  'Aïn Defla': 44,
+  'Ain Defla': 44,
   'Naâma': 45,
-  'Aïn Témouchent': 46,
+  'Ain Témouchent': 46,
   'Ghardaïa': 47,
   'Relizane': 48,
-  "El M'Ghair": 49,
-  'El Meniaa': 50,
+  'Timimoun': 49,
+  'Bordj Badji Mokhtar': 50,
   'Ouled Djellal': 51,
-  'Bordj Baji Mokhtar': 52,
-  'Béni Abbès': 53,
-  'Timimoun': 54,
+  'Béni Abbès': 52,
+  'In Salah': 53,
+  'In Guezzam': 54,
   'Touggourt': 55,
   'Djanet': 56,
-  'In Salah': 57,
-  'In Guezzam': 58,
+  "El M'Ghair": 57,
+  'El Meniaa': 58,
+  // New 11 Wilayas (59-69) - Added November 16, 2025
+  'Aflou': 59,
+  'Barika': 60,
+  'Ksar Chellala': 61,
+  'Messaad': 62,
+  'Aïn Oussera': 63,
+  'Bou Saâda': 64,
+  'El Abiodh Sidi Cheikh': 65,
+  'El Kantara': 66,
+  'Bir El Ater': 67,
+  'Ksar El Boukhari': 68,
+  'El Aricha': 69,
 };
 
 /**
@@ -153,12 +167,12 @@ export const getAllRelayPoints = async (provider) => {
 };
 
 /**
- * Get a specific relay point by ID
- * @param {string} relayPointId - The relay point ID
- * @returns {Promise<Object>} Relay point data
+ * Get a specific stop desk by ID
+ * @param {string} stopDeskId - The stop desk ID
+ * @returns {Promise<Object>} Stop desk data
  */
-export const getRelayPointById = async (relayPointId) => {
-  const response = await api.get(`/api/relay-points/${relayPointId}`);
+export const getStopDeskById = async (stopDeskId) => {
+  const response = await api.get(`/api/relay-points/${stopDeskId}`);
   return response.data;
 };
 
@@ -192,7 +206,7 @@ export const searchRelayPoints = async (provider, query = '', wilayaName = null)
 export default {
   getRelayPoints,
   getAllRelayPoints,
-  getRelayPointById,
+  getStopDeskById,
   searchRelayPoints,
   WILAYA_ID_MAP,
 };

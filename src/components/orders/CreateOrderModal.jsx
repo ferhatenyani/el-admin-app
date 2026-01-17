@@ -9,8 +9,12 @@ import CustomSelect from '../common/CustomSelect';
 import RelayPointSelect from './RelayPointSelect';
 import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE } from '../../services/ordersApi';
 
-// Wilaya options (69 wilayas and communes of Algeria)
+/**
+ * Wilaya options (69 wilayas of Algeria)
+ * Updated: December 2025 - includes 11 new wilayas added November 16, 2025
+ */
 const WILAYA_OPTIONS = [
+  // Original 58 Wilayas (1-58)
   { value: 'Adrar', label: '01 - Adrar' },
   { value: 'Chlef', label: '02 - Chlef' },
   { value: 'Laghouat', label: '03 - Laghouat' },
@@ -44,7 +48,7 @@ const WILAYA_OPTIONS = [
   { value: 'Oran', label: '31 - Oran' },
   { value: 'El Bayadh', label: '32 - El Bayadh' },
   { value: 'Illizi', label: '33 - Illizi' },
-  { value: 'Bordj Bou Arreridj', label: '34 - Bordj Bou Arreridj' },
+  { value: 'Bordj Bou Arréridj', label: '34 - Bordj Bou Arréridj' },
   { value: 'Boumerdès', label: '35 - Boumerdès' },
   { value: 'El Tarf', label: '36 - El Tarf' },
   { value: 'Tindouf', label: '37 - Tindouf' },
@@ -54,32 +58,33 @@ const WILAYA_OPTIONS = [
   { value: 'Souk Ahras', label: '41 - Souk Ahras' },
   { value: 'Tipaza', label: '42 - Tipaza' },
   { value: 'Mila', label: '43 - Mila' },
-  { value: 'Aïn Defla', label: '44 - Aïn Defla' },
+  { value: 'Ain Defla', label: '44 - Ain Defla' },
   { value: 'Naâma', label: '45 - Naâma' },
-  { value: 'Aïn Témouchent', label: '46 - Aïn Témouchent' },
+  { value: 'Ain Témouchent', label: '46 - Ain Témouchent' },
   { value: 'Ghardaïa', label: '47 - Ghardaïa' },
   { value: 'Relizane', label: '48 - Relizane' },
-  { value: "El M'Ghair", label: "49 - El M'Ghair" },
-  { value: 'El Meniaa', label: '50 - El Meniaa' },
+  { value: 'Timimoun', label: '49 - Timimoun' },
+  { value: 'Bordj Badji Mokhtar', label: '50 - Bordj Badji Mokhtar' },
   { value: 'Ouled Djellal', label: '51 - Ouled Djellal' },
-  { value: 'Bordj Baji Mokhtar', label: '52 - Bordj Baji Mokhtar' },
-  { value: 'Béni Abbès', label: '53 - Béni Abbès' },
-  { value: 'Timimoun', label: '54 - Timimoun' },
+  { value: 'Béni Abbès', label: '52 - Béni Abbès' },
+  { value: 'In Salah', label: '53 - In Salah' },
+  { value: 'In Guezzam', label: '54 - In Guezzam' },
   { value: 'Touggourt', label: '55 - Touggourt' },
   { value: 'Djanet', label: '56 - Djanet' },
-  { value: 'In Salah', label: '57 - In Salah' },
-  { value: 'In Guezzam', label: '58 - In Guezzam' },
+  { value: "El M'Ghair", label: "57 - El M'Ghair" },
+  { value: 'El Meniaa', label: '58 - El Meniaa' },
+  // New 11 Wilayas (59-69) - Added November 16, 2025
   { value: 'Aflou', label: '59 - Aflou' },
   { value: 'Barika', label: '60 - Barika' },
-  { value: 'El Kantara', label: '61 - El Kantara' },
-  { value: 'Bir El Ater', label: '62 - Bir El Ater' },
-  { value: 'El Aricha', label: '63 - El Aricha' },
-  { value: 'Ksar Chellala', label: '64 - Ksar Chellala' },
-  { value: 'Aïn Oussera', label: '65 - Aïn Oussera' },
-  { value: 'Messaad', label: '66 - Messaad' },
-  { value: 'Ksar El Boukhari', label: '67 - Ksar El Boukhari' },
-  { value: 'Boussaâda', label: '68 - Boussaâda' },
-  { value: 'El Abiodh Sidi Cheikh', label: '69 - El Abiodh Sidi Cheikh' },
+  { value: 'Ksar Chellala', label: '61 - Ksar Chellala' },
+  { value: 'Messaad', label: '62 - Messaad' },
+  { value: 'Aïn Oussera', label: '63 - Aïn Oussera' },
+  { value: 'Bou Saâda', label: '64 - Bou Saâda' },
+  { value: 'El Abiodh Sidi Cheikh', label: '65 - El Abiodh Sidi Cheikh' },
+  { value: 'El Kantara', label: '66 - El Kantara' },
+  { value: 'Bir El Ater', label: '67 - Bir El Ater' },
+  { value: 'Ksar El Boukhari', label: '68 - Ksar El Boukhari' },
+  { value: 'El Aricha', label: '69 - El Aricha' },
 ];
 
 const SHIPPING_PROVIDER_OPTIONS = [
@@ -113,7 +118,8 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
     shippingProvider: SHIPPING_PROVIDER.YALIDINE,
     shippingMethod: SHIPPING_METHOD.HOME_DELIVERY,
     shippingCost: 0,
-    relayPointId: null,
+    stopDeskId: null,
+    isStopDesk: false,
 
     // Order items
     orderItems: [],
@@ -166,7 +172,8 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
         shippingProvider: SHIPPING_PROVIDER.YALIDINE,
         shippingMethod: SHIPPING_METHOD.HOME_DELIVERY,
         shippingCost: 0,
-        relayPointId: null,
+        stopDeskId: null,
+        isStopDesk: false,
         orderItems: [],
       });
       setErrors({});
@@ -219,9 +226,9 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       newErrors.streetAddress = 'L\'adresse est requise pour la livraison à domicile';
     }
 
-    // Relay point validation (required for point de retrait)
-    if (formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER && !formData.relayPointId) {
-      newErrors.relayPointId = 'Le point de retrait est requis';
+    // Stop desk validation (required for point de retrait)
+    if (formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER && !formData.stopDeskId) {
+      newErrors.stopDeskId = 'Le point de retrait est requis';
     }
 
     // Order items validation
@@ -330,7 +337,8 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       shippingProvider: formData.shippingProvider,
       shippingMethod: formData.shippingMethod,
       shippingCost: parseFloat(formData.shippingCost) || 0,
-      relayPointId: formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER ? formData.relayPointId : null,
+      stopDeskId: formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER ? formData.stopDeskId : null,
+      isStopDesk: formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER,
       totalAmount: totalAmount,
       orderItems: formData.orderItems.map(item => ({
         ...(item.itemType === ORDER_ITEM_TYPE.BOOK && { bookId: parseInt(item.itemId) }),
@@ -605,8 +613,9 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         onChange={(value) => setFormData((prev) => ({
                           ...prev,
                           shippingMethod: value,
-                          // Clear relay point when switching away from point de retrait
-                          relayPointId: value === SHIPPING_METHOD.SHIPPING_PROVIDER ? prev.relayPointId : null
+                          // Clear stop desk when switching away from point de retrait
+                          stopDeskId: value === SHIPPING_METHOD.SHIPPING_PROVIDER ? prev.stopDeskId : null,
+                          isStopDesk: value === SHIPPING_METHOD.SHIPPING_PROVIDER
                         }))}
                         options={SHIPPING_METHOD_OPTIONS}
                         placeholder="Sélectionnez une méthode"
@@ -637,24 +646,24 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         Point de retrait <span className="text-red-500">*</span>
                       </label>
                       <RelayPointSelect
-                        value={formData.relayPointId}
+                        value={formData.stopDeskId}
                         onChange={(value) => {
-                          setFormData((prev) => ({ ...prev, relayPointId: value }));
-                          if (errors.relayPointId) {
-                            setErrors((prev) => ({ ...prev, relayPointId: '' }));
+                          setFormData((prev) => ({ ...prev, stopDeskId: value }));
+                          if (errors.stopDeskId) {
+                            setErrors((prev) => ({ ...prev, stopDeskId: '' }));
                           }
                         }}
                         provider={formData.shippingProvider}
                         wilaya={formData.wilaya}
-                        error={!!errors.relayPointId}
+                        error={!!errors.stopDeskId}
                       />
-                      {errors.relayPointId && (
+                      {errors.stopDeskId && (
                         <motion.p
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           className="mt-1 text-sm text-red-600"
                         >
-                          {errors.relayPointId}
+                          {errors.stopDeskId}
                         </motion.p>
                       )}
                     </div>

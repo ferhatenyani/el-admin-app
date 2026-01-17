@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, X, MapPin, Phone, Building2, Loader2 } from 'lucide-react';
-import { getRelayPoints, getRelayPointById } from '../../services/relayPointsApi';
+import { getRelayPoints, getStopDeskById } from '../../services/relayPointsApi';
 import useDebounce from '../../hooks/useDebounce';
 
 /**
@@ -82,10 +82,10 @@ const RelayPointSelect = ({
 
       // Otherwise fetch from API
       try {
-        const point = await getRelayPointById(value);
+        const point = await getStopDeskById(value);
         setSelectedPoint(point);
       } catch (err) {
-        console.error('Error fetching selected relay point:', err);
+        console.error('Error fetching selected stop desk:', err);
         setSelectedPoint(null);
       }
     };

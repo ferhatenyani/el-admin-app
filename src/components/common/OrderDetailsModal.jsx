@@ -5,7 +5,7 @@ import { X, Package, MapPin } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import useScrollLock from '../../hooks/useScrollLock';
 import CustomSelect from './CustomSelect';
-import { getRelayPointById } from '../../services/relayPointsApi';
+import { getStopDeskById } from '../../services/relayPointsApi';
 
 /**
  * Reusable OrderDetailsModal component
@@ -58,42 +58,42 @@ const statusConfig = {
 
 const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
   const [selectedStatus, setSelectedStatus] = useState(order?.status || 'pending');
-  const [relayPoint, setRelayPoint] = useState(null);
-  const [loadingRelayPoint, setLoadingRelayPoint] = useState(false);
+  const [stopDesk, setStopDesk] = useState(null);
+  const [loadingStopDesk, setLoadingStopDesk] = useState(false);
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
 
-  // Fetch relay point details if order has relayPointId
+  // Fetch stop desk details if order has stopDeskId
   useEffect(() => {
-    const fetchRelayPoint = async () => {
-      if (!order?.relayPointId) {
-        setRelayPoint(null);
+    const fetchStopDesk = async () => {
+      if (!order?.stopDeskId) {
+        setStopDesk(null);
         return;
       }
 
-      // Check if relay point data is already included in order
-      if (order.relayPoint) {
-        setRelayPoint(order.relayPoint);
+      // Check if stop desk data is already included in order
+      if (order.stopDesk) {
+        setStopDesk(order.stopDesk);
         return;
       }
 
-      setLoadingRelayPoint(true);
+      setLoadingStopDesk(true);
       try {
-        const data = await getRelayPointById(order.relayPointId);
-        setRelayPoint(data);
+        const data = await getStopDeskById(order.stopDeskId);
+        setStopDesk(data);
       } catch (err) {
-        console.error('Error fetching relay point:', err);
-        setRelayPoint(null);
+        console.error('Error fetching stop desk:', err);
+        setStopDesk(null);
       } finally {
-        setLoadingRelayPoint(false);
+        setLoadingStopDesk(false);
       }
     };
 
     if (isOpen) {
-      fetchRelayPoint();
+      fetchStopDesk();
     }
-  }, [isOpen, order?.relayPointId, order?.relayPoint]);
+  }, [isOpen, order?.stopDeskId, order?.stopDesk]);
 
   if (!order) return null;
 
@@ -241,8 +241,8 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                       <span className="text-xs sm:text-sm text-gray-600 font-medium flex-shrink-0">Frais de livraison</span>
                       <span className="text-xs sm:text-sm font-bold text-green-600 break-words xs:text-right">{formatCurrency(order.shippingCost || 0)}</span>
                     </div>
-                    {/* Relay Point Display - Only shown for Point de retrait orders */}
-                    {order.shippingMethod === 'SHIPPING_PROVIDER' && (order.relayPointId || relayPoint) && (
+                    {/* Stop Desk Display - Only shown for Point de retrait orders */}
+                    {(order.isStopDesk || order.shippingMethod === 'SHIPPING_PROVIDER') && (order.stopDeskId || stopDesk) && (
                       <>
                         <div className="border-t border-gray-200"></div>
                         <div className="space-y-2">
@@ -250,33 +250,33 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                             <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
                             <span className="text-xs sm:text-sm text-gray-600 font-medium">Point de retrait</span>
                           </div>
-                          {loadingRelayPoint ? (
+                          {loadingStopDesk ? (
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 animate-pulse">
                               <div className="h-4 bg-blue-200 rounded w-3/4 mb-2"></div>
                               <div className="h-3 bg-blue-200 rounded w-full mb-1"></div>
                               <div className="h-3 bg-blue-200 rounded w-1/2"></div>
                             </div>
-                          ) : relayPoint ? (
+                          ) : stopDesk ? (
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                               <div className="text-xs sm:text-sm font-bold text-blue-900">
-                                {relayPoint.name}
+                                {stopDesk.name}
                               </div>
                               <div className="text-xs text-blue-700 mt-1">
-                                {relayPoint.address}
+                                {stopDesk.address}
                               </div>
                               <div className="text-xs text-blue-600 mt-0.5">
-                                {relayPoint.commune}, {relayPoint.wilaya}
+                                {stopDesk.commune}, {stopDesk.wilaya}
                               </div>
-                              {relayPoint.phone && (
+                              {stopDesk.phone && (
                                 <div className="text-xs text-blue-600 mt-1">
-                                  Tel: {relayPoint.phone}
+                                  Tel: {stopDesk.phone}
                                 </div>
                               )}
                             </div>
                           ) : (
                             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                               <span className="text-xs sm:text-sm text-gray-500">
-                                Point de retrait: {order.relayPointId}
+                                Point de retrait: {order.stopDeskId}
                               </span>
                             </div>
                           )}
