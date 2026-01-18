@@ -139,15 +139,19 @@ export const WILAYA_ID_MAP = {
  * @returns {Promise<Array>} Array of relay points
  */
 export const getRelayPoints = async (provider, wilayaName) => {
-  const wilayaId = WILAYA_ID_MAP[wilayaName];
-  if (!wilayaId) {
-    console.warn(`Unknown wilaya: ${wilayaName}`);
+  if (!wilayaName) {
+    console.warn('Wilaya name is required');
     return [];
   }
+
+  const wilayaId = WILAYA_ID_MAP[wilayaName];
+  // Clean wilaya name by removing diacritics (é -> e, ï -> i, etc.)
+  const cleanWilayaName = wilayaName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const response = await api.get('/api/relay-points', {
     params: {
       provider,
+      wilayaName: cleanWilayaName,
       wilayaId,
     },
   });

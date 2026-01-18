@@ -263,19 +263,22 @@ const OrdersTable = ({
                       )}
                       {order.trackingNumber ? (
                         <a
-                          href={`https://yalidine.app/app/colis/modifier-ecommerce.php?&id=${order.trackingNumber}`}
+                          href={order.shippingProvider === 'ZR'
+                            ? 'https://app.zrexpress.app/parcels/default/all'
+                            : `https://yalidine.app/app/colis/modifier-ecommerce.php?&id=${order.trackingNumber}`
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
                           className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50 cursor-pointer"
-                          title="Modifier sur Yalidine"
+                          title={order.shippingProvider === 'ZR' ? 'Voir sur ZR Express' : 'Modifier sur Yalidine'}
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
                       ) : (
                         <span
                           className="text-gray-300 p-1 rounded cursor-default"
-                          title="Lien Yalidine non disponible"
+                          title="Lien de suivi non disponible"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </span>
@@ -356,22 +359,25 @@ const OrdersTable = ({
                 )}
                 {order.trackingNumber ? (
                   <a
-                    href={`https://yalidine.app/app/colis/modifier-ecommerce.php?&id=${order.trackingNumber}`}
+                    href={order.shippingProvider === 'ZR'
+                      ? 'https://app.zrexpress.app/parcels/default/all'
+                      : `https://yalidine.app/app/colis/modifier-ecommerce.php?&id=${order.trackingNumber}`
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                    <span>Yalidine</span>
+                    <span>{order.shippingProvider === 'ZR' ? 'ZR' : 'Yalidine'}</span>
                   </a>
                 ) : (
                   <span
                     className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-default"
-                    title="Lien Yalidine non disponible"
+                    title="Lien de suivi non disponible"
                   >
                     <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                    <span>Yalidine</span>
+                    <span>Suivi</span>
                   </span>
                 )}
                 <button
