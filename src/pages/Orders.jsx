@@ -322,6 +322,7 @@ const Orders = () => {
         pagination={pagination}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        onRefresh={fetchOrders}
       />
 
       <OrderDetailsModal

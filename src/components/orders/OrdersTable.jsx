@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, Search, Trash2, Truck } from 'lucide-react';
+import { Eye, RefreshCw, Search, Trash2, Truck } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
@@ -111,7 +111,8 @@ const OrdersTable = ({
   loading = false,
   pagination = null,
   onPageChange = null,
-  onPageSizeChange = null
+  onPageSizeChange = null,
+  onRefresh = null
 }) => {
   // Use orders directly (server-side pagination)
   const displayOrders = orders || [];
@@ -137,7 +138,20 @@ const OrdersTable = ({
   return (
     <div className="bg-white rounded-lg border border-gray-200">
       <div className="p-6 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Toutes les commandes</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Toutes les commandes</h2>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={loading}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Rafraîchir"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Rafraîchir</span>
+            </button>
+          )}
+        </div>
 
         <div className="flex flex-col sm:flex-row justify-between gap-3 items-stretch sm:items-center">
           <div className="relative flex-1 max-w-md">
