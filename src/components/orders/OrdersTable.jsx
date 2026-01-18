@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, ExternalLink, Search, Trash2, Truck } from 'lucide-react';
+import { Eye, Search, Trash2, Truck } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
@@ -242,25 +242,6 @@ const OrdersTable = ({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {order.shippingLabelUrl ? (
-                        <a
-                          href={order.shippingLabelUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 cursor-pointer"
-                          title="Voir le bordereau d'expédition"
-                        >
-                          <Truck className="w-4 h-4" />
-                        </a>
-                      ) : (
-                        <span
-                          className="text-gray-300 p-1 rounded cursor-default"
-                          title="Bordereau non disponible"
-                        >
-                          <Truck className="w-4 h-4" />
-                        </span>
-                      )}
                       {order.trackingNumber ? (
                         <a
                           href={order.shippingProvider === 'ZR'
@@ -273,14 +254,14 @@ const OrdersTable = ({
                           className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50 cursor-pointer"
                           title={order.shippingProvider === 'ZR' ? 'Voir sur ZR Express' : 'Modifier sur Yalidine'}
                         >
-                          <ExternalLink className="w-4 h-4" />
+                          <Truck className="w-4 h-4" />
                         </a>
                       ) : (
                         <span
                           className="text-gray-300 p-1 rounded cursor-default"
                           title="Lien de suivi non disponible"
                         >
-                          <ExternalLink className="w-4 h-4" />
+                          <Truck className="w-4 h-4" />
                         </span>
                       )}
                       <button
@@ -329,34 +310,15 @@ const OrdersTable = ({
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-3 border-t border-gray-200">
+              <div className="flex gap-1.5 pt-3 border-t border-gray-200">
                 <button
                   onClick={() => onViewOrder(order)}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors"
+                  title="Voir les détails"
                 >
-                  <Eye className="w-4 h-4 flex-shrink-0" />
+                  <Eye className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>Voir</span>
                 </button>
-                {order.shippingLabelUrl ? (
-                  <a
-                    href={order.shippingLabelUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Truck className="w-4 h-4 flex-shrink-0" />
-                    <span>Bordereau</span>
-                  </a>
-                ) : (
-                  <span
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-default"
-                    title="Bordereau non disponible"
-                  >
-                    <Truck className="w-4 h-4 flex-shrink-0" />
-                    <span>Bordereau</span>
-                  </span>
-                )}
                 {order.trackingNumber ? (
                   <a
                     href={order.shippingProvider === 'ZR'
@@ -366,26 +328,28 @@ const OrdersTable = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-purple-600 text-white text-xs font-medium rounded-md hover:bg-purple-700 transition-colors"
+                    title={order.shippingProvider === 'ZR' ? 'Voir sur ZR Express' : 'Modifier sur Yalidine'}
                   >
-                    <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                    <span>{order.shippingProvider === 'ZR' ? 'ZR' : 'Yalidine'}</span>
+                    <Truck className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{order.shippingProvider === 'ZR' ? 'ZR' : 'Yali'}</span>
                   </a>
                 ) : (
                   <span
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-default"
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-gray-300 text-gray-500 text-xs font-medium rounded-md cursor-default"
                     title="Lien de suivi non disponible"
                   >
-                    <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                    <Truck className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>Suivi</span>
                   </span>
                 )}
                 <button
                   onClick={() => onDelete(order)}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors"
+                  title="Supprimer"
                 >
-                  <Trash2 className="w-4 h-4 flex-shrink-0" />
-                  <span>Supprimer</span>
+                  <Trash2 className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>Suppr.</span>
                 </button>
               </div>
             </motion.div>
