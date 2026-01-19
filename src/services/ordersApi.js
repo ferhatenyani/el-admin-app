@@ -67,7 +67,7 @@ api.interceptors.response.use(
  * @param {number} params.maxAmount - Maximum total amount filter
  * @param {string} params.sort - Sort parameter (e.g., 'createdAt,desc' or 'totalAmount,asc')
  * @param {AbortSignal} signal - Abort signal for cancellation
- * @returns {Promise} Response with orders data and pagination info
+ * @returns {Promise} Response with page data, pagination info, and optional statusRefreshInfo
  */
 export const getOrders = async (params = {}, signal = null) => {
   try {
@@ -88,7 +88,19 @@ export const getOrders = async (params = {}, signal = null) => {
       signal,
     });
 
-    return response.data;
+    const data = response.data;
+
+    // Handle new response structure: { page: {...}, statusRefreshInfo: {...} }
+    // Also maintain backwards compatibility with old structure
+    if (data.page) {
+      return {
+        ...data.page,
+        statusRefreshInfo: data.statusRefreshInfo || null,
+      };
+    }
+
+    // Fallback for old response structure
+    return data;
   } catch (error) {
     if (axios.isCancel(error)) {
       throw new Error('REQUEST_CANCELLED');

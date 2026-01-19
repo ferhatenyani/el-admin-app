@@ -76,7 +76,7 @@ const Orders = () => {
       }
 
       const response = await ordersApi.getOrders(params);
-      const data = response.content || response || [];
+      const data = response.content || [];
 
       // Transform API data to match OrdersTable expected format
       const transformedData = data.map(order => ({
@@ -112,14 +112,28 @@ const Orders = () => {
 
         return newPagination;
       });
-    } catch (error) {
-      console.error('Error fetching orders:', error);
+
+      // Show toast notification if statuses were auto-refreshed from shipping providers
+      if (response.statusRefreshInfo && response.statusRefreshInfo.totalRefreshed > 0) {
+        const { yalidineRefreshed, zrExpressRefreshed, totalRefreshed } = response.statusRefreshInfo;
+        const details = [];
+        if (yalidineRefreshed > 0) {
+          details.push(`${yalidineRefreshed} via Yalidine`);
+        }
+        if (zrExpressRefreshed > 0) {
+          details.push(`${zrExpressRefreshed} via ZR Express`);
+        }
+        const message = `${totalRefreshed} commande${totalRefreshed > 1 ? 's ont été mises' : ' a été mise'} à jour depuis les transporteurs (${details.join(', ')})`;
+        success(message);
+      }
+    } catch (err) {
+      console.error('Error fetching orders:', err);
       setOrders([]);
     } finally {
       setLoading(false);
       setInitialLoad(false);
     }
-  }, [debouncedSearchQuery, statusFilter, sortBy]);
+  }, [debouncedSearchQuery, statusFilter, sortBy, success]);
 
   useEffect(() => {
     fetchOrders();
