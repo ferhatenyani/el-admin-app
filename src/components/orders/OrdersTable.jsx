@@ -4,6 +4,7 @@ import { Eye, RefreshCw, Search, Trash2, Truck } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
+import StatusChangeModal from './StatusChangeModal';
 
 // Status options for inline editing (same as OrderDetailsModal)
 const statusOptions = [
@@ -14,45 +15,39 @@ const statusOptions = [
   { value: 'cancelled', label: 'Annulé' }
 ];
 
-// Inline status select component for table rows
-const InlineStatusSelect = ({ order, onUpdateStatus }) => {
-  const [selectedStatus, setSelectedStatus] = useState(order?.status || 'pending');
-  const [isUpdating, setIsUpdating] = useState(false);
+// Status badge colors
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+    case 'confirmed':
+      return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+    case 'shipped':
+      return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
+    case 'delivered':
+      return 'bg-green-100 text-green-800 hover:bg-green-200';
+    case 'cancelled':
+      return 'bg-red-100 text-red-800 hover:bg-red-200';
+    default:
+      return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+  }
+};
 
-  // Sync local state with order.status when it changes
-  useEffect(() => {
-    setSelectedStatus(order?.status || 'pending');
-  }, [order?.status]);
-
-  const handleStatusChange = async (newStatus) => {
-    if (newStatus !== selectedStatus && onUpdateStatus) {
-      setIsUpdating(true);
-      setSelectedStatus(newStatus);
-      try {
-        await onUpdateStatus(order.id, newStatus);
-      } catch (error) {
-        // Revert on error
-        setSelectedStatus(order.status);
-      } finally {
-        setIsUpdating(false);
-      }
-    }
-  };
+// Clickable status badge for desktop
+const StatusBadge = ({ order, onClick }) => {
+  const statusLabel = statusOptions.find(opt => opt.value === order.status)?.label || order.status;
 
   return (
-    <div className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
-      <CustomSelect
-        value={selectedStatus}
-        onChange={handleStatusChange}
-        options={statusOptions}
-        placeholder="Sélectionner un statut"
-      />
-      {isUpdating && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-lg">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-        </div>
-      )}
-    </div>
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={`inline-flex px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${getStatusColor(order.status)}`}
+      title="Cliquer pour modifier le statut"
+    >
+      {statusLabel}
+    </button>
   );
 };
 
@@ -117,6 +112,20 @@ const OrdersTable = ({
   // Use orders directly (server-side pagination)
   const displayOrders = orders || [];
   const totalCount = pagination?.totalElements || orders.length;
+
+  // Modal state for status change
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const handleOpenStatusModal = (order) => {
+    setSelectedOrder(order);
+    setStatusModalOpen(true);
+  };
+
+  const handleCloseStatusModal = () => {
+    setStatusModalOpen(false);
+    setSelectedOrder(null);
+  };
 
   // Filter status options (includes 'all' option)
   const filterStatusOptions = [
@@ -245,7 +254,7 @@ const OrdersTable = ({
                     {formatCurrency(order.total)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <InlineStatusSelect order={order} onUpdateStatus={onUpdateStatus} />
+                    <StatusBadge order={order} onClick={() => handleOpenStatusModal(order)} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center gap-2">
@@ -387,6 +396,16 @@ const OrdersTable = ({
           itemsPerPage={pagination.size}
           totalItems={pagination.totalElements}
           onItemsPerPageChange={onPageSizeChange}
+        />
+      )}
+
+      {/* Status Change Modal */}
+      {selectedOrder && (
+        <StatusChangeModal
+          isOpen={statusModalOpen}
+          onClose={handleCloseStatusModal}
+          order={selectedOrder}
+          onUpdateStatus={onUpdateStatus}
         />
       )}
     </div>
