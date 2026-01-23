@@ -30,7 +30,7 @@ const OrderStatusBadge = ({ status }) => {
   const config = statusConfig[status] || statusConfig.pending;
 
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.bgColor} ${config.textColor}`}>
+    <span className={`px-3 py-1.5 text-sm font-medium rounded-full ${config.bgColor} ${config.textColor}`}>
       {config.label}
     </span>
   );
