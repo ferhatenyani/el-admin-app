@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trash2, Edit2, Tag, MoreVertical } from 'lucide-react';
+import { Trash2, Edit2, Tag, MoreVertical, Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 /**
@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
  * Displays a single etiquette (label) with its name and color, and edit/delete actions
  * Modern, discreet, and user-friendly design
  */
-const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0 }) => {
+const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0, isDeleting = false }) => {
   const [showActions, setShowActions] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -114,10 +114,15 @@ const EtiquetteCard = ({ etiquette, onDelete, onEdit, index = 0 }) => {
               </button>
               <button
                 onClick={handleDelete}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors border-t border-gray-100"
+                disabled={isDeleting}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors border-t border-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                Supprimer
+                {isDeleting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                {isDeleting ? 'Suppression...' : 'Supprimer'}
               </button>
             </motion.div>
           )}

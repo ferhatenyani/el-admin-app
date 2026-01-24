@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trash2, Edit2, Languages, MoreVertical, FolderOpen } from 'lucide-react';
+import { Trash2, Edit2, Languages, MoreVertical, FolderOpen, Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 /**
@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
  * Displays a single category with image, names in both languages, and edit/delete actions
  * Modern, discreet, and user-friendly design
  */
-const CategoryCard = ({ category, onDelete, onEdit, index = 0, getCategoryImageUrl }) => {
+const CategoryCard = ({ category, onDelete, onEdit, index = 0, getCategoryImageUrl, isDeleting = false }) => {
   const [showActions, setShowActions] = useState(false);
   const [failedImage, setFailedImage] = useState(false);
   const [triedPlaceholder, setTriedPlaceholder] = useState(false);
@@ -110,10 +110,15 @@ const CategoryCard = ({ category, onDelete, onEdit, index = 0, getCategoryImageU
               </button>
               <button
                 onClick={handleDelete}
-                className="w-full flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9px] sm:text-[10px] text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors border-t border-gray-100"
+                disabled={isDeleting}
+                className="w-full flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9px] sm:text-[10px] text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors border-t border-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Trash2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                Supprimer
+                {isDeleting ? (
+                  <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin" />
+                ) : (
+                  <Trash2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                )}
+                {isDeleting ? 'Suppression...' : 'Supprimer'}
               </button>
             </motion.div>
           )}

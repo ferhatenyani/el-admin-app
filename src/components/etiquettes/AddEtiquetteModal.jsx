@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Tag } from 'lucide-react';
+import { X, Tag, Loader2 } from 'lucide-react';
 import ColorPicker from '../common/ColorPicker';
 import useScrollLock from '../../hooks/useScrollLock';
 
@@ -17,6 +17,7 @@ const AddEtiquetteModal = ({ isOpen, onClose, onSubmit, initialData = null }) =>
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -37,6 +38,7 @@ const AddEtiquetteModal = ({ isOpen, onClose, onSubmit, initialData = null }) =>
       });
     }
     setErrors({});
+    setIsSubmitting(false); // Reset submitting state when modal opens/closes
   }, [initialData, isOpen]);
 
   const handleChange = (e) => {
@@ -74,15 +76,20 @@ const AddEtiquetteModal = ({ isOpen, onClose, onSubmit, initialData = null }) =>
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (validateForm()) {
-      onSubmit({
-        ...formData,
-        nameFr: formData.nameFr.trim(),
-        nameEn: formData.nameEn.trim(),
-      });
+      setIsSubmitting(true);
+      try {
+        await onSubmit({
+          ...formData,
+          nameFr: formData.nameFr.trim(),
+          nameEn: formData.nameEn.trim(),
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -243,15 +250,20 @@ const AddEtiquetteModal = ({ isOpen, onClose, onSubmit, initialData = null }) =>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-6 py-2.5 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-100 border border-gray-300 transition-colors duration-200"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-100 border border-gray-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-gradient-to-r from-pink-600 to-orange-600 text-white font-semibold rounded-lg hover:from-pink-700 hover:to-orange-700 shadow-md hover:shadow-lg transition-all duration-200"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-gradient-to-r from-pink-600 to-orange-600 text-white font-semibold rounded-lg hover:from-pink-700 hover:to-orange-700 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {initialData ? 'Mettre à jour' : "Créer l'étiquette"}
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isSubmitting
+                      ? (initialData ? 'Mise à jour...' : 'Création...')
+                      : (initialData ? 'Mettre à jour' : "Créer l'étiquette")}
                   </button>
                 </div>
               </form>
