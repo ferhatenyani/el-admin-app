@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User } from 'lucide-react';
+import { X, User, Loader2 } from 'lucide-react';
 import UploadImageInput from '../common/UploadImageInput';
 import useScrollLock from '../../hooks/useScrollLock';
 
@@ -17,6 +17,7 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
 
   const [errors, setErrors] = useState({});
   const [imageRemoved, setImageRemoved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Verrouiller le défilement de l'arrière-plan lorsque le modal est ouvert
   useScrollLock(isOpen);
@@ -37,6 +38,7 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     }
     setErrors({});
     setImageRemoved(false); // Reset image removal state when modal opens/closes
+    setIsSubmitting(false); // Reset submitting state when modal opens/closes
   }, [initialData, isOpen]);
 
   const handleChange = (e) => {
@@ -59,15 +61,20 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (validateForm()) {
-      // Only send name and imageUrl - explicitly exclude profilePictureUrl
-      onSubmit({
-        name: formData.name.trim(),
-        imageUrl: formData.imageUrl,
-      });
+      setIsSubmitting(true);
+      try {
+        // Only send name and imageUrl - explicitly exclude profilePictureUrl
+        await onSubmit({
+          name: formData.name.trim(),
+          imageUrl: formData.imageUrl,
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -200,15 +207,20 @@ const AddAuthorModal = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-6 py-2.5 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-100 border border-gray-300 transition-colors duration-200"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-100 border border-gray-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-teal-700 shadow-md hover:shadow-lg transition-all duration-200"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-teal-700 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {initialData ? 'Mettre à jour' : 'Créer l\'auteur'}
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isSubmitting
+                      ? (initialData ? 'Mise à jour...' : 'Création...')
+                      : (initialData ? 'Mettre à jour' : 'Créer l\'auteur')}
                   </button>
                 </div>
               </form>

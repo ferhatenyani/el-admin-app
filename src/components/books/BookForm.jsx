@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import UploadImageInput from '../common/UploadImageInput';
 import CustomSelect from '../common/CustomSelect';
 import useScrollLock from '../../hooks/useScrollLock';
@@ -43,6 +43,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
   const [errors, setErrors] = useState({});
   const [error, setError] = useState(null);
   const [imageRemoved, setImageRemoved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -134,6 +135,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     }
     setErrors({});
     setImageRemoved(false); // Reset image removal state when modal opens/closes
+    setIsSubmitting(false); // Reset submitting state when modal opens/closes
   }, [initialData, isOpen]);
 
   const handleChange = (e) => {
@@ -193,33 +195,38 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    // Convert form language value back to backend code
-    const backendLanguage = LANGUAGE_FORM_TO_CODE[formData.language] || formData.language;
+    setIsSubmitting(true);
+    try {
+      // Convert form language value back to backend code
+      const backendLanguage = LANGUAGE_FORM_TO_CODE[formData.language] || formData.language;
 
-    // Build book data object matching backend structure
-    const bookData = {
-      title: formData.title.trim(),
-      price: parseFloat(formData.price),
-      stockQuantity: parseInt(formData.stockQuantity, 10),
-      language: backendLanguage,
-      active: true,
-      description: formData.description.trim() || '',
-    };
+      // Build book data object matching backend structure
+      const bookData = {
+        title: formData.title.trim(),
+        price: parseFloat(formData.price),
+        stockQuantity: parseInt(formData.stockQuantity, 10),
+        language: backendLanguage,
+        active: true,
+        description: formData.description.trim() || '',
+      };
 
-    // Add author reference if selected
-    if (formData.authorId) {
-      bookData.author = { id: formData.authorId };
+      // Add author reference if selected
+      if (formData.authorId) {
+        bookData.author = { id: formData.authorId };
+      }
+
+      // Pass book data, cover image, categoryId, and etiquetteId separately
+      await onSubmit(bookData, formData.coverImage, formData.categoryId, formData.etiquetteId);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Pass book data, cover image, categoryId, and etiquetteId separately
-    onSubmit(bookData, formData.coverImage, formData.categoryId, formData.etiquetteId);
   };
 
   const modalContent = (
@@ -522,15 +529,20 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-6 py-2.5 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-100 border border-gray-300 transition-colors duration-200"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-100 border border-gray-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {initialData ? 'Mettre à jour' : 'Créer le livre'}
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isSubmitting
+                      ? (initialData ? 'Mise à jour...' : 'Création...')
+                      : (initialData ? 'Mettre à jour' : 'Créer le livre')}
                   </button>
                 </div>
               </form>
