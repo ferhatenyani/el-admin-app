@@ -393,7 +393,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                     {/* Price */}
                     <div>
                       <label className="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">
-                        Prix (€) *
+                        Prix (DZD) *
                       </label>
                       <input
                         type="number"

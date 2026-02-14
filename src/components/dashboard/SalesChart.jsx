@@ -502,7 +502,7 @@ const SalesChart = memo(() => {
                 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => window.innerWidth < 640 ? `${value}€` : `€${value}`}
+                tickFormatter={(value) => window.innerWidth < 640 ? `${value} ` : `${value}`}
                 dx={0}
                 width={window.innerWidth < 640 ? 35 : 60}
               />
@@ -529,7 +529,7 @@ const SalesChart = memo(() => {
                   fontSize: window.innerWidth < 640 ? '12px' : '14px',
                   padding: '2px 0'
                 }}
-                formatter={(value) => [`€${value}`, '']}
+                formatter={(value) => [`DZD ${value}`, '']}
                 cursor={{ stroke: '#e5e7eb', strokeWidth: 1 }}
               />
 
