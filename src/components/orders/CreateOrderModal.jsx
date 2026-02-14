@@ -112,14 +112,13 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
     streetAddress: '',
     wilaya: '',
     city: '',
-    postalCode: '',
 
     // Shipping info
     shippingProvider: SHIPPING_PROVIDER.YALIDINE,
-    shippingMethod: SHIPPING_METHOD.HOME_DELIVERY,
+    shippingMethod: SHIPPING_METHOD.SHIPPING_PROVIDER,
     shippingCost: 0,
     stopDeskId: null,
-    isStopDesk: false,
+    isStopDesk: true,
 
     // Order items
     orderItems: [],
@@ -168,12 +167,11 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
         streetAddress: '',
         wilaya: '',
         city: '',
-        postalCode: '',
         shippingProvider: SHIPPING_PROVIDER.YALIDINE,
-        shippingMethod: SHIPPING_METHOD.HOME_DELIVERY,
+        shippingMethod: SHIPPING_METHOD.SHIPPING_PROVIDER,
         shippingCost: 0,
         stopDeskId: null,
-        isStopDesk: false,
+        isStopDesk: true,
         orderItems: [],
       });
       setErrors({});
@@ -216,8 +214,8 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       newErrors.wilaya = 'La wilaya est requise';
     }
 
-    // City validation
-    if (!formData.city.trim()) {
+    // City validation (only for home delivery)
+    if (formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && !formData.city.trim()) {
       newErrors.city = 'La ville est requise';
     }
 
@@ -332,8 +330,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       email: formData.email.trim() || null,
       streetAddress: formData.streetAddress.trim() || null,
       wilaya: formData.wilaya,
-      city: formData.city.trim(),
-      postalCode: formData.postalCode.trim() || null,
+      city: formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY ? formData.city.trim() : null,
       shippingProvider: formData.shippingProvider,
       shippingMethod: formData.shippingMethod,
       shippingCost: parseFloat(formData.shippingCost) || 0,
@@ -518,70 +515,6 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                       )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
-                        Ville <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
-                          errors.city
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
-                        }`}
-                      />
-                      {errors.city && (
-                        <motion.p
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="mt-1 text-sm text-red-600"
-                        >
-                          {errors.city}
-                        </motion.p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
-                        Code postal
-                      </label>
-                      <input
-                        type="text"
-                        name="postalCode"
-                        value={formData.postalCode}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
-                        Adresse {formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && <span className="text-red-500">*</span>}
-                      </label>
-                      <input
-                        type="text"
-                        name="streetAddress"
-                        value={formData.streetAddress}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
-                          errors.streetAddress
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
-                        }`}
-                      />
-                      {errors.streetAddress && (
-                        <motion.p
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="mt-1 text-sm text-red-600"
-                        >
-                          {errors.streetAddress}
-                        </motion.p>
-                      )}
-                    </div>
                   </div>
                 </div>
 
@@ -615,7 +548,9 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                           shippingMethod: value,
                           // Clear stop desk when switching away from point de retrait
                           stopDeskId: value === SHIPPING_METHOD.SHIPPING_PROVIDER ? prev.stopDeskId : null,
-                          isStopDesk: value === SHIPPING_METHOD.SHIPPING_PROVIDER
+                          isStopDesk: value === SHIPPING_METHOD.SHIPPING_PROVIDER,
+                          // Clear city and address when switching to point de retrait
+                          ...(value === SHIPPING_METHOD.SHIPPING_PROVIDER && { city: '', streetAddress: '' })
                         }))}
                         options={SHIPPING_METHOD_OPTIONS}
                         placeholder="Sélectionnez une méthode"
@@ -666,6 +601,63 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                           {errors.stopDeskId}
                         </motion.p>
                       )}
+                    </div>
+                  )}
+
+                  {/* Ville + Adresse - Only shown for Home Delivery */}
+                  {formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && (
+                    <div className="mt-4 grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                          Ville <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+                            errors.city
+                              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                              : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
+                          }`}
+                        />
+                        {errors.city && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-1 text-sm text-red-600"
+                          >
+                            {errors.city}
+                          </motion.p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                          Adresse <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="streetAddress"
+                          value={formData.streetAddress}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+                            errors.streetAddress
+                              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                              : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
+                          }`}
+                        />
+                        {errors.streetAddress && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-1 text-sm text-red-600"
+                          >
+                            {errors.streetAddress}
+                          </motion.p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

@@ -129,8 +129,7 @@ export const getOrderById = async (id) => {
  * @param {string} orderData.email - Customer email
  * @param {string} orderData.streetAddress - Street address
  * @param {string} orderData.wilaya - Wilaya (required)
- * @param {string} orderData.city - City (required)
- * @param {string} orderData.postalCode - Postal code
+ * @param {string} orderData.city - City (required for home delivery)
  * @param {string} orderData.shippingProvider - Shipping provider (YALIDINE, ZR)
  * @param {string} orderData.shippingMethod - Shipping method (HOME_DELIVERY, SHIPPING_PROVIDER)
  * @param {number} orderData.shippingCost - Shipping cost
@@ -159,7 +158,6 @@ export const createOrder = async (orderData) => {
  * @param {string} orderData.streetAddress - Street address
  * @param {string} orderData.wilaya - Wilaya
  * @param {string} orderData.city - City
- * @param {string} orderData.postalCode - Postal code
  * @param {string} orderData.shippingProvider - Shipping provider
  * @param {string} orderData.shippingMethod - Shipping method
  * @param {number} orderData.shippingCost - Shipping cost

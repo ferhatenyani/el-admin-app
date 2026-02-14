@@ -209,15 +209,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
                         </div>
                       </>
                     )}
-                    {order.postalCode && (
-                      <>
-                        <div className="border-t border-gray-200"></div>
-                        <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center gap-1 xs:gap-2">
-                          <span className="text-xs sm:text-sm text-gray-600 font-medium flex-shrink-0">Code postal</span>
-                          <span className="text-xs sm:text-sm font-semibold text-gray-900 break-words xs:text-right">{order.postalCode}</span>
-                        </div>
-                      </>
-                    )}
                     <div className="border-t border-gray-200"></div>
                     <div className="flex flex-col xs:flex-row xs:justify-between xs:items-start gap-1 xs:gap-2">
                       <span className="text-xs sm:text-sm text-gray-600 font-medium flex-shrink-0">Méthode de livraison</span>
