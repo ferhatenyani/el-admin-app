@@ -45,11 +45,6 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
     if (isSelected) {
       setSelectedBooks(selectedBooks.filter(b => b.id !== book.id));
     } else {
-      // Check if we've reached the maximum limit
-      if (selectedBooks.length >= 9) {
-        setErrors({ ...errors, books: 'Vous ne pouvez sélectionner que 9 livres maximum par section' });
-        return;
-      }
       setSelectedBooks([...selectedBooks, book]);
       setErrors({ ...errors, books: '' });
     }
