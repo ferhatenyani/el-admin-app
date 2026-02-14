@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, X, Search } from 'lucide-react';
 
-const CustomSelect = ({ value, onChange, options, placeholder = "Select option", onOpen, searchable = false, alwaysVisibleSearch = false }) => {
+const CustomSelect = ({ value, onChange, options, placeholder = "Select option", onOpen, searchable = false, alwaysVisibleSearch = false, disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -94,10 +94,13 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option",
       ) : (
         // Traditional select mode
         <div
-          className={`flex items-center bg-white rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+          className={`flex items-center bg-white rounded-lg border-2 transition-all duration-200 ${
+            disabled ? 'opacity-60 cursor-not-allowed bg-gray-50' : 'cursor-pointer'
+          } ${
             isOpen ? 'border-blue-500 shadow-md' : 'border-gray-300 hover:border-gray-400'
           }`}
           onClick={() => {
+            if (disabled) return;
             if (!isOpen && onOpen) {
               onOpen();
             }
@@ -113,12 +116,13 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option",
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              if (disabled) return;
               if (!isOpen && onOpen) {
                 onOpen();
               }
               setIsOpen(!isOpen);
             }}
-            className="py-3 px-3 hover:bg-gray-100 rounded-r-lg transition-colors flex items-center flex-shrink-0"
+            className={`py-3 px-3 rounded-r-lg transition-colors flex items-center flex-shrink-0 ${disabled ? 'cursor-not-allowed' : 'hover:bg-gray-100'}`}
           >
             <ChevronDown
               className={`w-4 h-4 text-gray-500 transform transition-transform duration-200 ${

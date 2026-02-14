@@ -183,7 +183,20 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error for this field when user types
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
+      // For email: clear error only when the value becomes valid
+      if (name === 'email') {
+        if (!value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+          setErrors((prev) => ({ ...prev, email: '' }));
+        }
+      } else {
+        setErrors((prev) => ({ ...prev, [name]: '' }));
+      }
+    }
+  };
+
+  const handleEmailBlur = () => {
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setErrors((prev) => ({ ...prev, email: 'Adresse email invalide' }));
     }
   };
 
@@ -206,7 +219,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
 
     // Email validation (optional, but must be valid if provided)
     if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = 'Veuillez entrer une adresse email valide';
+      newErrors.email = 'Adresse email invalide';
     }
 
     // Wilaya validation
@@ -471,6 +484,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
+                        onBlur={handleEmailBlur}
                         className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
                           errors.email
                             ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
@@ -534,6 +548,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         onChange={(value) => setFormData((prev) => ({ ...prev, shippingProvider: value }))}
                         options={SHIPPING_PROVIDER_OPTIONS}
                         placeholder="Sélectionnez un fournisseur"
+                        disabled={formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY}
                       />
                     </div>
 
@@ -550,7 +565,9 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                           stopDeskId: value === SHIPPING_METHOD.SHIPPING_PROVIDER ? prev.stopDeskId : null,
                           isStopDesk: value === SHIPPING_METHOD.SHIPPING_PROVIDER,
                           // Clear city and address when switching to point de retrait
-                          ...(value === SHIPPING_METHOD.SHIPPING_PROVIDER && { city: '', streetAddress: '' })
+                          ...(value === SHIPPING_METHOD.SHIPPING_PROVIDER && { city: '', streetAddress: '' }),
+                          // Auto-select ZR Express for home delivery
+                          ...(value === SHIPPING_METHOD.HOME_DELIVERY && { shippingProvider: SHIPPING_PROVIDER.ZR })
                         }))}
                         options={SHIPPING_METHOD_OPTIONS}
                         placeholder="Sélectionnez une méthode"
