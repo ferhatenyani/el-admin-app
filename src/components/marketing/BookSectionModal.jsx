@@ -45,11 +45,6 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
     if (isSelected) {
       setSelectedBooks(selectedBooks.filter(b => b.id !== book.id));
     } else {
-      // Check if we've reached the maximum limit
-      if (selectedBooks.length >= 9) {
-        setErrors({ ...errors, books: 'Vous ne pouvez sélectionner que 9 livres maximum par section' });
-        return;
-      }
       setSelectedBooks([...selectedBooks, book]);
       setErrors({ ...errors, books: '' });
     }
@@ -236,7 +231,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
                       Sélectionner les Livres <span className="text-red-500">*</span>
                     </label>
                     <span className="text-xs text-gray-500 font-medium">
-                      {selectedBooks.length}/9 livres
+                      {selectedBooks.length} {selectedBooks.length <= 1 ? 'livre' : 'livres'}
                     </span>
                   </div>
 
@@ -290,15 +285,12 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                           {filteredBooks.map((book) => {
                             const selected = isBookSelected(book.id);
-                            const isDisabled = !selected && selectedBooks.length >= 9;
                             return (
                               <div
                                 key={book.id}
-                                onClick={() => !isDisabled && handleToggleBook(book)}
+                                onClick={() => handleToggleBook(book)}
                                 className={`relative rounded-lg border transition-all duration-200 ${
-                                  isDisabled
-                                    ? 'opacity-50 cursor-not-allowed border-gray-200 bg-gray-100'
-                                    : selected
+                                  selected
                                     ? 'cursor-pointer border-blue-500 bg-blue-50 shadow-sm'
                                     : 'cursor-pointer border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'
                                 }`}
