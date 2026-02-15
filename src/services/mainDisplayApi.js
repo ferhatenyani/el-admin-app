@@ -68,7 +68,7 @@ const processMainDisplayData = (data) => {
       nameFr: display.nameFr,
       type: display.type,
       active: display.active,
-      displayOrder: display.displayOrder,
+      displayOrder: display.order,
       image: display.id ? `${API_BASE_URL}/api/tags/${display.id}/image` : null,
       imageUrl: display.imageUrl,
       books: display.books || [],
@@ -107,7 +107,7 @@ const transformToBackendFormat = (displayData) => {
     nameFr: displayData.nameFr,
     type: 'MAIN_DISPLAY',
     active: displayData.active !== false,
-    displayOrder: displayData.displayOrder,
+    order: displayData.displayOrder,
     imageUrl: displayData.imageUrl || '',
   };
 };
@@ -138,12 +138,20 @@ export const getMainDisplays = async (params = {}, signal = null) => {
       signal,
     });
 
-    // Process response data
+    // Backend returns array in body + pagination in headers
+    const totalElements = parseInt(response.headers['x-total-count'], 10) || 0;
+
+    // Process response data (response.data is an array)
     const processedData = processMainDisplayData(response.data);
+
+    // Sort by displayOrder (mapped from backend's `order` field)
+    const sortedData = Array.isArray(processedData)
+      ? processedData.sort((a, b) => (a.displayOrder ?? Infinity) - (b.displayOrder ?? Infinity))
+      : processedData;
 
     // Fetch books for each main display if requested (default: true)
     if (params.includeBooks !== false) {
-      const displays = processedData.content || processedData;
+      const displays = Array.isArray(sortedData) ? sortedData : (sortedData.content || sortedData);
 
       if (Array.isArray(displays)) {
         // Fetch books for each display in parallel
@@ -184,18 +192,17 @@ export const getMainDisplays = async (params = {}, signal = null) => {
           })
         );
 
-        // Return with same structure
-        if (processedData.content) {
-          return {
-            ...processedData,
-            content: displaysWithBooks,
-          };
-        }
-        return displaysWithBooks;
+        return {
+          content: displaysWithBooks,
+          totalElements,
+        };
       }
     }
 
-    return processedData;
+    return {
+      content: Array.isArray(sortedData) ? sortedData : [],
+      totalElements,
+    };
   } catch (error) {
     if (axios.isCancel(error)) {
       throw new Error('REQUEST_CANCELLED');
@@ -312,6 +319,16 @@ export const removeBooksFromMainDisplay = async (id, bookIds) => {
 };
 
 /**
+ * Reorder main display sections
+ * @param {Array<number>} tagIds - Ordered array of tag IDs
+ * @returns {Promise} Reordered main displays
+ */
+export const reorderMainDisplays = async (tagIds) => {
+  const response = await api.put('/api/tags/main-display/reorder', tagIds);
+  return response.data;
+};
+
+/**
  * Get main display image URL
  * @param {number} id - The main display ID
  * @returns {string} Image URL
@@ -329,5 +346,6 @@ export default {
   deleteMainDisplay,
   addBooksToMainDisplay,
   removeBooksFromMainDisplay,
+  reorderMainDisplays,
   getMainDisplayImageUrl,
 };

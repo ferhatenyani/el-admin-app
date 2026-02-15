@@ -27,7 +27,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
     if (section) {
       setNameEn(section.nameEn || '');
       setNameFr(section.nameFr || '');
-      setDisplayOrder(section.displayOrder != null ? section.displayOrder + 1 : 1);
+      setDisplayOrder(section.displayOrder != null ? section.displayOrder : 1);
       setSelectedBooks(section.books || []);
     } else {
       setNameEn('');
@@ -113,7 +113,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
       onSave({
         nameEn,
         nameFr,
-        displayOrder: displayOrder - 1, // Convert to 0-indexed for backend
+        displayOrder,
         books: selectedBooks
       });
     }

@@ -7,8 +7,7 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import BookSectionModal from './BookSectionModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
-import Pagination from '../common/Pagination';
-import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, getMainDisplays } from '../../services/mainDisplayApi';
+import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, getMainDisplays, reorderMainDisplays } from '../../services/mainDisplayApi';
 import { getBookCoverUrl } from '../../services/booksApi';
 import { useDebounce } from '../../hooks/useDebounce';
 
@@ -22,12 +21,8 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Pagination state
   const [sections, setSections] = useState([]);
   const [originalOrder, setOriginalOrder] = useState([]);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
   // DnD sensors
@@ -65,8 +60,8 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
     try {
       setLoading(true);
       const response = await getMainDisplays({
-        page: currentPage,
-        size: itemsPerPage,
+        page: 0,
+        size: 100,
         search: debouncedSearchQuery || undefined,
         includeBooks: true,
       });
@@ -75,34 +70,19 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
       const sectionsArray = Array.isArray(sectionsData) ? sectionsData : [];
       setSections(sectionsArray);
       setOriginalOrder(sectionsArray.map(s => s.id));
-
-      if (response.totalPages !== undefined) {
-        setTotalPages(response.totalPages);
-        setTotalItems(response.totalElements || 0);
-      } else {
-        setTotalPages(1);
-        setTotalItems(sectionsData.length);
-      }
+      setTotalItems(response.totalElements || sectionsArray.length);
     } catch (error) {
       console.error('Error fetching sections:', error);
       setSections([]);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+  }, [debouncedSearchQuery]);
 
   // Fetch sections on mount and when dependencies change
   useEffect(() => {
     fetchSections();
   }, [fetchSections]);
-
-  // Reset to page 0 when debounced search query changes
-  useEffect(() => {
-    if (currentPage !== 0) {
-      setCurrentPage(0);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearchQuery]);
 
   // DnD handler
   const handleDragEnd = (event) => {
@@ -116,26 +96,12 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
     }
   };
 
-  // Save reordered sections
+  // Save reordered sections using dedicated reorder endpoint
   const handleSaveOrder = async () => {
     try {
       setSavingOrder(true);
-      // Update each section that changed position
-      const pageOffset = currentPage * itemsPerPage;
-      await Promise.all(
-        sections.map((section, index) => {
-          const newOrder = pageOffset + index;
-          if (section.displayOrder !== newOrder || section.id !== originalOrder[index]) {
-            return updateMainDisplay(section.id, {
-              nameEn: section.nameEn,
-              nameFr: section.nameFr,
-              active: section.active,
-              displayOrder: newOrder,
-            });
-          }
-          return Promise.resolve();
-        })
-      );
+      const orderedIds = sections.map(s => s.id);
+      await reorderMainDisplays(orderedIds);
       // Refresh to get updated data
       await fetchSections();
     } catch (error) {
@@ -144,15 +110,6 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
     } finally {
       setSavingOrder(false);
     }
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page - 1);
-  };
-
-  const handleItemsPerPageChange = (newSize) => {
-    setItemsPerPage(newSize);
-    setCurrentPage(0);
   };
 
   const handleAddSection = () => {
@@ -402,20 +359,6 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
                     </div>
                   </SortableContext>
                 </DndContext>
-
-                {/* Pagination */}
-                {totalItems > 0 && (
-                  <div className="px-3 sm:px-6 pb-6">
-                    <Pagination
-                      currentPage={currentPage + 1}
-                      totalPages={totalPages}
-                      onPageChange={handlePageChange}
-                      itemsPerPage={itemsPerPage}
-                      totalItems={totalItems}
-                      onItemsPerPageChange={handleItemsPerPageChange}
-                    />
-                  </div>
-                )}
               </>
             )}
           </motion.div>
