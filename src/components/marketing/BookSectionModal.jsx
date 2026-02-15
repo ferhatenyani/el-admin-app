@@ -4,9 +4,10 @@ import { X, BookOpen, Search, Check, ChevronLeft, ChevronRight, Loader } from 'l
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
 
-const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, saving }) => {
+const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, saving, totalSections = 0 }) => {
   const [nameEn, setNameEn] = useState('');
   const [nameFr, setNameFr] = useState('');
+  const [displayOrder, setDisplayOrder] = useState(1);
   const [selectedBooks, setSelectedBooks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [errors, setErrors] = useState({});
@@ -18,20 +19,25 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
 
+  // Max position: totalSections for editing (same pool), totalSections + 1 for creating
+  const maxPosition = section ? totalSections : totalSections + 1;
+
   // Initialize form data when editing
   useEffect(() => {
     if (section) {
       setNameEn(section.nameEn || '');
       setNameFr(section.nameFr || '');
+      setDisplayOrder(section.displayOrder != null ? section.displayOrder + 1 : 1);
       setSelectedBooks(section.books || []);
     } else {
       setNameEn('');
       setNameFr('');
+      setDisplayOrder(maxPosition || 1);
       setSelectedBooks([]);
     }
     setErrors({});
     setSearchQuery('');
-  }, [section, isOpen]);
+  }, [section, isOpen, maxPosition]);
 
   // Filter books based on search query
   const filteredBooks = (availableBooks || []).filter(book => {
@@ -90,6 +96,10 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
       newErrors.nameFr = 'Le nom en français est requis';
     }
 
+    if (!displayOrder || displayOrder < 1 || displayOrder > maxPosition) {
+      newErrors.displayOrder = `La position doit être entre 1 et ${maxPosition}`;
+    }
+
     if (selectedBooks.length === 0) {
       newErrors.books = 'Veuillez sélectionner au moins un livre';
     }
@@ -103,6 +113,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
       onSave({
         nameEn,
         nameFr,
+        displayOrder: displayOrder - 1, // Convert to 0-indexed for backend
         books: selectedBooks
       });
     }
@@ -222,6 +233,43 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, sa
                       </motion.p>
                     )}
                   </div>
+                </div>
+
+                {/* Display Order Input */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Position d'affichage <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min={1}
+                      max={maxPosition}
+                      value={displayOrder}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        setDisplayOrder(isNaN(val) ? '' : val);
+                        setErrors({ ...errors, displayOrder: '' });
+                      }}
+                      className={`w-24 px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                        errors.displayOrder
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                    />
+                    <span className="text-xs text-gray-500">
+                      sur {maxPosition} {maxPosition <= 1 ? 'position' : 'positions'}
+                    </span>
+                  </div>
+                  {errors.displayOrder && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-600 text-xs mt-1.5 font-medium"
+                    >
+                      {errors.displayOrder}
+                    </motion.p>
+                  )}
                 </div>
 
                 {/* Book Selection */}

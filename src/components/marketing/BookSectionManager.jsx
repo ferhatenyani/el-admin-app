@@ -1,6 +1,10 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader, Search, ChevronDown, ChevronUp, GripVertical, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { CSS } from '@dnd-kit/utilities';
 import BookSectionModal from './BookSectionModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
@@ -12,6 +16,7 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, sectionId: null, book: null });
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,10 +24,27 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
 
   // Pagination state
   const [sections, setSections] = useState([]);
+  const [originalOrder, setOriginalOrder] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Check if order has changed
+  const hasOrderChanged = useMemo(() => {
+    if (sections.length !== originalOrder.length) return false;
+    return sections.some((section, index) => section.id !== originalOrder[index]);
+  }, [sections, originalOrder]);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -50,7 +72,9 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
       });
 
       const sectionsData = response.content || response;
-      setSections(Array.isArray(sectionsData) ? sectionsData : []);
+      const sectionsArray = Array.isArray(sectionsData) ? sectionsData : [];
+      setSections(sectionsArray);
+      setOriginalOrder(sectionsArray.map(s => s.id));
 
       if (response.totalPages !== undefined) {
         setTotalPages(response.totalPages);
@@ -79,6 +103,48 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchQuery]);
+
+  // DnD handler
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setSections((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // Save reordered sections
+  const handleSaveOrder = async () => {
+    try {
+      setSavingOrder(true);
+      // Update each section that changed position
+      const pageOffset = currentPage * itemsPerPage;
+      await Promise.all(
+        sections.map((section, index) => {
+          const newOrder = pageOffset + index;
+          if (section.displayOrder !== newOrder || section.id !== originalOrder[index]) {
+            return updateMainDisplay(section.id, {
+              nameEn: section.nameEn,
+              nameFr: section.nameFr,
+              active: section.active,
+              displayOrder: newOrder,
+            });
+          }
+          return Promise.resolve();
+        })
+      );
+      // Refresh to get updated data
+      await fetchSections();
+    } catch (error) {
+      console.error('Error saving order:', error);
+      alert('Une erreur est survenue lors de la sauvegarde de l\'ordre. Veuillez réessayer.');
+    } finally {
+      setSavingOrder(false);
+    }
+  };
 
   const handlePageChange = (page) => {
     setCurrentPage(page - 1);
@@ -141,6 +207,7 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
           nameEn: sectionData.nameEn,
           nameFr: sectionData.nameFr,
           active: true,
+          displayOrder: sectionData.displayOrder,
         });
 
         // Handle book changes
@@ -164,6 +231,7 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
           nameEn: sectionData.nameEn,
           nameFr: sectionData.nameFr,
           active: true,
+          displayOrder: sectionData.displayOrder,
         });
 
         // Add books to the new section
@@ -185,6 +253,8 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
       setSaving(false);
     }
   };
+
+  const sectionIds = useMemo(() => sections.map(s => s.id), [sections]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -213,6 +283,31 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            {/* Save Order Button - only visible when order changed */}
+            <AnimatePresence>
+              {hasOrderChanged && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSaveOrder}
+                  disabled={savingOrder}
+                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-lg shadow-green-500/30 font-medium transition-all text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {savingOrder ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  <span className="hidden xs:inline">
+                    {savingOrder ? 'Sauvegarde...' : 'Sauvegarder l\'ordre'}
+                  </span>
+                </motion.button>
+              )}
+            </AnimatePresence>
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -287,17 +382,26 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
               </div>
             ) : (
               <>
-                <div className="space-y-4 p-3 sm:p-6">
-                  {sections.map((section) => (
-                    <SectionCard
-                      key={section.id}
-                      section={section}
-                      onEdit={() => handleEditSection(section)}
-                      onDelete={() => handleDeleteSection(section)}
-                      onRemoveBook={(book) => handleRemoveBookFromSection(section.id, book)}
-                    />
-                  ))}
-                </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                  modifiers={[restrictToVerticalAxis]}
+                >
+                  <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-4 p-3 sm:p-6">
+                      {sections.map((section) => (
+                        <SortableSectionCard
+                          key={section.id}
+                          section={section}
+                          onEdit={() => handleEditSection(section)}
+                          onDelete={() => handleDeleteSection(section)}
+                          onRemoveBook={(book) => handleRemoveBookFromSection(section.id, book)}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
 
                 {/* Pagination */}
                 {totalItems > 0 && (
@@ -329,6 +433,7 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
         section={editingSection}
         availableBooks={availableBooks}
         saving={saving}
+        totalSections={totalItems}
       />
 
       {/* Confirm Delete Modal */}
@@ -342,8 +447,40 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
   );
 };
 
+// Sortable wrapper for SectionCard
+const SortableSectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    position: 'relative',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <SectionCard
+        section={section}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onRemoveBook={onRemoveBook}
+        dragHandleProps={{ ...attributes, ...listeners }}
+        isDragActive={isDragging}
+      />
+    </div>
+  );
+};
+
 // Section Card Component - Professional Style
-const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
+const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, dragHandleProps, isDragActive }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [failedImages, setFailedImages] = useState(new Set());
   const [isDragging, setIsDragging] = useState(false);
@@ -351,7 +488,7 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
   const [scrollLeft, setScrollLeft] = useState(0);
   const scrollContainerRef = useRef(null);
 
-  // Mouse/Touch drag handlers
+  // Mouse/Touch drag handlers (for carousel scrolling)
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
@@ -458,10 +595,20 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
   const canScrollRight = scrollPosition < section.books.length - visibleCards;
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+    <div className={`bg-white rounded-lg shadow-md border overflow-hidden transition-shadow duration-200 ${isDragActive ? 'border-blue-400 shadow-xl ring-2 ring-blue-200' : 'border-gray-200'}`}>
       {/* Section Header - Professional with subtle gradient accent */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-4 sm:px-5 sm:py-5">
         <div className="flex items-center justify-between gap-3">
+          {/* Drag Handle */}
+          <button
+            {...dragHandleProps}
+            className="p-1.5 bg-white/15 hover:bg-white/25 rounded-lg transition-colors duration-200 cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
+            title="Glisser pour réordonner"
+            aria-label="Glisser pour réordonner"
+          >
+            <GripVertical className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          </button>
+
           <div className="flex-1 min-w-0">
             <h3 className="text-white text-base sm:text-lg font-semibold mb-1 truncate">
               {section.name}

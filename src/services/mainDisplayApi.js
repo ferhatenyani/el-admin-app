@@ -68,6 +68,7 @@ const processMainDisplayData = (data) => {
       nameFr: display.nameFr,
       type: display.type,
       active: display.active,
+      displayOrder: display.displayOrder,
       image: display.id ? `${API_BASE_URL}/api/tags/${display.id}/image` : null,
       imageUrl: display.imageUrl,
       books: display.books || [],
@@ -106,6 +107,7 @@ const transformToBackendFormat = (displayData) => {
     nameFr: displayData.nameFr,
     type: 'MAIN_DISPLAY',
     active: displayData.active !== false,
+    displayOrder: displayData.displayOrder,
     imageUrl: displayData.imageUrl || '',
   };
 };
