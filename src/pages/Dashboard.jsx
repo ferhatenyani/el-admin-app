@@ -59,7 +59,7 @@ const Dashboard = () => {
         const mapStatus = (backendStatus) => {
           const statusMap = {
             'PENDING': 'pending',
-            'CONFIRMED': 'pending',  // Map CONFIRMED to pending in UI
+            'CONFIRMED': 'confirmed',
             'SHIPPED': 'shipped',
             'DELIVERED': 'delivered',
             'CANCELLED': 'cancelled',
