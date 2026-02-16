@@ -9,7 +9,9 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
     name: '',
     description: '',
     price: '',
-    books: []
+    books: [],
+    deliveryFee: '',
+    automaticDeliveryFee: false,
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [errors, setErrors] = useState({});
@@ -35,14 +37,18 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
         name: pack.name || pack.title || '',
         description: pack.description || '',
         price: pack.price || '',
-        books: pack.books || []
+        books: pack.books || [],
+        deliveryFee: pack.deliveryFee || '',
+        automaticDeliveryFee: pack.automaticDeliveryFee || false,
       });
     } else {
       setFormData({
         name: '',
         description: '',
         price: '',
-        books: []
+        books: [],
+        deliveryFee: '',
+        automaticDeliveryFee: false,
       });
     }
     setErrors({});
@@ -133,7 +139,9 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
         title: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
-        books: formData.books
+        books: formData.books,
+        automaticDeliveryFee: formData.automaticDeliveryFee,
+        deliveryFee: formData.automaticDeliveryFee ? 0 : (parseFloat(formData.deliveryFee) || 0),
       };
 
       // Call onSave with pack data
@@ -286,6 +294,37 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                       {errors.price}
                     </motion.p>
                   )}
+                </div>
+
+                {/* Delivery Fee */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Frais de livraison (DZD)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      name="deliveryFee"
+                      value={formData.deliveryFee}
+                      onChange={handleInputChange}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      disabled={formData.automaticDeliveryFee}
+                      className={`flex-1 px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all border-gray-300 focus:ring-green-500 ${
+                        formData.automaticDeliveryFee ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''
+                      }`}
+                    />
+                    <label className="flex items-center gap-2 cursor-pointer select-none whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={formData.automaticDeliveryFee}
+                        onChange={(e) => setFormData({ ...formData, automaticDeliveryFee: e.target.checked })}
+                        className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Auto</span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Book Selection */}

@@ -68,6 +68,8 @@ const processPackData = (data) => {
       coverUrl: pack.coverUrl, // Keep original for updates
       price: pack.price,
       books: pack.books || [],
+      deliveryFee: pack.deliveryFee,
+      automaticDeliveryFee: pack.automaticDeliveryFee,
       createdDate: pack.createdDate,
       lastModifiedDate: pack.lastModifiedDate,
     };
@@ -97,6 +99,8 @@ const transformToBackendFormat = (packData) => {
     coverUrl: '', // Always send empty string
     price: parseFloat(packData.price),
     books: (packData.books || []).map(book => ({ id: book.id })), // Only send book IDs
+    automaticDeliveryFee: packData.automaticDeliveryFee || false,
+    deliveryFee: packData.deliveryFee || 0,
   };
 };
 

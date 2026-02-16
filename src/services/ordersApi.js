@@ -213,6 +213,22 @@ export const exportOrders = async () => {
 };
 
 /**
+ * Calculate delivery fee based on cart items and destination
+ * Calls the public endpoint POST /api/delivery-fee/calculate
+ * @param {Object} request - Calculation request
+ * @param {string} request.shippingProvider - YALIDINE or ZR
+ * @param {string} request.wilaya - Destination wilaya name
+ * @param {string} request.city - Destination city (optional)
+ * @param {boolean} request.isStopDesk - Whether delivery is to a relay point
+ * @param {Array} request.items - Cart items [{bookId, bookPackId, quantity}]
+ * @returns {Promise} { success, fee, method, provider, errorMessage }
+ */
+export const calculateDeliveryFee = async (request) => {
+  const response = await api.post('/api/delivery-fee/calculate', request);
+  return response.data;
+};
+
+/**
  * Order status enum values
  */
 export const ORDER_STATUS = {
@@ -256,6 +272,7 @@ export default {
   getCurrentUserOrders,
   updateOrderStatus,
   exportOrders,
+  calculateDeliveryFee,
   ORDER_STATUS,
   SHIPPING_PROVIDER,
   SHIPPING_METHOD,

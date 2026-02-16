@@ -7,7 +7,9 @@
       "Bash(ipconfig:*)",
       "Bash(findstr:*)",
       "Bash(powershell -Command \"\\(Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_InterfaceAlias -notlike ''*Loopback*'' -and $_IPAddress -notlike ''169.254.*''}\\).IPAddress\")",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Read(//c/Users/MyHomehP/Desktop/projects/EL/api/src/main/java/com/oussamabenberkane/espritlivre/config/**)",
+      "Read(//c/Users/MyHomehP/Desktop/projects/EL/api/src/main/resources/config/liquibase/changelog/**)"
     ]
   }
 }

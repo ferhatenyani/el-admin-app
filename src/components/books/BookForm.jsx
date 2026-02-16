@@ -34,6 +34,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     description: '',
     etiquetteId: null,
     coverImage: null,
+    deliveryFee: '',
+    automaticDeliveryFee: false,
   });
 
   const [authors, setAuthors] = useState([]);
@@ -118,6 +120,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         description: initialData.description || '',
         coverImage: null, // Don't prefill file input
         imageUrl: initialData.imageUrl || initialData.coverImageUrl || null, // For existing image preview
+        deliveryFee: initialData.deliveryFee || '',
+        automaticDeliveryFee: initialData.automaticDeliveryFee || false,
       };
       setFormData(normalizedData);
     } else {
@@ -131,6 +135,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         description: '',
         etiquetteId: null,
         coverImage: null,
+        deliveryFee: '',
+        automaticDeliveryFee: false,
       });
     }
     setErrors({});
@@ -215,6 +221,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         language: backendLanguage,
         active: true,
         description: formData.description.trim() || '',
+        automaticDeliveryFee: formData.automaticDeliveryFee,
+        deliveryFee: formData.automaticDeliveryFee ? 0 : (parseFloat(formData.deliveryFee) || 0),
       };
 
       // Add author reference if selected
@@ -445,6 +453,36 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                           {errors.stockQuantity}
                         </motion.p>
                       )}
+                    </div>
+
+                    {/* Delivery Fee */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">
+                        Frais de livraison (DZD)
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="number"
+                          step="0.01"
+                          name="deliveryFee"
+                          value={formData.deliveryFee}
+                          onChange={handleChange}
+                          placeholder="0.00"
+                          disabled={formData.automaticDeliveryFee}
+                          className={`flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 border-gray-300 focus:ring-blue-500 ${
+                            formData.automaticDeliveryFee ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''
+                          }`}
+                        />
+                        <label className="flex items-center gap-2 cursor-pointer select-none whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={formData.automaticDeliveryFee}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, automaticDeliveryFee: e.target.checked }))}
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Auto</span>
+                        </label>
+                      </div>
                     </div>
 
                     {/* Etiquette */}

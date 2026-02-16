@@ -7,7 +7,7 @@ import * as booksApi from '../../services/booksApi';
 import * as packsApi from '../../services/packsApi';
 import CustomSelect from '../common/CustomSelect';
 import RelayPointSelect from './RelayPointSelect';
-import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE } from '../../services/ordersApi';
+import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE, calculateDeliveryFee } from '../../services/ordersApi';
 
 /**
  * Wilaya options (69 wilayas of Algeria)
@@ -128,6 +128,8 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
   const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [autoFeeLoading, setAutoFeeLoading] = useState(false);
+  const [autoFeeError, setAutoFeeError] = useState('');
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -318,6 +320,53 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
 
       return { ...prev, orderItems: newOrderItems };
     });
+  };
+
+  const handleAutoFee = async () => {
+    setAutoFeeError('');
+
+    // Validate prerequisites
+    const missing = [];
+    if (!formData.wilaya) missing.push('wilaya');
+    if (!formData.shippingProvider) missing.push('fournisseur');
+    if (!formData.shippingMethod) missing.push('méthode');
+    if (formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER && !formData.stopDeskId) missing.push('point de retrait');
+    if (formData.orderItems.length === 0 || !formData.orderItems.some(i => i.itemId)) missing.push('articles');
+
+    if (missing.length > 0) {
+      setAutoFeeError(`Veuillez remplir: ${missing.join(', ')}`);
+      return;
+    }
+
+    setAutoFeeLoading(true);
+    try {
+      const items = formData.orderItems
+        .filter(item => item.itemId)
+        .map(item => ({
+          ...(item.itemType === ORDER_ITEM_TYPE.BOOK && { bookId: parseInt(item.itemId) }),
+          ...(item.itemType === ORDER_ITEM_TYPE.PACK && { bookPackId: parseInt(item.itemId) }),
+          quantity: parseInt(item.quantity) || 1,
+        }));
+
+      const result = await calculateDeliveryFee({
+        shippingProvider: formData.shippingProvider,
+        wilaya: formData.wilaya,
+        city: formData.city || null,
+        isStopDesk: formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER,
+        items,
+      });
+
+      if (result.success) {
+        setFormData((prev) => ({ ...prev, shippingCost: result.fee }));
+      } else {
+        setAutoFeeError(result.errorMessage || 'Erreur lors du calcul');
+      }
+    } catch (err) {
+      console.error('Auto fee calculation error:', err);
+      setAutoFeeError('Erreur lors du calcul des frais');
+    } finally {
+      setAutoFeeLoading(false);
+    }
   };
 
   const calculateTotalAmount = () => {
@@ -578,15 +627,35 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                       <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
                         Frais de livraison (DZD)
                       </label>
-                      <input
-                        type="number"
-                        name="shippingCost"
-                        value={formData.shippingCost}
-                        onChange={handleChange}
-                        min="0"
-                        step="0.01"
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 leading-tight"
-                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          name="shippingCost"
+                          value={formData.shippingCost}
+                          onChange={handleChange}
+                          min="0"
+                          step="0.01"
+                          className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 leading-tight"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAutoFee}
+                          disabled={autoFeeLoading}
+                          title="Calculer automatiquement les frais de livraison"
+                          className="px-3 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm leading-tight flex-shrink-0"
+                        >
+                          {autoFeeLoading ? '...' : 'A'}
+                        </button>
+                      </div>
+                      {autoFeeError && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {autoFeeError}
+                        </motion.p>
+                      )}
                     </div>
                   </div>
 
