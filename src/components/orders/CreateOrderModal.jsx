@@ -593,10 +593,12 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                   {/* Relay Point Selection - Only shown for Point de retrait */}
                   {formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER && (
                     <div className="mt-4">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide items-center gap-2">
-                        <MapPin className="w-4 h-4 text-blue-600" />
-                        Point de retrait <span className="text-red-500">*</span>
-                      </label>
+                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+  <MapPin className="w-4 h-4 text-blue-600" />
+  <span>
+    Point de retrait <span className="text-red-500">*</span>
+  </span>
+</label>
                       <RelayPointSelect
                         value={formData.stopDeskId}
                         onChange={(value) => {
