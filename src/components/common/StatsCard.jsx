@@ -28,6 +28,8 @@ const StatsCard = memo(({
   const [timeRange, setTimeRange] = useState('Ce mois-ci');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [activeSection, setActiveSection] = useState(0);
+  const [activeView, setActiveView] = useState('net');
   const dropdownRef = useRef(null);
   const cardRef = useRef(null);
   const popupRef = useRef(null);
@@ -47,21 +49,32 @@ const StatsCard = memo(({
   const getMetricData = () => {
     if (!data) return { value: 0, growth: null };
 
+    const getValueForTimeRange = (metricObj) => {
+      if (!metricObj) return 0;
+      switch (timeRange) {
+        case "Aujourd'hui": return metricObj.today ?? 0;
+        case 'Cette semaine': return metricObj.thisWeek ?? 0;
+        case 'Ce mois-ci': return metricObj.thisMonth ?? 0;
+        default: return metricObj.thisMonth ?? 0;
+      }
+    };
+
     const metricMap = {
       bestSellingBook: {
         value: data.bestSellingBook?.title || 'N/A',
         growth: data.growth?.bestSellingBook,
       },
       newUsers: {
-        value: data.newUsers?.total || 0,
+        value: getValueForTimeRange(data.newUsers),
         growth: data.growth?.newUsers,
       },
       orders: {
-        value: data.totalOrders,
+        value: getValueForTimeRange(data.orders),
         growth: data.growth?.orders,
       },
       sales: {
-        value: formatCurrency(data.monthlySales),
+        value: formatCurrency(getValueForTimeRange(data.sales)),
+        grossValue: data.grossSales ? formatCurrency(getValueForTimeRange(data.grossSales)) : null,
         growth: data.growth?.sales,
       },
     };
@@ -69,7 +82,7 @@ const StatsCard = memo(({
     return metricMap[metricKey] || { value: 0, growth: null };
   };
 
-  const { value, growth } = getMetricData();
+  const { value, grossValue, growth } = getMetricData();
   const detailsData = detailsDataBuilder && data ? detailsDataBuilder(data, timeRange) : null;
 
   // Close dropdown when clicking outside
@@ -99,6 +112,11 @@ const StatsCard = memo(({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isPopupVisible]);
+
+  // Reset active section tab when popup closes
+  useEffect(() => {
+    if (!isPopupVisible) setActiveSection(0);
   }, [isPopupVisible]);
 
   // Auto-scroll to make popup fully visible when opened
@@ -146,24 +164,32 @@ const StatsCard = memo(({
       icon: 'bg-gradient-to-br from-blue-400 to-blue-600',
       shadow: 'hover:shadow-blue-200',
       ring: 'hover:ring-blue-100',
+      badge: 'bg-blue-100 text-blue-700',
+      tabActive: 'bg-white shadow-sm text-blue-700',
     },
     green: {
       bg: 'from-emerald-500 to-emerald-600',
       icon: 'bg-gradient-to-br from-emerald-400 to-emerald-600',
       shadow: 'hover:shadow-emerald-200',
       ring: 'hover:ring-emerald-100',
+      badge: 'bg-emerald-100 text-emerald-700',
+      tabActive: 'bg-white shadow-sm text-emerald-700',
     },
     purple: {
       bg: 'from-purple-500 to-purple-600',
       icon: 'bg-gradient-to-br from-purple-400 to-purple-600',
       shadow: 'hover:shadow-purple-200',
       ring: 'hover:ring-purple-100',
+      badge: 'bg-purple-100 text-purple-700',
+      tabActive: 'bg-white shadow-sm text-purple-700',
     },
     red: {
       bg: 'from-rose-500 to-rose-600',
       icon: 'bg-gradient-to-br from-rose-400 to-rose-600',
       shadow: 'hover:shadow-rose-200',
       ring: 'hover:ring-rose-100',
+      badge: 'bg-rose-100 text-rose-700',
+      tabActive: 'bg-white shadow-sm text-rose-700',
     },
   };
 
@@ -241,99 +267,126 @@ const StatsCard = memo(({
 
       {/* Card Content - Structured Layout */}
       <div className="relative space-y-4">
-        {/* Header Row: Title and Time Selector */}
+        {/* Header Row: Title and Controls */}
         <div className="flex items-start justify-between gap-3">
           {/* Title */}
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide flex-1">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide flex-1 min-w-0">
             {title}
           </p>
 
-          {/* Custom Time Range Selector */}
-          {showTimeSelector && (
-            <div ref={dropdownRef} className="relative flex-shrink-0 z-20">
-              {/* Dropdown Trigger Button */}
+          {/* Right controls: Net/Brut toggle + Time Selector */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Net/Brut cycling toggle — only for cards with gross data */}
+            {grossValue && (
               <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onClick={(e) => { e.stopPropagation(); setActiveView(v => v === 'net' ? 'brut' : 'net'); }}
                 className="
-                  flex items-center gap-1.5
-                  bg-gray-50 hover:bg-gray-100
-                  text-gray-700
-                  text-xs font-medium
-                  px-3 py-1.5
-                  rounded-lg
-                  border border-gray-200
-                  cursor-pointer
+                  text-[10px] font-bold uppercase tracking-wider
+                  px-2 py-1.5 rounded-lg border
                   transition-all duration-200
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                  whitespace-nowrap
+                  bg-gray-200 text-gray-800 border-gray-300
                 "
               >
-                <span className="text-left">{timeRange}</span>
-                <motion.div
-                  animate={{ rotate: isDropdownOpen ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-                </motion.div>
+                {activeView === 'net' ? 'Net' : 'Brut'}
               </button>
+            )}
 
-              {/* Custom Dropdown Menu */}
-              <AnimatePresence>
-                {isDropdownOpen && (
+            {/* Custom Time Range Selector */}
+            {showTimeSelector && (
+              <div ref={dropdownRef} className="relative z-20">
+                {/* Dropdown Trigger Button */}
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="
+                    flex items-center gap-1.5
+                    bg-gray-50 hover:bg-gray-100
+                    text-gray-700
+                    text-xs font-medium
+                    px-3 py-1.5
+                    rounded-lg
+                    border border-gray-200
+                    cursor-pointer
+                    transition-all duration-200
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                    whitespace-nowrap
+                  "
+                >
+                  <span className="text-left">{timeRange}</span>
                   <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="
-                      absolute top-full right-0 mt-2
-                      min-w-full
-                      bg-white
-                      border border-gray-200
-                      rounded-lg
-                      shadow-lg
-                      overflow-hidden
-                      z-50
-                    "
+                    animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    {timeRangeOptions.map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => handleTimeRangeChange(option)}
-                        className={`
-                          w-full
-                          flex items-center justify-between
-                          px-3 py-2
-                          text-xs font-medium
-                          text-left
-                          transition-colors duration-150
-                          whitespace-nowrap
-                          ${timeRange === option
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'text-gray-700 hover:bg-gray-50'
-                          }
-                        `}
-                      >
-                        <span>{option}</span>
-                        {timeRange === option && (
-                          <Check className="w-3.5 h-3.5 text-blue-600 flex-shrink-0 ml-2" />
-                        )}
-                      </button>
-                    ))}
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
                   </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
+                </button>
+
+                {/* Custom Dropdown Menu */}
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="
+                        absolute top-full right-0 mt-2
+                        min-w-full
+                        bg-white
+                        border border-gray-200
+                        rounded-lg
+                        shadow-lg
+                        overflow-hidden
+                        z-50
+                      "
+                    >
+                      {timeRangeOptions.map((option) => (
+                        <button
+                          key={option}
+                          onClick={() => handleTimeRangeChange(option)}
+                          className={`
+                            w-full
+                            flex items-center justify-between
+                            px-3 py-2
+                            text-xs font-medium
+                            text-left
+                            transition-colors duration-150
+                            whitespace-nowrap
+                            ${timeRange === option
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'text-gray-700 hover:bg-gray-50'
+                            }
+                          `}
+                        >
+                          <span>{option}</span>
+                          {timeRange === option && (
+                            <Check className="w-3.5 h-3.5 text-blue-600 flex-shrink-0 ml-2" />
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Main Content Row: Value and Icon */}
         <div className="flex items-center justify-between gap-3">
           {/* Value */}
           <div className="flex-1 min-w-0">
-            <p className="text-3xl font-bold text-gray-900 tracking-tight truncate">
-              {value}
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={grossValue ? activeView : 'static'}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="text-3xl font-bold text-gray-900 tracking-tight truncate"
+              >
+                {grossValue ? (activeView === 'net' ? value : grossValue) : value}
+              </motion.p>
+            </AnimatePresence>
           </div>
 
           {/* Icon */}
@@ -399,7 +452,10 @@ const StatsCard = memo(({
               className="absolute left-0 right-0 top-full mt-4 z-[200] px-2 sm:px-0"
               style={{ pointerEvents: 'none' }}
             >
-              <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden max-w-sm mx-auto sm:mx-0 relative ring-4 ring-black/5">
+              <div
+                className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden max-w-sm mx-auto sm:mx-0 relative ring-4 ring-black/5"
+                style={{ pointerEvents: 'auto' }}
+              >
               {/* Popup Header */}
               <div className={`bg-gradient-to-r ${colors.bg} px-4 py-3`}>
                 <div className="flex items-center gap-2">
@@ -411,32 +467,80 @@ const StatsCard = memo(({
               {/* Popup Content */}
               <div className="p-4 space-y-4">
                 {/* Description */}
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {detailsData.description}
-                </p>
+                {detailsData.description && (
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {detailsData.description}
+                  </p>
+                )}
 
-                {/* Breakdown Section */}
-                {detailsData.breakdown && detailsData.breakdown.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Répartition
-                    </h4>
-                    <div className="space-y-2">
-                      {detailsData.breakdown.map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                {/* Sectioned breakdown with tab navigation (e.g. Net / Brut) */}
+                {detailsData.sections ? (
+                  <div className="space-y-3">
+                    {/* Tab bar */}
+                    <div className="flex gap-0.5 p-0.5 bg-gray-100 rounded-md">
+                      {detailsData.sections.map((section, idx) => (
+                        <button
+                          key={section.key}
+                          onClick={(e) => { e.stopPropagation(); setActiveSection(idx); }}
+                          className={`
+                            flex-1 py-1 px-1 rounded text-[11px] font-semibold
+                            transition-all duration-200
+                            ${activeSection === idx
+                              ? colors.tabActive
+                              : 'text-gray-500 hover:text-gray-700'
+                            }
+                          `}
                         >
-                          <span className="text-sm text-gray-700 font-medium">
-                            {item.label}
-                          </span>
-                          <span className={`text-sm font-bold ${item.color}`}>
-                            {item.value}
-                          </span>
-                        </div>
+                          {section.label}
+                        </button>
                       ))}
                     </div>
+
+                    {/* Animated section content */}
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeSection}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.18 }}
+                      >
+                        {detailsData.sections[activeSection].breakdown.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                          >
+                            <span className="text-sm text-gray-700 font-medium">{item.label}</span>
+                            <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
+                          </div>
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
                   </div>
+                ) : (
+                  /* Flat breakdown for other cards */
+                  detailsData.breakdown && detailsData.breakdown.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Répartition
+                      </h4>
+                      <div className="space-y-2">
+                        {detailsData.breakdown.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                          >
+                            <span className="text-sm text-gray-700 font-medium">
+                              {item.label}
+                            </span>
+                            <span className={`text-sm font-bold ${item.color}`}>
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
                 )}
 
                 {/* Comparison Section */}

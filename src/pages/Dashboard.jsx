@@ -113,20 +113,17 @@ const Dashboard = () => {
         { label: "Prix unitaire", value: formatCurrency(data.bestSellingBook.price), color: "text-green-600" },
         { label: "Revenu total", value: formatCurrency(data.bestSellingBook.soldCount * data.bestSellingBook.price), color: "text-purple-600" }
       ],
-      lastUpdated: "Mis à jour il y a 2 heures"
     };
   };
 
   const buildNewUsersDetails = (data) => {
     if (!data?.newUsers) return null;
     return {
-      description: "Nouveaux utilisateurs inscrits sur votre plateforme",
       breakdown: [
         { label: "Cette semaine", value: data.newUsers.thisWeek, color: "text-blue-600" },
         { label: "Ce mois-ci", value: data.newUsers.thisMonth, color: "text-green-600" },
         { label: "Aujourd'hui", value: data.newUsers.today, color: "text-purple-600" }
       ],
-      lastUpdated: "Mis à jour il y a 1 heure",
       comparison: data.growth?.newUsers ? {
         period: "vs mois dernier",
         change: `${data.growth.newUsers.isPositive ? '+' : ''}${data.growth.newUsers.value}%`,
@@ -136,15 +133,14 @@ const Dashboard = () => {
   };
 
   const buildOrdersDetails = (data) => {
-    if (!data?.totalOrders) return null;
+    if (!data?.orders) return null;
     return {
-      description: "Total des commandes reçues depuis toujours",
       breakdown: [
-        { label: "Terminées", value: Math.floor(data.totalOrders * 0.65), color: "text-green-600" },
-        { label: "En attente", value: Math.floor(data.totalOrders * 0.25), color: "text-yellow-600" },
-        { label: "Cette semaine", value: 47, color: "text-blue-600" }
+        { label: "Aujourd'hui", value: data.orders.today, color: "text-blue-600" },
+        { label: "Cette semaine", value: data.orders.thisWeek, color: "text-yellow-600" },
+        { label: "Ce mois-ci", value: data.orders.thisMonth, color: "text-green-600" },
+        { label: "Total", value: data.orders.total, color: "text-purple-600" }
       ],
-      lastUpdated: "Mis à jour il y a 30 minutes",
       comparison: data.growth?.orders ? {
         period: "vs mois dernier",
         change: `${data.growth.orders.isPositive ? '+' : ''}${data.growth.orders.value}%`,
@@ -154,15 +150,28 @@ const Dashboard = () => {
   };
 
   const buildSalesDetails = (data) => {
-    if (!data?.monthlySales) return null;
+    if (!data?.sales) return null;
     return {
-      description: "Revenu généré ce mois-ci",
-      breakdown: [
-        { label: "Ventes en ligne", value: formatCurrency(data.monthlySales * 0.72), color: "text-green-600" },
-        { label: "Ventes en magasin", value: formatCurrency(data.monthlySales * 0.28), color: "text-blue-600" },
-        { label: "Commande moyenne", value: formatCurrency(data.monthlySales / Math.max(data.totalOrders, 1)), color: "text-purple-600" }
+      sections: [
+        {
+          key: 'net',
+          label: 'Net',
+          breakdown: [
+            { label: "Aujourd'hui", value: formatCurrency(data.sales.today), color: "text-blue-600" },
+            { label: "Cette semaine", value: formatCurrency(data.sales.thisWeek), color: "text-yellow-600" },
+            { label: "Ce mois-ci", value: formatCurrency(data.sales.thisMonth), color: "text-green-600" },
+          ],
+        },
+        ...(data.grossSales ? [{
+          key: 'brut',
+          label: 'Brut',
+          breakdown: [
+            { label: "Aujourd'hui", value: formatCurrency(data.grossSales.today), color: "text-blue-600" },
+            { label: "Cette semaine", value: formatCurrency(data.grossSales.thisWeek), color: "text-yellow-600" },
+            { label: "Ce mois-ci", value: formatCurrency(data.grossSales.thisMonth), color: "text-green-600" },
+          ],
+        }] : []),
       ],
-      lastUpdated: "Mis à jour il y a 10 minutes",
       comparison: data.growth?.sales ? {
         period: "vs mois dernier",
         change: `${data.growth.sales.isPositive ? '+' : ''}${data.growth.sales.value}%`,
@@ -256,7 +265,7 @@ const Dashboard = () => {
             mockData={dashboardData}
           />
           <StatsCard
-            title="Ventes mensuelles"
+            title="Ventes"
             icon={TrendingUp}
             color="red"
             delay={0.2}
