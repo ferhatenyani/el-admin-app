@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Package, MapPin } from 'lucide-react';
+import { X, MapPin } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import useScrollLock from '../../hooks/useScrollLock';
 import CustomSelect from './CustomSelect';
@@ -131,11 +131,11 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-2 xs:p-3 sm:p-4 pointer-events-none"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 xs:p-4 sm:p-4 pointer-events-none"
           >
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] flex flex-col pointer-events-auto">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85svh] sm:max-h-[90vh] flex flex-col pointer-events-auto">
               {/* Header with gradient */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 xs:p-4 sm:p-6 text-white flex-shrink-0">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 xs:p-4 sm:p-6 text-white flex-shrink-0 rounded-t-xl sm:rounded-t-2xl">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold truncate">Détails de la commande</h2>
@@ -472,7 +472,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onUpdateStatus }) => {
               </div>
 
               {/* Footer with action buttons */}
-              <div className="border-t border-gray-200 bg-gray-50 flex-shrink-0 px-3 xs:px-4 sm:px-6 pt-4 sm:pt-5 md:pt-6 pb-4 sm:pb-6 md:pb-8">
+              <div className="border-t border-gray-200 bg-gray-50 flex-shrink-0 px-3 xs:px-4 sm:px-6 pt-4 sm:pt-5 md:pt-6 pb-4 sm:pb-6 md:pb-8 rounded-b-xl sm:rounded-b-2xl">
                 <div className="flex flex-col xs:flex-row gap-2 xs:gap-3 justify-end">
                   <button
                     onClick={onClose}

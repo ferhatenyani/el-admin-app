@@ -68,7 +68,12 @@ const UserDetailsModal = ({ isOpen, onClose, user }) => {
                         <Mail className="w-5 h-5 text-blue-500" />
                         <span className="text-sm text-gray-600 font-medium">Email</span>
                       </div>
-                      <span className="text-sm font-semibold text-blue-600">{user.email}</span>
+                      <div
+                        className="max-w-[55%] overflow-x-auto [&::-webkit-scrollbar]:[display:none]"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                      >
+                        <span className="text-sm font-semibold text-blue-600 whitespace-nowrap">{user.email}</span>
+                      </div>
                     </div>
 
                     <div className="border-t border-gray-200"></div>
