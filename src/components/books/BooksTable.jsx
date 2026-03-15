@@ -3,7 +3,7 @@ import { Edit, Trash2, Search, ChevronDown, ChevronUp, Plus, BookOpen } from 'lu
 import { formatCurrency } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getBookCoverUrl } from '../../services/booksApi';
 
 const statusColors = {
@@ -36,6 +36,27 @@ const BooksTable = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [failedImages, setFailedImages] = useState(new Set());
+
+  // Compute stable image URLs once per books change — not on every render.
+  // Without this, Date.now() inside getBookCoverUrl generates a new URL on each
+  // render, forcing a fresh network request every time and breaking the onError
+  // fallback logic (each state update triggers a new failing request).
+  const imageUrls = useMemo(() => {
+    const map = new Map();
+    (books || []).forEach(book => {
+      map.set(book.id, {
+        normal: getBookCoverUrl(book.id),
+        placeholder: getBookCoverUrl(book.id, true),
+      });
+    });
+    return map;
+  }, [books]);
+
+  // Reset failed-image tracking whenever the books list changes (e.g. after a
+  // refetch following a connection drop), so images can recover automatically.
+  useEffect(() => {
+    setFailedImages(new Set());
+  }, [books]);
 
   // Auto-expand when search query is present
   useEffect(() => {
@@ -250,16 +271,14 @@ const BooksTable = ({
                                 </div>
                               ) : (
                                 <img
-                                  src={getBookCoverUrl(book.id, failedImages.has(`${book.id}-placeholder`))}
+                                  src={failedImages.has(`${book.id}-placeholder`) ? imageUrls.get(book.id)?.placeholder : imageUrls.get(book.id)?.normal}
                                   alt={book.title}
                                   className="w-10 h-14 lg:w-12 lg:h-16 object-cover rounded"
                                   onError={(e) => {
-                                    // Try placeholder if not already tried
                                     if (!failedImages.has(`${book.id}-placeholder`)) {
                                       setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
-                                      e.target.src = getBookCoverUrl(book.id, true);
+                                      e.target.src = imageUrls.get(book.id).placeholder;
                                     } else {
-                                      // Both failed, show icon
                                       setFailedImages(prev => new Set(prev).add(book.id));
                                     }
                                   }}
@@ -338,16 +357,14 @@ const BooksTable = ({
                           </div>
                         ) : (
                           <img
-                            src={getBookCoverUrl(book.id, failedImages.has(`${book.id}-placeholder`))}
+                            src={failedImages.has(`${book.id}-placeholder`) ? imageUrls.get(book.id)?.placeholder : imageUrls.get(book.id)?.normal}
                             alt={book.title}
                             className="w-14 h-18 sm:w-16 sm:h-20 object-cover rounded flex-shrink-0"
                             onError={(e) => {
-                              // Try placeholder if not already tried
                               if (!failedImages.has(`${book.id}-placeholder`)) {
                                 setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
-                                e.target.src = getBookCoverUrl(book.id, true);
+                                e.target.src = imageUrls.get(book.id).placeholder;
                               } else {
-                                // Both failed, show icon
                                 setFailedImages(prev => new Set(prev).add(book.id));
                               }
                             }}
