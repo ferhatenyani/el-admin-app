@@ -6,6 +6,7 @@ import useScrollLock from '../../hooks/useScrollLock';
 import * as booksApi from '../../services/booksApi';
 import * as packsApi from '../../services/packsApi';
 import CustomSelect from '../common/CustomSelect';
+import wilayaData from '../../utils/wilayaData';
 import RelayPointSelect from './RelayPointSelect';
 import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE, calculateDeliveryFee } from '../../services/ordersApi';
 
@@ -126,6 +127,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
 
   const [books, setBooks] = useState([]);
   const [packs, setPacks] = useState([]);
+  const [availableCities, setAvailableCities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [autoFeeLoading, setAutoFeeLoading] = useState(false);
@@ -177,8 +179,58 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
         orderItems: [],
       });
       setErrors({});
+      setAvailableCities([]);
     }
   }, [isOpen]);
+
+  // Reactive shipping fee calculation (mirrors CartCheckoutPage — 600ms debounce)
+  useEffect(() => {
+    const hasValidItem = formData.orderItems.some(i => i.itemId);
+
+    if (!formData.wilaya || !formData.city || !formData.shippingProvider || !formData.shippingMethod || !hasValidItem) {
+      setAutoFeeError('');
+      return;
+    }
+
+    setAutoFeeLoading(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const items = formData.orderItems
+          .filter(item => item.itemId)
+          .map(item => ({
+            ...(item.itemType === ORDER_ITEM_TYPE.BOOK && { bookId: parseInt(item.itemId) }),
+            ...(item.itemType === ORDER_ITEM_TYPE.PACK && { bookPackId: parseInt(item.itemId) }),
+            quantity: parseInt(item.quantity) || 1,
+          }));
+
+        const result = await calculateDeliveryFee({
+          shippingProvider: formData.shippingProvider,
+          wilaya: formData.wilaya,
+          city: formData.city || null,
+          isStopDesk: formData.shippingMethod === SHIPPING_METHOD.SHIPPING_PROVIDER,
+          items,
+        });
+
+        if (result.success) {
+          setFormData(prev => ({ ...prev, shippingCost: result.fee }));
+          setAutoFeeError('');
+        } else {
+          setAutoFeeError(result.errorMessage || 'Erreur lors du calcul');
+        }
+      } catch (err) {
+        console.error('Auto fee calculation error:', err);
+        setAutoFeeError('Erreur lors du calcul des frais');
+      } finally {
+        setAutoFeeLoading(false);
+      }
+    }, 600);
+
+    return () => {
+      clearTimeout(timer);
+      setAutoFeeLoading(false);
+    };
+  }, [formData.wilaya, formData.city, formData.shippingProvider, formData.shippingMethod, formData.orderItems]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -558,7 +610,8 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                       <CustomSelect
                         value={formData.wilaya}
                         onChange={(value) => {
-                          setFormData((prev) => ({ ...prev, wilaya: value }));
+                          setFormData((prev) => ({ ...prev, wilaya: value, city: '' }));
+                          setAvailableCities(wilayaData[value] || []);
                           if (errors.wilaya) {
                             setErrors((prev) => ({ ...prev, wilaya: '' }));
                           }
@@ -574,6 +627,34 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                           className="mt-1 text-sm text-red-600"
                         >
                           {errors.wilaya}
+                        </motion.p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                        Ville {formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && <span className="text-red-500">*</span>}
+                      </label>
+                      <CustomSelect
+                        value={formData.city}
+                        onChange={(value) => {
+                          setFormData((prev) => ({ ...prev, city: value }));
+                          if (errors.city) {
+                            setErrors((prev) => ({ ...prev, city: '' }));
+                          }
+                        }}
+                        options={availableCities.map(c => ({ value: c, label: c }))}
+                        placeholder="Sélectionnez une ville"
+                        alwaysVisibleSearch={true}
+                        disabled={!formData.wilaya}
+                      />
+                      {errors.city && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 text-sm text-red-600"
+                        >
+                          {errors.city}
                         </motion.p>
                       )}
                     </div>
@@ -613,8 +694,8 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                           // Clear stop desk when switching away from point de retrait
                           stopDeskId: value === SHIPPING_METHOD.SHIPPING_PROVIDER ? prev.stopDeskId : null,
                           isStopDesk: value === SHIPPING_METHOD.SHIPPING_PROVIDER,
-                          // Clear city and address when switching to point de retrait
-                          ...(value === SHIPPING_METHOD.SHIPPING_PROVIDER && { city: '', streetAddress: '' }),
+                          // Clear street address when switching to point de retrait (city stays for fee calculation)
+                          ...(value === SHIPPING_METHOD.SHIPPING_PROVIDER && { streetAddress: '' }),
                           // Auto-select ZR Express for home delivery
                           ...(value === SHIPPING_METHOD.HOME_DELIVERY && { shippingProvider: SHIPPING_PROVIDER.ZR })
                         }))}
@@ -692,35 +773,9 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     </div>
                   )}
 
-                  {/* Ville + Adresse - Only shown for Home Delivery */}
+                  {/* Adresse - Only shown for Home Delivery (Ville is always visible above) */}
                   {formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && (
-                    <div className="mt-4 grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
-                          Ville <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                          className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
-                            errors.city
-                              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                              : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'
-                          }`}
-                        />
-                        {errors.city && (
-                          <motion.p
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mt-1 text-sm text-red-600"
-                          >
-                            {errors.city}
-                          </motion.p>
-                        )}
-                      </div>
-
+                    <div className="mt-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
                           Adresse <span className="text-red-500">*</span>
