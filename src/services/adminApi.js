@@ -1,30 +1,6 @@
-import axios from 'axios';
+import { createApiClient, API_BASE_URL } from './apiClient';
 
-// API base URL - should match backend
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-
-// Create axios instance for admin API calls
-const adminApi = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Request interceptor to add Authorization header
-adminApi.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+const adminApi = createApiClient();
 
 /**
  * Get current admin profile

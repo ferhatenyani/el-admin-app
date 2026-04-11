@@ -1,56 +1,13 @@
-import axios from 'axios';
-import { getCookie } from '../utils/cookies';
+import { createApiClient } from './apiClient';
 
 /**
  * Relay Points API Service
  *
  * This service provides access to relay point (Point de Relais / Stopdesk) data
  * from Yalidine and ZR Express delivery providers via the backend API.
- *
- * The backend should implement endpoints to fetch relay points from:
- * - Yalidine API: https://api.yalidine.app/v1/
- * - ZR Express / Procolis API
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-
-// Create axios instance for relay points API
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-});
-
-// Request interceptor to add Bearer token and CSRF token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  config.headers['Content-Type'] = 'application/json';
-
-  // Add CSRF token for mutating requests
-  if (['post', 'put', 'delete', 'patch'].includes(config.method?.toLowerCase())) {
-    const csrfToken = getCookie('XSRF-TOKEN');
-    if (csrfToken) {
-      config.headers['X-XSRF-TOKEN'] = csrfToken;
-    }
-  }
-
-  return config;
-});
-
-// Response interceptor for handling authentication errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/admin/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+const api = createApiClient();
 
 /**
  * Wilaya mapping for API compatibility

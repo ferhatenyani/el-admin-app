@@ -63,6 +63,48 @@ export const login = async (username, password) => {
 };
 
 /**
+ * Refresh the access token using the stored refresh token.
+ * Concurrent callers share a single in-flight request so we don't
+ * hammer Keycloak when many API calls fail at once.
+ * @returns {Promise<string>} New access token
+ */
+let refreshPromise = null;
+export const refreshAccessToken = () => {
+  if (refreshPromise) return refreshPromise;
+
+  const refreshToken = localStorage.getItem('refresh_token');
+  if (!refreshToken) {
+    return Promise.reject(new Error('No refresh token available'));
+  }
+
+  const params = new URLSearchParams();
+  params.append('grant_type', 'refresh_token');
+  params.append('client_id', KEYCLOAK_CLIENT_ID);
+  params.append('refresh_token', refreshToken);
+
+  refreshPromise = keycloakApi
+    .post('/token', params.toString())
+    .then((response) => {
+      const { access_token, refresh_token, id_token } = response.data;
+      localStorage.setItem('access_token', access_token);
+      if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
+      if (id_token) localStorage.setItem('id_token', id_token);
+      return access_token;
+    })
+    .catch((error) => {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('id_token');
+      throw error;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+};
+
+/**
  * Check if user is authenticated
  * @returns {Promise<boolean>} True if authenticated, false otherwise
  */
