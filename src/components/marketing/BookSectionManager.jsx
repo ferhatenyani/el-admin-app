@@ -11,7 +11,7 @@ import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBook
 import { getBookCoverUrl } from '../../services/booksApi';
 import { useDebounce } from '../../hooks/useDebounce';
 
-const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
+const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -375,6 +375,7 @@ const BookSectionManager = ({ availableBooks, onDeleteRequest }) => {
         onSave={handleSaveSection}
         section={editingSection}
         availableBooks={availableBooks}
+        availablePacks={availablePacks}
         saving={saving}
         totalSections={totalItems}
       />

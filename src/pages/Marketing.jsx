@@ -3,15 +3,16 @@ import BookSectionManager from '../components/marketing/BookSectionManager';
 import PackManager from '../components/marketing/PackManager';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
 import ToastContainer from '../components/common/Toast';
-import { deletePack } from '../services/packsApi';
+import { deletePack, getPacks } from '../services/packsApi';
 import { getBooks } from '../services/booksApi';
 import { deleteMainDisplay } from '../services/mainDisplayApi';
 import { useToast } from '../hooks/useToast';
 
 
 const Marketing = () => {
-  // Available Books State (for modals)
+  // Available Books & Packs State (for modals)
   const [availableBooks, setAvailableBooks] = useState([]);
+  const [availablePacks, setAvailablePacks] = useState([]);
 
   // Confirmation modal state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -22,19 +23,30 @@ const Marketing = () => {
   // Toast notifications
   const { toasts, removeToast, success, error } = useToast();
 
-  // Fetch available books from API on mount (for modals)
+  // Fetch available books and packs from API on mount (for modals)
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await getBooks({ page: 0, size: 1000 }); // Fetch all books for selection
+        const response = await getBooks({ page: 0, size: 1000 });
         const books = response.content || response;
         setAvailableBooks(books);
-      } catch (error) {
-        console.error('Error fetching books:', error);
+      } catch (err) {
+        console.error('Error fetching books:', err);
+      }
+    };
+
+    const fetchPacks = async () => {
+      try {
+        const response = await getPacks({ page: 0, size: 1000 });
+        const packs = response.content || response;
+        setAvailablePacks(Array.isArray(packs) ? packs : []);
+      } catch (err) {
+        console.error('Error fetching packs:', err);
       }
     };
 
     fetchBooks();
+    fetchPacks();
   }, []);
 
   // Handlers for deletion confirmation
@@ -103,6 +115,7 @@ const Marketing = () => {
       {/* Book Sections (Carousels) */}
       <BookSectionManager
         availableBooks={availableBooks}
+        availablePacks={availablePacks}
         onDeleteRequest={handleDeleteRequest}
       />
 

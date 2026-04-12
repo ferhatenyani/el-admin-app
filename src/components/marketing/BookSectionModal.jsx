@@ -119,15 +119,15 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
     }
 
     if (!nameFr.trim()) {
-      newErrors.nameFr = 'Le nom en fran\u00e7ais est requis';
+      newErrors.nameFr = 'Le nom en français est requis';
     }
 
     if (!displayOrder || displayOrder < 1 || displayOrder > maxPosition) {
-      newErrors.displayOrder = `La position doit \u00eatre entre 1 et ${maxPosition}`;
+      newErrors.displayOrder = `La position doit être entre 1 et ${maxPosition}`;
     }
 
     if (selectedBooks.length === 0 && selectedPacks.length === 0) {
-      newErrors.items = 'Veuillez s\u00e9lectionner au moins un livre ou un pack';
+      newErrors.items = 'Veuillez sélectionner au moins un livre ou un pack';
     }
 
     setErrors(newErrors);
@@ -185,7 +185,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                         {section ? 'Modifier la Section' : 'Nouvelle Section'}
                       </h2>
                       <p className="text-xs sm:text-sm text-blue-50 hidden sm:block">
-                        G\u00e9rer les livres et packs de la section carrousel
+                        Gérer les livres et packs de la section carrousel
                       </p>
                     </div>
                   </div>
@@ -236,7 +236,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                   {/* French Name Input */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Nom en Fran\u00e7ais <span className="text-red-500">*</span>
+                      Nom en Français <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -245,7 +245,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                         setNameFr(e.target.value);
                         setErrors({ ...errors, nameFr: '' });
                       }}
-                      placeholder="ex: Nos Nouveaut\u00e9s, Meilleures Ventes..."
+                      placeholder="ex: Nos Nouveautés, Meilleures Ventes..."
                       className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all ${
                         errors.nameFr
                           ? 'border-red-500 focus:ring-red-500'
@@ -305,10 +305,10 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-semibold text-gray-700">
-                      S\u00e9lectionner le Contenu <span className="text-red-500">*</span>
+                      Sélectionner le Contenu <span className="text-red-500">*</span>
                     </label>
                     <span className="text-xs text-gray-500 font-medium">
-                      {totalSelectedCount} {totalSelectedCount <= 1 ? '\u00e9l\u00e9ment' : '\u00e9l\u00e9ments'}
+                      {totalSelectedCount} {totalSelectedCount <= 1 ? 'élément' : 'éléments'}
                       {selectedBooks.length > 0 && selectedPacks.length > 0 && (
                         <span className="text-gray-400 ml-1">
                           ({selectedBooks.length} {selectedBooks.length <= 1 ? 'livre' : 'livres'}, {selectedPacks.length} {selectedPacks.length <= 1 ? 'pack' : 'packs'})
@@ -376,7 +376,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                       <button
                         onClick={() => handleScroll('left')}
                         className="absolute left-1 top-1/2 -translate-y-1/2 z-10 bg-white rounded-lg p-1.5 shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200"
-                        aria-label="D\u00e9filer vers la gauche"
+                        aria-label="Défiler vers la gauche"
                       >
                         <ChevronLeft className="w-4 h-4 text-gray-700" />
                       </button>
@@ -387,7 +387,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                       <button
                         onClick={() => handleScroll('right')}
                         className="absolute right-1 top-1/2 -translate-y-1/2 z-10 bg-white rounded-lg p-1.5 shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200"
-                        aria-label="D\u00e9filer vers la droite"
+                        aria-label="Défiler vers la droite"
                       >
                         <ChevronRight className="w-4 h-4 text-gray-700" />
                       </button>
@@ -404,7 +404,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                           {filteredBooks.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                               <BookOpen className="w-10 h-10 mx-auto mb-2 text-gray-400" />
-                              <p className="text-sm">Aucun livre trouv\u00e9</p>
+                              <p className="text-sm">Aucun livre trouvé</p>
                             </div>
                           ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -477,7 +477,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                           {filteredPacks.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                               <Package className="w-10 h-10 mx-auto mb-2 text-gray-400" />
-                              <p className="text-sm">Aucun pack trouv\u00e9</p>
+                              <p className="text-sm">Aucun pack trouvé</p>
                             </div>
                           ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -566,7 +566,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                 {totalSelectedCount > 0 && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2.5">
-                      \u00c9l\u00e9ments S\u00e9lectionn\u00e9s
+                      Éléments Sélectionnés
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {selectedBooks.map((book) => (
@@ -623,7 +623,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                   className="px-5 py-2.5 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {saving && <Loader className="w-4 h-4 animate-spin" />}
-                  {saving ? 'Enregistrement...' : (section ? 'Mettre \u00e0 Jour' : 'Cr\u00e9er')}
+                  {saving ? 'Enregistrement...' : (section ? 'Mettre à Jour' : 'Créer')}
                 </button>
               </div>
             </div>
