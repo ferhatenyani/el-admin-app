@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { createApiClient, API_BASE_URL } from './apiClient';
 import { getBookCoverUrl } from './booksApi';
+import { getPackCoverUrl } from './packsApi';
 
 const api = createApiClient();
 
@@ -27,6 +28,7 @@ const processMainDisplayData = (data) => {
       image: display.id ? `${API_BASE_URL}/api/tags/${display.id}/image` : null,
       imageUrl: display.imageUrl,
       books: display.books || [],
+      packs: display.packs || [],
       deletedAt: display.deletedAt,
       deletedBy: display.deletedBy,
     };
@@ -109,46 +111,70 @@ export const getMainDisplays = async (params = {}, signal = null) => {
       const displays = Array.isArray(sortedData) ? sortedData : (sortedData.content || sortedData);
 
       if (Array.isArray(displays)) {
-        // Fetch books for each display in parallel
-        const displaysWithBooks = await Promise.all(
+        // Fetch books and packs for each display in parallel
+        const displaysWithItems = await Promise.all(
           displays.map(async (display) => {
             try {
-              const booksResponse = await api.get('/api/books', {
-                params: {
-                  mainDisplayId: display.id,
-                  page: 0,
-                  size: 1000, // Get all books for this display
-                },
-                signal,
-              });
+              // Fetch books and packs in parallel
+              const [booksResponse, packsResponse] = await Promise.all([
+                api.get('/api/books', {
+                  params: {
+                    mainDisplayId: display.id,
+                    page: 0,
+                    size: 1000,
+                  },
+                  signal,
+                }),
+                api.get('/api/book-packs', {
+                  params: {
+                    mainDisplayId: display.id,
+                    page: 0,
+                    size: 1000,
+                  },
+                  signal,
+                }),
+              ]);
+
               const books = booksResponse.data.content || booksResponse.data;
-              // Transform books to match expected format
               const transformedBooks = Array.isArray(books)
                 ? books.map(book => ({
                     ...book,
-                    image: getBookCoverUrl(book.id), // Use the same pattern as BooksTable
+                    image: getBookCoverUrl(book.id),
                     coverImageUrl: getBookCoverUrl(book.id),
                     author: typeof book.author === 'object' && book.author !== null
                       ? `${book.author.firstName || ''} ${book.author.lastName || ''}`.trim()
                       : book.author || 'Unknown Author',
                   }))
                 : [];
+
+              const packsData = packsResponse.data.content || packsResponse.data;
+              const transformedPacks = Array.isArray(packsData)
+                ? packsData.map(pack => ({
+                    ...pack,
+                    image: getPackCoverUrl(pack.id),
+                    coverImageUrl: getPackCoverUrl(pack.id),
+                    originalPrice: (pack.books || []).reduce((sum, b) => sum + (parseFloat(b.price) || 0), 0),
+                  }))
+                : [];
+
               return {
                 ...display,
                 books: transformedBooks,
+                packs: transformedPacks,
               };
             } catch (error) {
-              console.error(`Error fetching books for main display ${display.id}:`, error);
+              console.error(`Error fetching items for main display ${display.id}:`, error);
               return {
                 ...display,
                 books: [],
+                packs: [],
               };
             }
           })
         );
 
         return {
-          content: displaysWithBooks,
+          content: displaysWithItems,
           totalElements,
         };
       }
@@ -274,6 +300,28 @@ export const removeBooksFromMainDisplay = async (id, bookIds) => {
 };
 
 /**
+ * Add packs to a main display section
+ * @param {number} id - Main display ID
+ * @param {Array<number>} packIds - Array of pack IDs to add
+ * @returns {Promise} Updated main display data
+ */
+export const addPacksToMainDisplay = async (id, packIds) => {
+  const response = await api.post(`/api/tags/${id}/book-packs/add`, packIds);
+  return processMainDisplayData(response.data);
+};
+
+/**
+ * Remove packs from a main display section
+ * @param {number} id - Main display ID
+ * @param {Array<number>} packIds - Array of pack IDs to remove
+ * @returns {Promise} Updated main display data
+ */
+export const removePacksFromMainDisplay = async (id, packIds) => {
+  const response = await api.post(`/api/tags/${id}/book-packs/remove`, packIds);
+  return processMainDisplayData(response.data);
+};
+
+/**
  * Reorder main display sections
  * @param {Array<number>} tagIds - Ordered array of tag IDs
  * @returns {Promise} Reordered main displays
@@ -301,6 +349,8 @@ export default {
   deleteMainDisplay,
   addBooksToMainDisplay,
   removeBooksFromMainDisplay,
+  addPacksToMainDisplay,
+  removePacksFromMainDisplay,
   reorderMainDisplays,
   getMainDisplayImageUrl,
 };
