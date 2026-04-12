@@ -208,6 +208,64 @@ const Orders = () => {
     }
   };
 
+  const handleSaveOrder = async (orderId, formData) => {
+    try {
+      const fullOrder = await ordersApi.getOrderById(orderId);
+
+      const updatedOrder = await ordersApi.updateOrder(orderId, {
+        ...fullOrder,
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        wilaya: formData.wilaya,
+        city: formData.city,
+        streetAddress: formData.streetAddress,
+        shippingMethod: formData.shippingMethod,
+        shippingProvider: formData.shippingProvider,
+        shippingCost: formData.shippingCost,
+        stopDeskId: formData.stopDeskId,
+        status: formData.status.toUpperCase(),
+      });
+
+      // Refresh orders list
+      fetchOrders();
+
+      // Update selectedOrder so the modal reflects the saved state
+      const transformed = {
+        ...updatedOrder,
+        orderNumber: updatedOrder.uniqueId || updatedOrder.orderNumber,
+        customer: updatedOrder.fullName || updatedOrder.customer,
+        customerEmail: updatedOrder.email || updatedOrder.customerEmail,
+        date: updatedOrder.createdAt || updatedOrder.date,
+        total: updatedOrder.totalAmount || updatedOrder.total,
+        status: updatedOrder.status ? updatedOrder.status.toLowerCase() : 'pending',
+      };
+      setSelectedOrder(transformed);
+
+      // Handle tracking info for status changes
+      const newStatus = formData.status.toLowerCase();
+      if (newStatus === 'confirmed' || newStatus === 'shipped') {
+        const trackingInfo = updatedOrder.trackingNumber || updatedOrder.providerOrderId;
+        if (trackingInfo) {
+          success(`Commande mise à jour. Numéro de suivi: ${trackingInfo}`);
+        } else if (!updatedOrder.shippingLabelUrl) {
+          error('La création du colis chez le transporteur a échoué', 'Attention');
+        } else {
+          success('La commande a été mise à jour avec succès');
+        }
+      } else {
+        success('La commande a été mise à jour avec succès');
+      }
+
+      return updatedOrder;
+    } catch (err) {
+      console.error('Error saving order:', err);
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || 'Une erreur est survenue';
+      error(errorMessage, 'Erreur lors de la sauvegarde');
+      throw err;
+    }
+  };
+
   const handleCreateOrder = async (orderData) => {
     try {
       await ordersApi.createOrder(orderData);
@@ -344,6 +402,7 @@ const Orders = () => {
         onClose={() => setIsModalOpen(false)}
         order={selectedOrder}
         onUpdateStatus={handleUpdateStatus}
+        onSaveOrder={handleSaveOrder}
       />
 
       <CreateOrderModal
