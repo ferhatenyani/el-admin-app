@@ -7,7 +7,7 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import BookSectionModal from './BookSectionModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
-import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, getMainDisplays, reorderMainDisplays } from '../../services/mainDisplayApi';
+import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, addPacksToMainDisplay, removePacksFromMainDisplay, getMainDisplays, reorderMainDisplays } from '../../services/mainDisplayApi';
 import { getBookCoverUrl } from '../../services/booksApi';
 import { useDebounce } from '../../hooks/useDebounce';
 
@@ -171,16 +171,28 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
         const currentBookIds = editingSection.books.map(b => b.id);
         const newBookIds = sectionData.books.map(b => b.id);
 
-        // Books to add
         const booksToAdd = newBookIds.filter(id => !currentBookIds.includes(id));
         if (booksToAdd.length > 0) {
           await addBooksToMainDisplay(editingSection.id, booksToAdd);
         }
 
-        // Books to remove
         const booksToRemove = currentBookIds.filter(id => !newBookIds.includes(id));
         if (booksToRemove.length > 0) {
           await removeBooksFromMainDisplay(editingSection.id, booksToRemove);
+        }
+
+        // Handle pack changes
+        const currentPackIds = (editingSection.packs || []).map(p => p.id);
+        const newPackIds = (sectionData.packs || []).map(p => p.id);
+
+        const packsToAdd = newPackIds.filter(id => !currentPackIds.includes(id));
+        if (packsToAdd.length > 0) {
+          await addPacksToMainDisplay(editingSection.id, packsToAdd);
+        }
+
+        const packsToRemove = currentPackIds.filter(id => !newPackIds.includes(id));
+        if (packsToRemove.length > 0) {
+          await removePacksFromMainDisplay(editingSection.id, packsToRemove);
         }
       } else {
         // Create new section
@@ -195,6 +207,12 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
         if (sectionData.books.length > 0) {
           const bookIds = sectionData.books.map(b => b.id);
           await addBooksToMainDisplay(newSection.id, bookIds);
+        }
+
+        // Add packs to the new section
+        if (sectionData.packs && sectionData.packs.length > 0) {
+          const packIds = sectionData.packs.map(p => p.id);
+          await addPacksToMainDisplay(newSection.id, packIds);
         }
       }
 
