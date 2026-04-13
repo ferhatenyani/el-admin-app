@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader, Search, ChevronDown, ChevronUp, GripVertical, Save } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader, Search, ChevronDown, ChevronUp, GripVertical, Save, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -9,6 +9,7 @@ import BookSectionModal from './BookSectionModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, addPacksToMainDisplay, removePacksFromMainDisplay, getMainDisplays, reorderMainDisplays } from '../../services/mainDisplayApi';
 import { getBookCoverUrl } from '../../services/booksApi';
+import { getPackCoverUrl } from '../../services/packsApi';
 import { useDebounce } from '../../hooks/useDebounce';
 
 const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest }) => {
@@ -127,31 +128,34 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
   };
 
   const handleRemoveBookFromSection = (sectionId, book) => {
-    // Show confirmation modal
-    setConfirmDelete({ isOpen: true, sectionId, book });
+    setConfirmDelete({ isOpen: true, sectionId, book, type: 'book' });
   };
 
-  const confirmRemoveBook = async () => {
-    const { sectionId, book } = confirmDelete;
+  const handleRemovePackFromSection = (sectionId, pack) => {
+    setConfirmDelete({ isOpen: true, sectionId, book: pack, type: 'pack' });
+  };
+
+  const confirmRemoveItem = async () => {
+    const { sectionId, book: item, type } = confirmDelete;
 
     try {
-      // Call API to remove book from main display
-      await removeBooksFromMainDisplay(sectionId, [book.id]);
+      if (type === 'pack') {
+        await removePacksFromMainDisplay(sectionId, [item.id]);
+      } else {
+        await removeBooksFromMainDisplay(sectionId, [item.id]);
+      }
 
-      // Refresh the list after removal
       await fetchSections();
-
-      // Close confirmation modal
-      setConfirmDelete({ isOpen: false, sectionId: null, book: null });
+      setConfirmDelete({ isOpen: false, sectionId: null, book: null, type: null });
     } catch (error) {
-      console.error('Error removing book from section:', error);
-      alert('Une erreur est survenue lors de la suppression du livre. Veuillez réessayer.');
-      setConfirmDelete({ isOpen: false, sectionId: null, book: null });
+      console.error('Error removing item from section:', error);
+      alert('Une erreur est survenue lors de la suppression. Veuillez réessayer.');
+      setConfirmDelete({ isOpen: false, sectionId: null, book: null, type: null });
     }
   };
 
   const cancelRemoveBook = () => {
-    setConfirmDelete({ isOpen: false, sectionId: null, book: null });
+    setConfirmDelete({ isOpen: false, sectionId: null, book: null, type: null });
   };
 
   const handleSaveSection = async (sectionData) => {
@@ -372,6 +376,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
                           onEdit={() => handleEditSection(section)}
                           onDelete={() => handleDeleteSection(section)}
                           onRemoveBook={(book) => handleRemoveBookFromSection(section.id, book)}
+                          onRemovePack={(pack) => handleRemovePackFromSection(section.id, pack)}
                         />
                       ))}
                     </div>
@@ -401,16 +406,16 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
       {/* Confirm Delete Modal */}
       <ConfirmDeleteModal
         isOpen={confirmDelete.isOpen}
-        onConfirm={confirmRemoveBook}
+        onConfirm={confirmRemoveItem}
         onCancel={cancelRemoveBook}
-        itemName={confirmDelete.book ? `"${confirmDelete.book.title}"` : 'ce livre'}
+        itemName={confirmDelete.book ? `"${confirmDelete.book.title}"` : 'cet élément'}
       />
     </div>
   );
 };
 
 // Sortable wrapper for SectionCard
-const SortableSectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
+const SortableSectionCard = ({ section, onEdit, onDelete, onRemoveBook, onRemovePack }) => {
   const {
     attributes,
     listeners,
@@ -434,6 +439,7 @@ const SortableSectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
         onEdit={onEdit}
         onDelete={onDelete}
         onRemoveBook={onRemoveBook}
+        onRemovePack={onRemovePack}
         dragHandleProps={{ ...attributes, ...listeners }}
         isDragActive={isDragging}
       />
@@ -442,7 +448,7 @@ const SortableSectionCard = ({ section, onEdit, onDelete, onRemoveBook }) => {
 };
 
 // Section Card Component - Professional Style
-const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, dragHandleProps, isDragActive }) => {
+const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, onRemovePack, dragHandleProps, isDragActive }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [failedImages, setFailedImages] = useState(new Set());
   const [isDragging, setIsDragging] = useState(false);
@@ -550,11 +556,13 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, dragHandleProps,
         behavior: 'smooth'
       });
     }
-    setScrollPosition(Math.min(section.books.length - visibleCards, scrollPosition + 1));
+    const totalItems = section.books.length + (section.packs || []).length;
+    setScrollPosition(Math.min(totalItems - visibleCards, scrollPosition + 1));
   };
 
+  const totalItems = section.books.length + (section.packs || []).length;
   const canScrollLeft = scrollPosition > 0;
-  const canScrollRight = scrollPosition < section.books.length - visibleCards;
+  const canScrollRight = scrollPosition < totalItems - visibleCards;
 
   return (
     <div className={`bg-white rounded-lg shadow-md border overflow-hidden transition-shadow duration-200 ${isDragActive ? 'border-blue-400 shadow-xl ring-2 ring-blue-200' : 'border-gray-200'}`}>
@@ -577,6 +585,9 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, dragHandleProps,
             </h3>
             <p className="text-blue-50 text-xs sm:text-sm font-medium">
               {section.books.length} {section.books.length === 1 ? 'livre' : 'livres'}
+              {(section.packs || []).length > 0 && (
+                <span>, {section.packs.length} {section.packs.length === 1 ? 'pack' : 'packs'}</span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -602,17 +613,17 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, dragHandleProps,
 
       {/* Carousel Content */}
       <div className="p-4 sm:p-5">
-        {section.books.length === 0 ? (
+        {totalItems === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 border border-dashed border-gray-300 rounded-lg">
             <div className="bg-gray-100 rounded-lg p-3 mb-3">
               <BookOpen className="w-7 h-7 text-gray-400" />
             </div>
-            <p className="text-gray-600 font-medium text-sm mb-2">Aucun livre dans cette section</p>
+            <p className="text-gray-600 font-medium text-sm mb-2">Aucun contenu dans cette section</p>
             <button
               onClick={onEdit}
               className="text-blue-600 hover:text-blue-700 font-semibold text-xs hover:underline"
             >
-              Ajouter des livres
+              Ajouter des livres ou packs
             </button>
           </div>
         ) : (
@@ -628,7 +639,7 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, dragHandleProps,
               </button>
             )}
 
-            {/* Books Container */}
+            {/* Items Container */}
             <div
               ref={scrollContainerRef}
               className="overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing"
@@ -650,16 +661,16 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, dragHandleProps,
                   gap: `${gap}px`
                 }}
               >
+                {/* Books */}
                 {section.books.map((book) => (
                   <div
-                    key={book.id}
+                    key={`book-${book.id}`}
                     className="flex-shrink-0 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden border border-gray-200 group"
                     style={{
                       width: `${cardWidth}px`,
                       height: `${cardHeight}px`
                     }}
                   >
-                    {/* Book Image Container */}
                     <div className="relative" style={{ height: `${imageHeight}px` }}>
                       {failedImages.has(book.id) ? (
                         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -681,20 +692,16 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, dragHandleProps,
                         />
                       )}
 
-                      {/* Subtle Gradient Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-                      {/* Price Badge */}
                       <div className="absolute top-2 right-2 bg-blue-600 text-white px-2.5 py-1 rounded-md text-xs font-semibold shadow-sm">
                         {book.price} DZD
                       </div>
 
-                      {/* Language Badge */}
                       <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-gray-800 px-2 py-0.5 rounded-md text-xs font-medium shadow-sm">
                         {book.language || 'N/A'}
                       </div>
 
-                      {/* Remove Button */}
                       <button
                         onClick={() => onRemoveBook(book)}
                         className="absolute top-2 left-2 bg-red-500 text-white rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600 shadow-md"
@@ -705,13 +712,78 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, dragHandleProps,
                       </button>
                     </div>
 
-                    {/* Book Content */}
                     <div className="p-2.5">
                       <h4 className="font-semibold text-gray-900 text-xs sm:text-sm line-clamp-2 mb-0.5 leading-snug" title={book.title}>
                         {book.title}
                       </h4>
                       <p className="text-gray-600 text-xs truncate" title={book.author}>
                         {book.author}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Packs */}
+                {(section.packs || []).map((pack) => (
+                  <div
+                    key={`pack-${pack.id}`}
+                    className="flex-shrink-0 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden border border-purple-200 group"
+                    style={{
+                      width: `${cardWidth}px`,
+                      height: `${cardHeight}px`
+                    }}
+                  >
+                    <div className="relative" style={{ height: `${imageHeight}px` }}>
+                      {failedImages.has(`pack-${pack.id}`) ? (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                          <Package className="w-8 h-8 text-purple-400" />
+                        </div>
+                      ) : (
+                        <img
+                          src={pack.image || getPackCoverUrl(pack.id)}
+                          alt={pack.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={() => {
+                            setFailedImages(prev => new Set(prev).add(`pack-${pack.id}`));
+                          }}
+                        />
+                      )}
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+                      {/* Pack Badge */}
+                      <div className="absolute top-2 left-2 flex items-center gap-1 bg-purple-600 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm">
+                        <Package className="w-3 h-3" />
+                        Pack
+                      </div>
+
+                      {/* Price Badge */}
+                      <div className="absolute top-2 right-2 bg-purple-600 text-white px-2.5 py-1 rounded-md text-xs font-semibold shadow-sm">
+                        {pack.price} DZD
+                      </div>
+
+                      {/* Book count */}
+                      <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-gray-800 px-2 py-0.5 rounded-md text-xs font-medium shadow-sm">
+                        {(pack.books || []).length} livres
+                      </div>
+
+                      {/* Remove Button */}
+                      <button
+                        onClick={() => onRemovePack(pack)}
+                        className="absolute top-2 left-2 bg-red-500 text-white rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600 shadow-md z-10"
+                        title="Retirer de la section"
+                        aria-label="Retirer de la section"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="p-2.5">
+                      <h4 className="font-semibold text-gray-900 text-xs sm:text-sm line-clamp-2 mb-0.5 leading-snug" title={pack.title}>
+                        {pack.title}
+                      </h4>
+                      <p className="text-purple-600 text-xs truncate font-medium">
+                        {(pack.books || []).length} livres · Pack
                       </p>
                     </div>
                   </div>
