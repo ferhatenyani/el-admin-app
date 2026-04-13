@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { createApiClient, API_BASE_URL } from './apiClient';
 import { getBookCoverUrl } from './booksApi';
-import { getPackCoverUrl } from './packsApi';
 
 const api = createApiClient();
 
@@ -151,8 +150,8 @@ export const getMainDisplays = async (params = {}, signal = null) => {
               const transformedPacks = Array.isArray(packsData)
                 ? packsData.map(pack => ({
                     ...pack,
-                    image: getPackCoverUrl(pack.id),
-                    coverImageUrl: getPackCoverUrl(pack.id),
+                    image: pack.books?.[0]?.id ? getBookCoverUrl(pack.books[0].id) : null,
+                    coverImageUrl: pack.books?.[0]?.id ? getBookCoverUrl(pack.books[0].id) : null,
                     originalPrice: (pack.books || []).reduce((sum, b) => sum + (parseFloat(b.price) || 0), 0),
                   }))
                 : [];

@@ -19,7 +19,7 @@ const processPackData = (data) => {
       id: pack.id,
       name: pack.title, // Backend uses 'title', frontend uses 'name'
       description: pack.description,
-      image: pack.id ? `${API_BASE_URL}/api/book-packs/${pack.id}/cover` : null, // Use cover endpoint
+      image: pack.books?.[0]?.id ? `${API_BASE_URL}/api/books/${pack.books[0].id}/cover` : null,
       coverUrl: pack.coverUrl, // Keep original for updates
       price: pack.price,
       books: pack.books || [],
@@ -224,21 +224,10 @@ export const deletePack = async (id) => {
   return response.data;
 };
 
-/**
- * Get pack cover image URL
- * @param {number} id - The pack ID
- * @returns {string} Cover image URL
- */
-export const getPackCoverUrl = (id) => {
-  if (!id) return null;
-  return `${API_BASE_URL}/api/book-packs/${id}/cover`;
-};
-
 export default {
   getPacks,
   getPackById,
   createPack,
   updatePack,
   deletePack,
-  getPackCoverUrl,
 };

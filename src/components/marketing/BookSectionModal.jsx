@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, BookOpen, Search, Check, ChevronLeft, ChevronRight, Loader, Package } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
-import { getPackCoverUrl } from '../../services/packsApi';
 
 const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, availablePacks, saving, totalSections = 0 }) => {
   const [nameEn, setNameEn] = useState('');
@@ -517,7 +516,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                                       </div>
                                     ) : (
                                       <img
-                                        src={pack.image || getPackCoverUrl(pack.id)}
+                                        src={pack.image || (pack.books?.[0]?.id ? getBookCoverUrl(pack.books[0].id) : null)}
                                         alt={packTitle}
                                         className="w-full h-28 object-cover rounded-t-lg"
                                         onError={() => {

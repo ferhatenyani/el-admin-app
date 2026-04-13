@@ -9,7 +9,6 @@ import BookSectionModal from './BookSectionModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, addPacksToMainDisplay, removePacksFromMainDisplay, getMainDisplays, reorderMainDisplays } from '../../services/mainDisplayApi';
 import { getBookCoverUrl } from '../../services/booksApi';
-import { getPackCoverUrl } from '../../services/packsApi';
 import { useDebounce } from '../../hooks/useDebounce';
 
 const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest }) => {
@@ -740,7 +739,7 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, onRemovePack, dr
                         </div>
                       ) : (
                         <img
-                          src={pack.image || getPackCoverUrl(pack.id)}
+                          src={pack.image || (pack.books?.[0]?.id ? getBookCoverUrl(pack.books[0].id) : null)}
                           alt={pack.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={() => {
