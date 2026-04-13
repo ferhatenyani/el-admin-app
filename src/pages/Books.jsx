@@ -278,15 +278,27 @@ const Books = () => {
         // Update existing book
         savedBook = await booksApi.updateBook(editingBook.id, bookData, coverImage);
 
+        // Remove old CATEGORY and ETIQUETTE tags before adding new ones,
+        // otherwise addTagsToBook accumulates duplicates and find() returns the stale tag.
+        const oldCategoryTag = editingBook.tags?.find(t => t.type === 'CATEGORY');
+        const oldEtiquetteTag = editingBook.tags?.find(t => t.type === 'ETIQUETTE');
+        const tagIdsToRemove = [];
+        if (oldCategoryTag) tagIdsToRemove.push(oldCategoryTag.id);
+        if (oldEtiquetteTag) tagIdsToRemove.push(oldEtiquetteTag.id);
+        if (tagIdsToRemove.length > 0) {
+          await booksApi.removeTagsFromBook(savedBook.id, tagIdsToRemove);
+        }
+
         // Collect tag IDs to add
         const tagIdsToAdd = [];
         if (categoryId) tagIdsToAdd.push(categoryId);
         if (etiquetteId) tagIdsToAdd.push(etiquetteId);
 
-        // Add tags if any are selected
+        // Add new tags and refetch to get updated state
         if (tagIdsToAdd.length > 0) {
           await booksApi.addTagsToBook(savedBook.id, tagIdsToAdd);
-          // Refetch to get updated tags
+        }
+        if (tagIdsToRemove.length > 0 || tagIdsToAdd.length > 0) {
           savedBook = await booksApi.getBookById(savedBook.id);
         }
 
