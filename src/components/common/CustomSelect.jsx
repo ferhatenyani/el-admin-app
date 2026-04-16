@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, X, Search } from 'lucide-react';
+import useIsDesktop from '../../hooks/useIsDesktop';
 
 const CustomSelect = ({ value, onChange, options, placeholder = "Select option", onOpen, searchable = false, alwaysVisibleSearch = false, disabled = false }) => {
+  const isDesktop = useIsDesktop();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -38,6 +40,25 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select option",
   };
 
   const selectedOption = options.find(opt => opt.value === value);
+
+  // On mobile/tablet render a native select (non-searchable, uses OS picker)
+  if (!isDesktop) {
+    return (
+      <select
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className={`w-full py-3 px-4 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 bg-white appearance-none ${
+          disabled ? 'opacity-60 cursor-not-allowed bg-gray-50' : 'cursor-pointer'
+        } ${value ? 'text-gray-700 font-medium' : 'text-gray-400'} border-gray-300 hover:border-gray-400`}
+      >
+        <option value="" disabled>{placeholder}</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    );
+  }
 
   // Filter options based on search query
   const filteredOptions = (searchable || alwaysVisibleSearch) && searchQuery
