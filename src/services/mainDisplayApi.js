@@ -331,6 +331,28 @@ export const reorderMainDisplays = async (tagIds) => {
 };
 
 /**
+ * Reorder books within a section
+ * @param {number} id - Main display ID
+ * @param {Array<number>} bookIds - Ordered array of book IDs
+ * @returns {Promise} Updated main display data
+ */
+export const reorderBooksInSection = async (id, bookIds) => {
+  const response = await api.put(`/api/tags/${id}/books/reorder`, bookIds);
+  return processMainDisplayData(response.data);
+};
+
+/**
+ * Reorder packs within a section
+ * @param {number} id - Main display ID
+ * @param {Array<number>} packIds - Ordered array of pack IDs
+ * @returns {Promise} Updated main display data
+ */
+export const reorderPacksInSection = async (id, packIds) => {
+  const response = await api.put(`/api/tags/${id}/book-packs/reorder`, packIds);
+  return processMainDisplayData(response.data);
+};
+
+/**
  * Get main display image URL
  * @param {number} id - The main display ID
  * @returns {string} Image URL
@@ -351,5 +373,7 @@ export default {
   addPacksToMainDisplay,
   removePacksFromMainDisplay,
   reorderMainDisplays,
+  reorderBooksInSection,
+  reorderPacksInSection,
   getMainDisplayImageUrl,
 };

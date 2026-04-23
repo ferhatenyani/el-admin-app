@@ -7,7 +7,7 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import BookSectionModal from './BookSectionModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
-import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, addPacksToMainDisplay, removePacksFromMainDisplay, getMainDisplays, reorderMainDisplays } from '../../services/mainDisplayApi';
+import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, addPacksToMainDisplay, removePacksFromMainDisplay, getMainDisplays, reorderMainDisplays, reorderBooksInSection, reorderPacksInSection } from '../../services/mainDisplayApi';
 import { getBookCoverUrl } from '../../services/booksApi';
 import { useDebounce } from '../../hooks/useDebounce';
 
@@ -184,6 +184,11 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
           await removeBooksFromMainDisplay(editingSection.id, booksToRemove);
         }
 
+        // Persist book order
+        if (newBookIds.length > 0) {
+          await reorderBooksInSection(editingSection.id, newBookIds);
+        }
+
         // Handle pack changes
         const currentPackIds = (editingSection.packs || []).map(p => p.id);
         const newPackIds = (sectionData.packs || []).map(p => p.id);
@@ -197,6 +202,11 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
         if (packsToRemove.length > 0) {
           await removePacksFromMainDisplay(editingSection.id, packsToRemove);
         }
+
+        // Persist pack order
+        if (newPackIds.length > 0) {
+          await reorderPacksInSection(editingSection.id, newPackIds);
+        }
       } else {
         // Create new section
         const newSection = await createMainDisplay({
@@ -206,16 +216,18 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
           displayOrder: sectionData.displayOrder,
         });
 
-        // Add books to the new section
+        // Add books to the new section and persist order
         if (sectionData.books.length > 0) {
           const bookIds = sectionData.books.map(b => b.id);
           await addBooksToMainDisplay(newSection.id, bookIds);
+          await reorderBooksInSection(newSection.id, bookIds);
         }
 
-        // Add packs to the new section
+        // Add packs to the new section and persist order
         if (sectionData.packs && sectionData.packs.length > 0) {
           const packIds = sectionData.packs.map(p => p.id);
           await addPacksToMainDisplay(newSection.id, packIds);
+          await reorderPacksInSection(newSection.id, packIds);
         }
       }
 
