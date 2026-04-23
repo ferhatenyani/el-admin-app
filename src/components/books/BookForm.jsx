@@ -116,13 +116,13 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         categoryId: initialData.tags?.find(t => t.type === 'CATEGORY')?.id || initialData.categoryId || null,
         etiquetteId: initialData.tags?.find(t => t.type === 'ETIQUETTE')?.id || initialData.etiquetteId || null,
         language: formLang,
-        price: initialData.price || '',
-        stockQuantity: initialData.stockQuantity || '',
-        preorderDate: initialData.preorderDate || '',
+        price: initialData.price ?? '',
+        stockQuantity: initialData.stockQuantity ?? '',
+        preorderDate: initialData.preorderDate ?? '',
         description: initialData.description || '',
         coverImage: null, // Don't prefill file input
         imageUrl: initialData.imageUrl || initialData.coverImageUrl || null, // For existing image preview
-        deliveryFee: initialData.deliveryFee || '',
+        deliveryFee: initialData.deliveryFee ?? '',
         automaticDeliveryFee: initialData.automaticDeliveryFee || false,
       };
       setFormData(normalizedData);
