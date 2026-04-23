@@ -31,6 +31,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     language: '',
     price: '',
     stockQuantity: '',
+    preorderDate: '',
     description: '',
     etiquetteId: null,
     coverImage: null,
@@ -117,6 +118,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         language: formLang,
         price: initialData.price || '',
         stockQuantity: initialData.stockQuantity || '',
+        preorderDate: initialData.preorderDate || '',
         description: initialData.description || '',
         coverImage: null, // Don't prefill file input
         imageUrl: initialData.imageUrl || initialData.coverImageUrl || null, // For existing image preview
@@ -132,6 +134,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         language: '',
         price: '',
         stockQuantity: '',
+        preorderDate: '',
         description: '',
         etiquetteId: null,
         coverImage: null,
@@ -223,6 +226,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         description: formData.description.trim() || '',
         automaticDeliveryFee: formData.automaticDeliveryFee,
         deliveryFee: formData.automaticDeliveryFee ? 0 : (parseFloat(formData.deliveryFee) || 0),
+        preorderDate: formData.preorderDate || null,
       };
 
       // Add author reference if selected
@@ -453,6 +457,23 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                           {errors.stockQuantity}
                         </motion.p>
                       )}
+                    </div>
+
+                    {/* Preorder Date */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">
+                        Date de précommande
+                      </label>
+                      <input
+                        type="date"
+                        name="preorderDate"
+                        value={formData.preorderDate}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      />
+                      <p className="mt-1 text-xs text-gray-400">
+                        Disponibilité affichée si stock = 0
+                      </p>
                     </div>
 
                     {/* Delivery Fee */}
