@@ -6,6 +6,7 @@ import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import UploadImageInput from '../common/UploadImageInput';
 import CustomSelect from '../common/CustomSelect';
+import InlineMDInput from '../common/InlineMDInput';
 import useScrollLock from '../../hooks/useScrollLock';
 import * as authorsApi from '../../services/authorsApi';
 import * as tagsApi from '../../services/tagsApi';
@@ -294,17 +295,14 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       <label className="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">
                         Titre *
                       </label>
-                      <input
-                        type="text"
-                        name="title"
+                      <InlineMDInput
                         value={formData.title}
-                        onChange={handleChange}
+                        onChange={(value) => {
+                          setFormData((prev) => ({ ...prev, title: value }));
+                          if (errors.title) setErrors((prev) => ({ ...prev, title: '' }));
+                        }}
                         placeholder="Entrez le titre du livre"
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
-                          errors.title
-                            ? 'border-red-300 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-blue-500'
-                        }`}
+                        error={errors.title}
                       />
                       {errors.title && (
                         <motion.p

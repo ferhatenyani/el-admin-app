@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Package, Search, Check, BookOpen } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
+import InlineMDInput from '../common/InlineMDInput';
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
 
@@ -217,17 +218,14 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Nom du Pack <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    name="name"
+                  <InlineMDInput
                     value={formData.name}
-                    onChange={handleInputChange}
+                    onChange={(value) => {
+                      setFormData((prev) => ({ ...prev, name: value }));
+                      if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
+                    }}
                     placeholder="ex: Pack Littérature Classique"
-                    className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                      errors.name
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-green-500'
-                    }`}
+                    error={errors.name}
                   />
                   {errors.name && (
                     <motion.p
