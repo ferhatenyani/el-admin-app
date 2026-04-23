@@ -64,7 +64,7 @@ const SortableSelectedItem = ({ item, type, onRemove }) => {
   );
 };
 
-const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, availablePacks, saving, totalSections = 0 }) => {
+const BookSectionModal = ({ isOpen, onClose, onSave, onSaveOrder, section, availableBooks, availablePacks, saving, savingOrder = false, totalSections = 0 }) => {
   const [nameEn, setNameEn] = useState('');
   const [nameFr, setNameFr] = useState('');
   const [displayOrder, setDisplayOrder] = useState(1);
@@ -77,6 +77,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
   const [showRightScroll, setShowRightScroll] = useState(false);
   const scrollContainerRef = useRef(null);
   const [failedImages, setFailedImages] = useState(new Set());
+  const [hasOrderChanged, setHasOrderChanged] = useState(false);
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -102,6 +103,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
     setErrors({});
     setSearchQuery('');
     setActiveTab('books');
+    setHasOrderChanged(false);
   }, [section, isOpen, maxPosition]);
 
   // Filter books based on search query
@@ -218,6 +220,7 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
         const newIndex = items.findIndex((b) => b.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
       });
+      if (section) setHasOrderChanged(true);
     }
   };
 
@@ -229,6 +232,13 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
         const newIndex = items.findIndex((p) => p.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
       });
+      if (section) setHasOrderChanged(true);
+    }
+  };
+
+  const handleSubmitOrder = () => {
+    if (onSaveOrder) {
+      onSaveOrder({ books: selectedBooks, packs: selectedPacks });
     }
   };
 
@@ -716,22 +726,40 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end gap-2.5 px-4 py-4 sm:px-6 border-t bg-gray-50">
+              <div className="flex items-center justify-between gap-2.5 px-4 py-4 sm:px-6 border-t bg-gray-50">
                 <button
                   onClick={onClose}
-                  disabled={saving}
+                  disabled={saving || savingOrder}
                   className="px-5 py-2.5 text-sm border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Annuler
                 </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={saving}
-                  className="px-5 py-2.5 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {saving && <Loader className="w-4 h-4 animate-spin" />}
-                  {saving ? 'Enregistrement...' : (section ? 'Mettre à Jour' : 'Créer')}
-                </button>
+
+                <div className="flex items-center gap-2.5">
+                  {section && hasOrderChanged && (
+                    <button
+                      onClick={handleSubmitOrder}
+                      disabled={saving || savingOrder}
+                      className="px-4 py-2.5 text-sm border border-amber-300 bg-amber-50 text-amber-700 font-medium rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {savingOrder ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <GripVertical className="w-4 h-4" />
+                      )}
+                      {savingOrder ? 'Sauvegarde...' : 'Sauvegarder l\'ordre'}
+                    </button>
+                  )}
+
+                  <button
+                    onClick={handleSubmit}
+                    disabled={saving || savingOrder}
+                    className="px-5 py-2.5 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {saving && <Loader className="w-4 h-4 animate-spin" />}
+                    {saving ? 'Enregistrement...' : (section ? 'Mettre à Jour' : 'Créer')}
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>

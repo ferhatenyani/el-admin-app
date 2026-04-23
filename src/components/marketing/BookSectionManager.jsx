@@ -16,6 +16,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
   const [editingSection, setEditingSection] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [savingItemOrder, setSavingItemOrder] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, sectionId: null, book: null });
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +113,25 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
     }
   };
 
+  const handleSaveItemOrder = async ({ books, packs }) => {
+    if (!editingSection) return;
+    try {
+      setSavingItemOrder(true);
+      if (books.length > 0) {
+        await reorderBooksInSection(editingSection.id, books.map(b => b.id));
+      }
+      if (packs.length > 0) {
+        await reorderPacksInSection(editingSection.id, packs.map(p => p.id));
+      }
+      await fetchSections();
+    } catch (error) {
+      console.error('Error saving item order:', error);
+      alert('Une erreur est survenue lors de la sauvegarde de l\'ordre. Veuillez réessayer.');
+    } finally {
+      setSavingItemOrder(false);
+    }
+  };
+
   const handleAddSection = () => {
     setEditingSection(null);
     setIsModalOpen(true);
@@ -184,11 +204,6 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
           await removeBooksFromMainDisplay(editingSection.id, booksToRemove);
         }
 
-        // Persist book order
-        if (newBookIds.length > 0) {
-          await reorderBooksInSection(editingSection.id, newBookIds);
-        }
-
         // Handle pack changes
         const currentPackIds = (editingSection.packs || []).map(p => p.id);
         const newPackIds = (sectionData.packs || []).map(p => p.id);
@@ -201,11 +216,6 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
         const packsToRemove = currentPackIds.filter(id => !newPackIds.includes(id));
         if (packsToRemove.length > 0) {
           await removePacksFromMainDisplay(editingSection.id, packsToRemove);
-        }
-
-        // Persist pack order
-        if (newPackIds.length > 0) {
-          await reorderPacksInSection(editingSection.id, newPackIds);
         }
       } else {
         // Create new section
@@ -407,10 +417,12 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
           setEditingSection(null);
         }}
         onSave={handleSaveSection}
+        onSaveOrder={handleSaveItemOrder}
         section={editingSection}
         availableBooks={availableBooks}
         availablePacks={availablePacks}
         saving={saving}
+        savingOrder={savingItemOrder}
         totalSections={totalItems}
       />
 
