@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Tag, Percent, BadgeDollarSign } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import UploadImageInput from '../common/UploadImageInput';
@@ -40,6 +40,9 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     coverImage: null,
     deliveryFee: '',
     automaticDeliveryFee: false,
+    onSale: false,
+    discountType: 'PERCENTAGE',
+    discountValue: '',
   });
 
   const [authors, setAuthors] = useState([]);
@@ -127,6 +130,9 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         imageUrl: initialData.imageUrl || initialData.coverImageUrl || null, // For existing image preview
         deliveryFee: initialData.deliveryFee ?? '',
         automaticDeliveryFee: initialData.automaticDeliveryFee || false,
+        onSale: initialData.onSale || false,
+        discountType: initialData.discountType || 'PERCENTAGE',
+        discountValue: initialData.discountValue ?? '',
       };
       setFormData(normalizedData);
     } else {
@@ -143,6 +149,9 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         coverImage: null,
         deliveryFee: '',
         automaticDeliveryFee: false,
+        onSale: false,
+        discountType: 'PERCENTAGE',
+        discountValue: '',
       });
     }
     setErrors({});
@@ -203,6 +212,17 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
       newErrors.coverImage = 'Veuillez télécharger une image de couverture';
     }
 
+    // Discount validation
+    if (formData.onSale) {
+      if (!formData.discountValue || parseFloat(formData.discountValue) <= 0) {
+        newErrors.discountValue = 'Veuillez entrer une valeur de remise valide';
+      } else if (formData.discountType === 'PERCENTAGE' && parseFloat(formData.discountValue) >= 100) {
+        newErrors.discountValue = 'La remise en pourcentage doit être inférieure à 100%';
+      } else if (formData.discountType === 'FIXED_AMOUNT' && parseFloat(formData.discountValue) >= parseFloat(formData.price || 0)) {
+        newErrors.discountValue = 'La remise fixe doit être inférieure au prix du livre';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -230,6 +250,9 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         automaticDeliveryFee: formData.automaticDeliveryFee,
         deliveryFee: formData.automaticDeliveryFee ? 0 : (parseFloat(formData.deliveryFee) || 0),
         preorderDate: formData.preorderDate || null,
+        onSale: formData.onSale,
+        discountType: formData.onSale ? formData.discountType : null,
+        discountValue: formData.onSale ? parseFloat(formData.discountValue) : null,
       };
 
       // Add author reference if selected
@@ -503,6 +526,151 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                           />
                           <span className="text-sm font-medium text-gray-700">Auto</span>
                         </label>
+                      </div>
+                    </div>
+
+                    {/* Promotion */}
+                    <div className="md:col-span-2">
+                      <div className={`rounded-xl border-2 transition-all duration-300 overflow-hidden ${
+                        formData.onSale
+                          ? 'border-orange-400 bg-gradient-to-r from-orange-50 to-amber-50'
+                          : 'border-gray-200 bg-gray-50'
+                      }`}>
+                        {/* Toggle Header */}
+                        <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg transition-colors duration-200 ${
+                              formData.onSale ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'
+                            }`}>
+                              <Tag className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-gray-900 uppercase tracking-wide">Promotion</p>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {formData.onSale ? 'Ce livre est en promotion' : 'Activer une remise sur ce livre'}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              onSale: !prev.onSale,
+                              discountValue: !prev.onSale ? prev.discountValue : '',
+                            }))}
+                            className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                              formData.onSale ? 'bg-orange-500' : 'bg-gray-300'
+                            }`}
+                          >
+                            <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                              formData.onSale ? 'translate-x-5' : 'translate-x-0'
+                            }`} />
+                          </button>
+                        </div>
+
+                        {/* Discount Fields - visible when onSale is true */}
+                        {formData.onSale && (
+                          <div className="px-4 pb-4 space-y-3 border-t border-orange-200">
+                            <div className="grid grid-cols-2 gap-3 pt-3">
+                              {/* Discount Type Selector */}
+                              <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                                  Type de remise
+                                </label>
+                                <div className="flex rounded-lg overflow-hidden border border-gray-300">
+                                  <button
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({ ...prev, discountType: 'PERCENTAGE' }))}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold transition-colors duration-150 ${
+                                      formData.discountType === 'PERCENTAGE'
+                                        ? 'bg-orange-500 text-white'
+                                        : 'bg-white text-gray-600 hover:bg-orange-50'
+                                    }`}
+                                  >
+                                    <Percent className="w-3.5 h-3.5" />
+                                    Pourcentage
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({ ...prev, discountType: 'FIXED_AMOUNT' }))}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold border-l border-gray-300 transition-colors duration-150 ${
+                                      formData.discountType === 'FIXED_AMOUNT'
+                                        ? 'bg-orange-500 text-white'
+                                        : 'bg-white text-gray-600 hover:bg-orange-50'
+                                    }`}
+                                  >
+                                    <BadgeDollarSign className="w-3.5 h-3.5" />
+                                    Montant fixe
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Discount Value */}
+                              <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                                  {formData.discountType === 'PERCENTAGE' ? 'Remise (%)' : 'Remise (DZD)'}
+                                </label>
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    step={formData.discountType === 'PERCENTAGE' ? '1' : '0.01'}
+                                    min="0"
+                                    max={formData.discountType === 'PERCENTAGE' ? '99' : undefined}
+                                    value={formData.discountValue}
+                                    onChange={(e) => {
+                                      setFormData(prev => ({ ...prev, discountValue: e.target.value }));
+                                      if (errors.discountValue) setErrors(prev => ({ ...prev, discountValue: '' }));
+                                    }}
+                                    placeholder={formData.discountType === 'PERCENTAGE' ? 'ex: 20' : 'ex: 500'}
+                                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                                      errors.discountValue
+                                        ? 'border-red-300 focus:ring-red-500'
+                                        : 'border-gray-300 focus:ring-orange-400'
+                                    }`}
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium pointer-events-none">
+                                    {formData.discountType === 'PERCENTAGE' ? '%' : 'DZD'}
+                                  </span>
+                                </div>
+                                {errors.discountValue && (
+                                  <motion.p
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mt-1 text-xs text-red-600"
+                                  >
+                                    {errors.discountValue}
+                                  </motion.p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Price Preview */}
+                            {formData.price && formData.discountValue && parseFloat(formData.discountValue) > 0 && (
+                              <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-orange-200">
+                                <div className="text-sm text-gray-500 line-through font-medium">
+                                  {parseFloat(formData.price).toFixed(2)} DZD
+                                </div>
+                                <span className="text-orange-400 font-bold">→</span>
+                                <div className="text-base font-bold text-orange-600">
+                                  {(() => {
+                                    const price = parseFloat(formData.price);
+                                    const val = parseFloat(formData.discountValue);
+                                    if (isNaN(price) || isNaN(val)) return '—';
+                                    if (formData.discountType === 'PERCENTAGE') {
+                                      return Math.max(0, price * (1 - val / 100)).toFixed(2) + ' DZD';
+                                    }
+                                    return Math.max(0, price - val).toFixed(2) + ' DZD';
+                                  })()}
+                                </div>
+                                <div className="ml-auto bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                  {formData.discountType === 'PERCENTAGE'
+                                    ? `-${formData.discountValue}%`
+                                    : `-${formData.discountValue} DZD`}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 

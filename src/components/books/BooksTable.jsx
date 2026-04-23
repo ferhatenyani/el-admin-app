@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit, Trash2, Search, ChevronDown, ChevronUp, Plus, BookOpen } from 'lucide-react';
+import { Edit, Trash2, Search, ChevronDown, ChevronUp, Plus, BookOpen, Tag } from 'lucide-react';
 import { formatCurrency } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
@@ -299,8 +299,25 @@ const BooksTable = ({
                                 {LANGUAGE_DISPLAY[book.language] || book.language || 'Inconnue'}
                               </span>
                             </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {formatCurrency(book.price)}
+                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              {book.onSale ? (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-gray-400 line-through text-xs">{formatCurrency(book.price)}</span>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-orange-600 font-bold">
+                                      {book.discountType === 'PERCENTAGE'
+                                        ? formatCurrency(book.price * (1 - book.discountValue / 100))
+                                        : formatCurrency(Math.max(0, book.price - book.discountValue))}
+                                    </span>
+                                    <span className="bg-orange-100 text-orange-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                      <Tag className="w-2.5 h-2.5" />
+                                      {book.discountType === 'PERCENTAGE' ? `-${book.discountValue}%` : `-${book.discountValue} DZD`}
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-gray-900">{formatCurrency(book.price)}</span>
+                              )}
                             </td>
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                               {book.stockQuantity || 0}
@@ -384,7 +401,22 @@ const BooksTable = ({
 
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5 sm:space-y-1">
-                          <p className="text-sm font-medium text-gray-900">{formatCurrency(book.price)}</p>
+                          {book.onSale ? (
+                            <>
+                              <p className="text-xs text-gray-400 line-through">{formatCurrency(book.price)}</p>
+                              <p className="text-sm font-bold text-orange-600">
+                                {book.discountType === 'PERCENTAGE'
+                                  ? formatCurrency(book.price * (1 - book.discountValue / 100))
+                                  : formatCurrency(Math.max(0, book.price - book.discountValue))}
+                              </p>
+                              <span className="inline-flex items-center gap-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                <Tag className="w-2.5 h-2.5" />
+                                {book.discountType === 'PERCENTAGE' ? `-${book.discountValue}%` : `-${book.discountValue} DZD`}
+                              </span>
+                            </>
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{formatCurrency(book.price)}</p>
+                          )}
                           <p className="text-xs text-gray-600">Stock: {book.stockQuantity || 0}</p>
                         </div>
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}>
