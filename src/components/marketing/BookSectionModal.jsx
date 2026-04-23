@@ -1,70 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, BookOpen, Search, Check, ChevronLeft, ChevronRight, Loader, Package, GripVertical } from 'lucide-react';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, KeyboardSensor } from '@dnd-kit/core';
-import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { X, BookOpen, Search, Check, ChevronLeft, ChevronRight, Loader, Package } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
 
-const SortableSelectedItem = ({ item, type, onRemove }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: transition || 'transform 200ms ease',
-    zIndex: isDragging ? 50 : undefined,
-    opacity: isDragging ? 0.85 : 1,
-  };
-
-  const isBook = type === 'book';
-  const title = item.title || item.name;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center gap-2.5 bg-white rounded-lg border px-3 py-2 shadow-sm transition-shadow duration-150 select-none ${
-        isDragging
-          ? isBook ? 'border-blue-400 shadow-md ring-1 ring-blue-200' : 'border-purple-400 shadow-md ring-1 ring-purple-200'
-          : 'border-gray-200 hover:border-gray-300 hover:shadow'
-      }`}
-    >
-      <button
-        {...attributes}
-        {...listeners}
-        className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
-        tabIndex={-1}
-        aria-label="Glisser pour réordonner"
-      >
-        <GripVertical className="w-4 h-4" />
-      </button>
-
-      <span className={`flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-        isBook ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-      }`}>
-        {isBook ? <BookOpen className="w-2.5 h-2.5" /> : <Package className="w-2.5 h-2.5" />}
-        {isBook ? 'Livre' : 'Pack'}
-      </span>
-
-      <span className="text-xs font-medium text-gray-700 truncate flex-1 min-w-0" title={title}>
-        {title}
-      </span>
-
-      <button
-        onClick={() => onRemove(item)}
-        className={`flex-shrink-0 rounded-full p-0.5 transition-colors ${
-          isBook ? 'hover:bg-blue-50 text-gray-400 hover:text-blue-600' : 'hover:bg-purple-50 text-gray-400 hover:text-purple-600'
-        }`}
-        aria-label={`Retirer ${title}`}
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
-    </div>
-  );
-};
-
-const BookSectionModal = ({ isOpen, onClose, onSave, onSaveOrder, section, availableBooks, availablePacks, saving, savingOrder = false, totalSections = 0 }) => {
+const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, availablePacks, saving, totalSections = 0 }) => {
   const [nameEn, setNameEn] = useState('');
   const [nameFr, setNameFr] = useState('');
   const [displayOrder, setDisplayOrder] = useState(1);
@@ -77,7 +17,6 @@ const BookSectionModal = ({ isOpen, onClose, onSave, onSaveOrder, section, avail
   const [showRightScroll, setShowRightScroll] = useState(false);
   const scrollContainerRef = useRef(null);
   const [failedImages, setFailedImages] = useState(new Set());
-  const [hasOrderChanged, setHasOrderChanged] = useState(false);
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
@@ -103,7 +42,6 @@ const BookSectionModal = ({ isOpen, onClose, onSave, onSaveOrder, section, avail
     setErrors({});
     setSearchQuery('');
     setActiveTab('books');
-    setHasOrderChanged(false);
   }, [section, isOpen, maxPosition]);
 
   // Filter books based on search query
@@ -204,41 +142,6 @@ const BookSectionModal = ({ isOpen, onClose, onSave, onSaveOrder, section, avail
         books: selectedBooks,
         packs: selectedPacks,
       });
-    }
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleBookDragEnd = (event) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setSelectedBooks((items) => {
-        const oldIndex = items.findIndex((b) => b.id === active.id);
-        const newIndex = items.findIndex((b) => b.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-      if (section) setHasOrderChanged(true);
-    }
-  };
-
-  const handlePackDragEnd = (event) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setSelectedPacks((items) => {
-        const oldIndex = items.findIndex((p) => p.id === active.id);
-        const newIndex = items.findIndex((p) => p.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-      if (section) setHasOrderChanged(true);
-    }
-  };
-
-  const handleSubmitOrder = () => {
-    if (onSaveOrder) {
-      onSaveOrder({ books: selectedBooks, packs: selectedPacks });
     }
   };
 
@@ -658,108 +561,69 @@ const BookSectionModal = ({ isOpen, onClose, onSave, onSaveOrder, section, avail
                   )}
                 </div>
 
-                {/* Selected Items — sortable drag-and-drop lists */}
+                {/* Selected Items Preview */}
                 {totalSelectedCount > 0 && (
                   <div>
-                    <div className="flex items-baseline gap-2 mb-2.5">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Éléments Sélectionnés
-                      </label>
-                      <span className="text-xs text-gray-400">(glisser pour réordonner)</span>
-                    </div>
-
-                    <div className="space-y-3">
-                      {selectedBooks.length > 0 && (
-                        <div>
-                          {selectedBooks.length > 0 && selectedPacks.length > 0 && (
-                            <p className="text-[11px] font-semibold text-blue-500 uppercase tracking-wide mb-1.5">
-                              Livres
-                            </p>
-                          )}
-                          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBookDragEnd}>
-                            <SortableContext items={selectedBooks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                              <div className="flex flex-col gap-1.5">
-                                {selectedBooks.map((book) => (
-                                  <SortableSelectedItem
-                                    key={book.id}
-                                    item={book}
-                                    type="book"
-                                    onRemove={handleToggleBook}
-                                  />
-                                ))}
-                              </div>
-                            </SortableContext>
-                          </DndContext>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2.5">
+                      Éléments Sélectionnés
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedBooks.map((book) => (
+                        <div
+                          key={`book-${book.id}`}
+                          className="flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800 px-2.5 py-1.5 rounded-lg text-xs"
+                        >
+                          <span className="truncate max-w-[120px] sm:max-w-[160px] font-medium">{book.title}</span>
+                          <button
+                            onClick={() => handleToggleBook(book)}
+                            className="hover:bg-blue-100 rounded-full p-0.5 transition-colors"
+                            aria-label={`Retirer ${book.title}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                      )}
-
-                      {selectedBooks.length > 0 && selectedPacks.length > 0 && (
-                        <div className="border-t border-gray-100" />
-                      )}
-
-                      {selectedPacks.length > 0 && (
-                        <div>
-                          {selectedBooks.length > 0 && selectedPacks.length > 0 && (
-                            <p className="text-[11px] font-semibold text-purple-500 uppercase tracking-wide mb-1.5">
-                              Packs
-                            </p>
-                          )}
-                          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handlePackDragEnd}>
-                            <SortableContext items={selectedPacks.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                              <div className="flex flex-col gap-1.5">
-                                {selectedPacks.map((pack) => (
-                                  <SortableSelectedItem
-                                    key={pack.id}
-                                    item={pack}
-                                    type="pack"
-                                    onRemove={handleTogglePack}
-                                  />
-                                ))}
-                              </div>
-                            </SortableContext>
-                          </DndContext>
+                      ))}
+                      {selectedPacks.map((pack) => (
+                        <div
+                          key={`pack-${pack.id}`}
+                          className="flex items-center gap-2 bg-purple-50 border border-purple-200 text-purple-800 px-2.5 py-1.5 rounded-lg text-xs"
+                        >
+                          <span className="inline-flex items-center gap-1 bg-purple-200 text-purple-700 px-1 py-0.5 rounded text-[10px] font-bold flex-shrink-0">
+                            <Package className="w-2.5 h-2.5" />
+                            Pack
+                          </span>
+                          <span className="truncate max-w-[120px] sm:max-w-[160px] font-medium">{pack.title || pack.name}</span>
+                          <button
+                            onClick={() => handleTogglePack(pack)}
+                            className="hover:bg-purple-100 rounded-full p-0.5 transition-colors"
+                            aria-label={`Retirer ${pack.title || pack.name}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                      )}
+                      ))}
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-between gap-2.5 px-4 py-4 sm:px-6 border-t bg-gray-50">
+              <div className="flex justify-end gap-2.5 px-4 py-4 sm:px-6 border-t bg-gray-50">
                 <button
                   onClick={onClose}
-                  disabled={saving || savingOrder}
+                  disabled={saving}
                   className="px-5 py-2.5 text-sm border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Annuler
                 </button>
-
-                <div className="flex items-center gap-2.5">
-                  {section && hasOrderChanged && (
-                    <button
-                      onClick={handleSubmitOrder}
-                      disabled={saving || savingOrder}
-                      className="px-4 py-2.5 text-sm border border-amber-300 bg-amber-50 text-amber-700 font-medium rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {savingOrder ? (
-                        <Loader className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <GripVertical className="w-4 h-4" />
-                      )}
-                      {savingOrder ? 'Sauvegarde...' : 'Sauvegarder l\'ordre'}
-                    </button>
-                  )}
-
-                  <button
-                    onClick={handleSubmit}
-                    disabled={saving || savingOrder}
-                    className="px-5 py-2.5 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {saving && <Loader className="w-4 h-4 animate-spin" />}
-                    {saving ? 'Enregistrement...' : (section ? 'Mettre à Jour' : 'Créer')}
-                  </button>
-                </div>
+                <button
+                  onClick={handleSubmit}
+                  disabled={saving}
+                  className="px-5 py-2.5 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {saving && <Loader className="w-4 h-4 animate-spin" />}
+                  {saving ? 'Enregistrement...' : (section ? 'Mettre à Jour' : 'Créer')}
+                </button>
               </div>
             </div>
           </motion.div>

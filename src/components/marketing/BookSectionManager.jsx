@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader, Search, ChevronDown, ChevronUp, GripVertical, Save, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader, Search, ChevronDown, ChevronUp, GripVertical, Save, Package, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import BookSectionModal from './BookSectionModal';
+import BookSectionReorderModal from './BookSectionReorderModal';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, addPacksToMainDisplay, removePacksFromMainDisplay, getMainDisplays, reorderMainDisplays, reorderBooksInSection, reorderPacksInSection } from '../../services/mainDisplayApi';
 import { getBookCoverUrl } from '../../services/booksApi';
@@ -17,6 +18,8 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
   const [saving, setSaving] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
   const [savingItemOrder, setSavingItemOrder] = useState(false);
+  const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
+  const [reorderingSection, setReorderingSection] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, sectionId: null, book: null });
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,17 +116,24 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
     }
   };
 
+  const handleOpenReorder = (section) => {
+    setReorderingSection(section);
+    setIsReorderModalOpen(true);
+  };
+
   const handleSaveItemOrder = async ({ books, packs }) => {
-    if (!editingSection) return;
+    if (!reorderingSection) return;
     try {
       setSavingItemOrder(true);
       if (books.length > 0) {
-        await reorderBooksInSection(editingSection.id, books.map(b => b.id));
+        await reorderBooksInSection(reorderingSection.id, books.map(b => b.id));
       }
       if (packs.length > 0) {
-        await reorderPacksInSection(editingSection.id, packs.map(p => p.id));
+        await reorderPacksInSection(reorderingSection.id, packs.map(p => p.id));
       }
       await fetchSections();
+      setIsReorderModalOpen(false);
+      setReorderingSection(null);
     } catch (error) {
       console.error('Error saving item order:', error);
       alert('Une erreur est survenue lors de la sauvegarde de l\'ordre. Veuillez réessayer.');
@@ -395,6 +405,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
                           key={section.id}
                           section={section}
                           onEdit={() => handleEditSection(section)}
+                          onReorder={() => handleOpenReorder(section)}
                           onDelete={() => handleDeleteSection(section)}
                           onRemoveBook={(book) => handleRemoveBookFromSection(section.id, book)}
                           onRemovePack={(pack) => handleRemovePackFromSection(section.id, pack)}
@@ -417,13 +428,22 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
           setEditingSection(null);
         }}
         onSave={handleSaveSection}
-        onSaveOrder={handleSaveItemOrder}
         section={editingSection}
         availableBooks={availableBooks}
         availablePacks={availablePacks}
         saving={saving}
-        savingOrder={savingItemOrder}
         totalSections={totalItems}
+      />
+
+      <BookSectionReorderModal
+        isOpen={isReorderModalOpen}
+        onClose={() => {
+          setIsReorderModalOpen(false);
+          setReorderingSection(null);
+        }}
+        onSave={handleSaveItemOrder}
+        section={reorderingSection}
+        saving={savingItemOrder}
       />
 
       {/* Confirm Delete Modal */}
@@ -438,7 +458,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
 };
 
 // Sortable wrapper for SectionCard
-const SortableSectionCard = ({ section, onEdit, onDelete, onRemoveBook, onRemovePack }) => {
+const SortableSectionCard = ({ section, onEdit, onReorder, onDelete, onRemoveBook, onRemovePack }) => {
   const {
     attributes,
     listeners,
@@ -460,6 +480,7 @@ const SortableSectionCard = ({ section, onEdit, onDelete, onRemoveBook, onRemove
       <SectionCard
         section={section}
         onEdit={onEdit}
+        onReorder={onReorder}
         onDelete={onDelete}
         onRemoveBook={onRemoveBook}
         onRemovePack={onRemovePack}
@@ -471,7 +492,7 @@ const SortableSectionCard = ({ section, onEdit, onDelete, onRemoveBook, onRemove
 };
 
 // Section Card Component - Professional Style
-const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, onRemovePack, dragHandleProps, isDragActive }) => {
+const SectionCard = ({ section, onEdit, onReorder, onDelete, onRemoveBook, onRemovePack, dragHandleProps, isDragActive }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [failedImages, setFailedImages] = useState(new Set());
   const [isDragging, setIsDragging] = useState(false);
@@ -614,6 +635,14 @@ const SectionCard = ({ section, onEdit, onDelete, onRemoveBook, onRemovePack, dr
             </p>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={onReorder}
+              className="p-2 bg-white/15 hover:bg-white/25 rounded-lg transition-colors duration-200"
+              title="Réordonner les éléments"
+              aria-label="Réordonner les éléments"
+            >
+              <ArrowUpDown className="w-4 h-4 text-white" />
+            </button>
             <button
               onClick={onEdit}
               className="p-2 bg-white/15 hover:bg-white/25 rounded-lg transition-colors duration-200"
