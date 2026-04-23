@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Package, Search, Check, BookOpen } from 'lucide-react';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-md-editor/dist/mdeditor.min.css';
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
 
@@ -243,18 +245,22 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Description <span className="text-red-500">*</span>
                   </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Décrivez ce qui rend ce pack spécial..."
-                    rows={3}
-                    className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none ${
+                  <div
+                    data-color-mode="light"
+                    className={`rounded-lg overflow-hidden transition-all ${
                       errors.description
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-green-500'
+                        ? 'ring-2 ring-red-500 border-red-500'
+                        : 'border border-gray-300 focus-within:ring-2 focus-within:ring-green-500 focus-within:border-transparent'
                     }`}
-                  />
+                  >
+                    <MDEditor
+                      value={formData.description}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, description: value || '' }))}
+                      preview="live"
+                      height={240}
+                      style={{ borderRadius: 0 }}
+                    />
+                  </div>
                   {errors.description && (
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}

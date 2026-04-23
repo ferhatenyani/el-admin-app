@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-md-editor/dist/mdeditor.min.css';
 import UploadImageInput from '../common/UploadImageInput';
 import CustomSelect from '../common/CustomSelect';
 import useScrollLock from '../../hooks/useScrollLock';
@@ -525,14 +527,15 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                       <label className="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">
                         Description
                       </label>
-                      <textarea
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        placeholder="Entrez une description du livre"
-                        rows="3"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
+                      <div data-color-mode="light" className="rounded-lg overflow-hidden border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all duration-200">
+                        <MDEditor
+                          value={formData.description}
+                          onChange={(value) => setFormData((prev) => ({ ...prev, description: value || '' }))}
+                          preview="live"
+                          height={280}
+                          style={{ borderRadius: 0 }}
+                        />
+                      </div>
                     </div>
 
                     {/* Cover Image */}
