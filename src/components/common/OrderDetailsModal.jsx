@@ -436,7 +436,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onSaveOrder }) => {
                               onChange={val => updateField('wilaya', val)}
                               options={WILAYA_OPTIONS}
                               placeholder="Sélectionner une wilaya"
-                              searchable
                             />
                           </EditRow>
                           <EditRow label="Ville">
@@ -445,7 +444,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onSaveOrder }) => {
                               onChange={val => updateField('city', val)}
                               options={cityOptions}
                               placeholder={form.wilaya ? 'Sélectionner une ville' : 'Sélectionner une wilaya d\'abord'}
-                              searchable
                               disabled={!form.wilaya}
                             />
                           </EditRow>
