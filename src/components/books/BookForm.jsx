@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
-import '@uiw/react-md-editor/dist/mdeditor.min.css';
+import '@uiw/react-md-editor/markdown-editor.css';
 import UploadImageInput from '../common/UploadImageInput';
 import CustomSelect from '../common/CustomSelect';
 import useScrollLock from '../../hooks/useScrollLock';

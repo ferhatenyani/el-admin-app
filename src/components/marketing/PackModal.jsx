@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Package, Search, Check, BookOpen } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
-import '@uiw/react-md-editor/dist/mdeditor.min.css';
+import '@uiw/react-md-editor/markdown-editor.css';
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
 
