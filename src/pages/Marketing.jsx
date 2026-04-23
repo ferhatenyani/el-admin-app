@@ -7,6 +7,7 @@ import { deletePack, getPacks } from '../services/packsApi';
 import { getBooks } from '../services/booksApi';
 import { deleteMainDisplay } from '../services/mainDisplayApi';
 import { useToast } from '../hooks/useToast';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 
 const Marketing = () => {
@@ -77,8 +78,7 @@ const Marketing = () => {
       }
     } catch (err) {
       console.error('Error deleting item:', err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
-      error(errorMessage, 'Erreur lors de la suppression');
+      error(getApiErrorMessage(err), 'Erreur lors de la suppression');
       return;
     }
 

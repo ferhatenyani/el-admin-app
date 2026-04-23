@@ -3,8 +3,11 @@ import { Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import UsersTable from '../components/users/UsersTable';
 import UserDetailsModal from '../components/users/UserDetailsModal';
+import ToastContainer from '../components/common/Toast';
 import { getUsers, toggleUserActivation, exportUsers } from '../services/usersApi';
 import { useDebounce } from '../hooks/useDebounce';
+import { useToast } from '../hooks/useToast';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -25,6 +28,8 @@ const Users = () => {
 
   // Ref for request cancellation
   const abortControllerRef = useRef(null);
+
+  const { toasts, removeToast, error: showError } = useToast();
 
   // Debounce search query to reduce API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -94,7 +99,7 @@ const Users = () => {
       }
 
       console.error('Error fetching users:', err);
-      setError(err.response?.data?.message || 'Failed to load users. Please try again.');
+      setError(getApiErrorMessage(err, 'Failed to load users. Please try again.'));
       setUsers([]);
     } finally {
       setLoading(false);
@@ -187,7 +192,7 @@ const Users = () => {
       await fetchUsers();
     } catch (error) {
       console.error('Error toggling user status:', error);
-      alert('Erreur lors de la modification du statut de l\'utilisateur');
+      showError(getApiErrorMessage(error), 'Erreur lors de la modification du statut');
     }
   };
 
@@ -220,7 +225,7 @@ const Users = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting users:', error);
-      alert('Erreur lors de l\'export des utilisateurs');
+      showError(getApiErrorMessage(error), "Erreur lors de l'export");
     }
   };
 
@@ -257,6 +262,7 @@ const Users = () => {
 
   return (
     <div className="space-y-6">
+      <ToastContainer toasts={toasts} onClose={removeToast} />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Utilisateurs</h1>

@@ -5,6 +5,7 @@ import ProfileCard from '../components/profile/ProfileCard';
 import EditProfileModal from '../components/profile/EditProfileModal';
 import { getAdminProfile, updateAdminProfile, fetchAdminPictureBlob, changeAdminPassword } from '../services/adminApi';
 import { useAuth } from '../contexts/AuthContext';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 /**
  * Profile Page Component
@@ -136,38 +137,8 @@ const Profile = () => {
       setTimeout(() => setShowSuccessMessage(false), 3000);
     } catch (error) {
       console.error('Error saving profile:', error);
-      console.error('Error details:', error.response?.data);
 
-      // Parse error message from backend response
-      let errorMsg = 'Erreur lors de la mise à jour du profil';
-
-      if (error.response?.data) {
-        const errorData = error.response.data;
-
-        // Check for the specific email exists error
-        if (errorData.message === 'error.emailexists') {
-          errorMsg = 'Cette adresse email est déjà utilisée par un autre compte';
-        } else if (errorData.detail) {
-          // Check if detail contains nested error information
-          if (errorData.detail.includes('error.emailexists')) {
-            errorMsg = 'Cette adresse email est déjà utilisée par un autre compte';
-          } else if (errorData.detail.includes('ProblemDetailWithCause')) {
-            // Try to extract the message from the nested problem detail
-            const messageMatch = errorData.detail.match(/message=([^,}]+)/);
-            if (messageMatch && messageMatch[1] === 'error.emailexists') {
-              errorMsg = 'Cette adresse email est déjà utilisée par un autre compte';
-            } else {
-              errorMsg = errorData.title || errorData.detail;
-            }
-          } else {
-            errorMsg = errorData.detail;
-          }
-        } else if (errorData.title) {
-          errorMsg = errorData.title;
-        }
-      }
-
-      setSuccessMessage(errorMsg);
+      setSuccessMessage(getApiErrorMessage(error, 'Erreur lors de la mise à jour du profil'));
       setShowSuccessMessage(true);
       setTimeout(() => setShowSuccessMessage(false), 3000);
       throw error; // Re-throw to let the modal handle it

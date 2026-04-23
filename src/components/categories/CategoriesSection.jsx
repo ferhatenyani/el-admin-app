@@ -8,6 +8,7 @@ import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
 import * as categoriesApi from '../../services/categoriesApi';
 import { getCategoryImageUrl } from '../../services/categoriesApi';
+import { getApiErrorMessage } from '../../utils/apiErrors';
 
 /**
  * CategoriesSection Component
@@ -100,7 +101,7 @@ const CategoriesSection = memo(() => {
       setEditingCategory(null);
     } catch (err) {
       console.error('Error saving category:', err);
-      setError('Failed to save category. Please try again.');
+      setError(getApiErrorMessage(err, 'Échec de l\'enregistrement de la catégorie.'));
     }
   };
 
@@ -119,7 +120,7 @@ const CategoriesSection = memo(() => {
       setCategoryToDelete(null);
     } catch (err) {
       console.error('Error deleting category:', err);
-      setError('Failed to delete category. Please try again.');
+      setError(getApiErrorMessage(err, 'Échec de la suppression de la catégorie.'));
       setDeleteConfirmOpen(false);
       setCategoryToDelete(null);
     }

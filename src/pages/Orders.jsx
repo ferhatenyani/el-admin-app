@@ -9,6 +9,7 @@ import ToastContainer from '../components/common/Toast';
 import { useDebounce } from '../hooks/useDebounce';
 import { useToast } from '../hooks/useToast';
 import * as ordersApi from '../services/ordersApi';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -202,8 +203,7 @@ const Orders = () => {
       return updatedOrder;
     } catch (err) {
       console.error('Error updating order status:', err);
-      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || 'Une erreur est survenue';
-      error(errorMessage, 'Erreur lors de la mise à jour');
+      error(getApiErrorMessage(err), 'Erreur lors de la mise à jour');
       throw err;
     }
   };
@@ -260,8 +260,7 @@ const Orders = () => {
       return updatedOrder;
     } catch (err) {
       console.error('Error saving order:', err);
-      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || 'Une erreur est survenue';
-      error(errorMessage, 'Erreur lors de la sauvegarde');
+      error(getApiErrorMessage(err), 'Erreur lors de la sauvegarde');
       throw err;
     }
   };
@@ -274,8 +273,7 @@ const Orders = () => {
       success('La commande a été créée avec succès');
     } catch (err) {
       console.error('Error creating order:', err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
-      error(errorMessage, 'Erreur lors de la création');
+      error(getApiErrorMessage(err), 'Erreur lors de la création');
     }
   };
 
@@ -295,8 +293,7 @@ const Orders = () => {
       success('La commande a été supprimée avec succès');
     } catch (err) {
       console.error('Error deleting order:', err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
-      error(errorMessage, 'Erreur lors de la suppression');
+      error(getApiErrorMessage(err), 'Erreur lors de la suppression');
     }
   };
 
@@ -335,8 +332,7 @@ const Orders = () => {
       success('Les commandes ont été exportées avec succès');
     } catch (err) {
       console.error('Error exporting orders:', err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
-      error(errorMessage, 'Erreur lors de l\'export');
+      error(getApiErrorMessage(err), "Erreur lors de l'export");
     }
   };
 

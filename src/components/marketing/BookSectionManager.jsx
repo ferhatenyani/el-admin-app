@@ -11,8 +11,12 @@ import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import { createMainDisplay, updateMainDisplay, addBooksToMainDisplay, removeBooksFromMainDisplay, addPacksToMainDisplay, removePacksFromMainDisplay, getMainDisplays, reorderMainDisplays, reorderBooksInSection, reorderPacksInSection } from '../../services/mainDisplayApi';
 import { getBookCoverUrl } from '../../services/booksApi';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useToast } from '../../hooks/useToast';
+import ToastContainer from '../common/Toast';
+import { getApiErrorMessage } from '../../utils/apiErrors';
 
 const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest }) => {
+  const { toasts, removeToast, error: showError } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -110,7 +114,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
       await fetchSections();
     } catch (error) {
       console.error('Error saving order:', error);
-      alert('Une erreur est survenue lors de la sauvegarde de l\'ordre. Veuillez réessayer.');
+      showError(getApiErrorMessage(error), 'Erreur lors de la sauvegarde');
     } finally {
       setSavingOrder(false);
     }
@@ -136,7 +140,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
       setReorderingSection(null);
     } catch (error) {
       console.error('Error saving item order:', error);
-      alert('Une erreur est survenue lors de la sauvegarde de l\'ordre. Veuillez réessayer.');
+      showError(getApiErrorMessage(error), 'Erreur lors de la sauvegarde');
     } finally {
       setSavingItemOrder(false);
     }
@@ -178,7 +182,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
       setConfirmDelete({ isOpen: false, sectionId: null, book: null, type: null });
     } catch (error) {
       console.error('Error removing item from section:', error);
-      alert('Une erreur est survenue lors de la suppression. Veuillez réessayer.');
+      showError(getApiErrorMessage(error), 'Erreur lors de la suppression');
       setConfirmDelete({ isOpen: false, sectionId: null, book: null, type: null });
     }
   };
@@ -258,7 +262,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
       setEditingSection(null);
     } catch (error) {
       console.error('Error saving section:', error);
-      alert('Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.');
+      showError(getApiErrorMessage(error), 'Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -268,6 +272,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <ToastContainer toasts={toasts} onClose={removeToast} />
       {/* Header with gradient */}
       <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-6">

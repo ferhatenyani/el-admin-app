@@ -7,6 +7,7 @@ import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
 import * as etiquettesApi from '../../services/etiquettesApi';
+import { getApiErrorMessage } from '../../utils/apiErrors';
 
 /**
  * EtiquettesSection Component
@@ -98,7 +99,7 @@ const EtiquettesSection = memo(() => {
       setEditingEtiquette(null);
     } catch (err) {
       console.error('Error saving etiquette:', err);
-      setError('Failed to save etiquette. Please try again.');
+      setError(getApiErrorMessage(err, "Échec de l'enregistrement de l'étiquette."));
     }
   };
 
@@ -117,7 +118,7 @@ const EtiquettesSection = memo(() => {
       setEtiquetteToDelete(null);
     } catch (err) {
       console.error('Error deleting etiquette:', err);
-      setError('Failed to delete etiquette. Please try again.');
+      setError(getApiErrorMessage(err, "Échec de la suppression de l'étiquette."));
       setDeleteConfirmOpen(false);
       setEtiquetteToDelete(null);
     }

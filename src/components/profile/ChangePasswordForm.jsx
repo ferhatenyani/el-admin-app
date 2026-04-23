@@ -1,6 +1,7 @@
 import { useState, forwardRef, useImperativeHandle } from 'react';
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getApiErrorMessage } from '../../utils/apiErrors';
 
 /**
  * ChangePasswordForm Component
@@ -107,32 +108,16 @@ const ChangePasswordForm = forwardRef(({ onSubmit, onCancel, hideButtons = false
       });
     } catch (error) {
       console.error('Error changing password:', error);
-      console.error('Error response data:', error.response?.data);
-
-      // Handle specific error cases
-      const errorMessage = error.response?.data?.message;
-      const errorDetail = error.response?.data?.detail;
-
-      if (errorMessage === 'error.invalidcurrentpassword') {
-        setErrors({
-          currentPassword: 'Le mot de passe actuel est incorrect'
-        });
-      } else if (errorDetail && errorDetail.includes('error.invalidcurrentpassword')) {
-        // Check if error message is nested in detail string
-        setErrors({
-          currentPassword: 'Le mot de passe actuel est incorrect'
-        });
-      } else if (error.response?.status === 400) {
-        // Generic bad request error
-        setErrors({
-          currentPassword: 'Une erreur est survenue. Veuillez vérifier vos informations.'
-        });
-      } else {
-        // Generic error handling
-        setErrors({
-          currentPassword: 'Une erreur est survenue lors de la modification du mot de passe'
-        });
-      }
+      const code = error?.response?.data?.message;
+      const detail = error?.response?.data?.detail;
+      const isWrongPassword =
+        code === 'error.invalidcurrentpassword' ||
+        (detail && detail.includes('error.invalidcurrentpassword'));
+      setErrors({
+        currentPassword: isWrongPassword
+          ? 'Le mot de passe actuel est incorrect'
+          : getApiErrorMessage(error, 'Une erreur est survenue lors de la modification du mot de passe'),
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -7,6 +7,7 @@ import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 import Pagination from '../common/Pagination';
 import usePagination from '../../hooks/usePagination';
 import * as authorsApi from '../../services/authorsApi';
+import { getApiErrorMessage } from '../../utils/apiErrors';
 
 /**
  * AuthorsSection Component
@@ -107,7 +108,7 @@ const AuthorsSection = memo(() => {
       setEditingAuthor(null);
     } catch (err) {
       console.error('Error saving author:', err);
-      setError('Failed to save author. Please try again.');
+      setError(getApiErrorMessage(err, "Échec de l'enregistrement de l'auteur."));
     }
   };
 
@@ -126,7 +127,7 @@ const AuthorsSection = memo(() => {
       setAuthorToDelete(null);
     } catch (err) {
       console.error('Error deleting author:', err);
-      setError('Failed to delete author. Please try again.');
+      setError(getApiErrorMessage(err, "Échec de la suppression de l'auteur."));
       setDeleteConfirmOpen(false);
       setAuthorToDelete(null);
     }

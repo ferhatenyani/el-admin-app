@@ -9,6 +9,7 @@ import ToastContainer from '../components/common/Toast';
 import { useDebounce } from '../hooks/useDebounce';
 import { useToast } from '../hooks/useToast';
 import * as booksApi from '../services/booksApi';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 const Books = () => {
   // State management
@@ -105,7 +106,7 @@ const Books = () => {
       }
 
       console.error('Error fetching books:', err);
-      setError(err.response?.data?.message || 'Failed to load books. Please try again.');
+      setError(getApiErrorMessage(err, 'Failed to load books. Please try again.'));
       setBooks([]);
     } finally {
       setLoading(false);
@@ -200,8 +201,7 @@ const Books = () => {
       setIsFormOpen(true);
     } catch (err) {
       console.error('Error fetching book for edit:', err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
-      showError(errorMessage, 'Erreur lors du chargement');
+      showError(getApiErrorMessage(err), 'Erreur lors du chargement');
       setError('Failed to load book details. Please try again.');
     }
   };
@@ -250,9 +250,9 @@ const Books = () => {
       success('Le livre a été supprimé avec succès');
     } catch (err) {
       console.error('Error deleting book:', err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
+      const errorMessage = getApiErrorMessage(err);
       showError(errorMessage, 'Erreur lors de la suppression');
-      setError(err.response?.data?.message || 'Failed to delete book. Please try again.');
+      setError(errorMessage);
       // Revert optimistic update by refetching
       fetchBooks();
     }
@@ -336,8 +336,7 @@ const Books = () => {
       setEditingBook(null);
     } catch (err) {
       console.error('Error saving book:', err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Une erreur est survenue';
-      showError(errorMessage, editingBook ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
+      showError(getApiErrorMessage(err), editingBook ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
       throw err; // Let form handle error display
     }
   };
