@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit, Trash2, Search, ChevronDown, ChevronUp, Plus, BookOpen, Tag } from 'lucide-react';
+import { Edit, Trash2, Search, ChevronDown, ChevronUp, Plus, BookOpen, Tag, Eye, EyeOff } from 'lucide-react';
 import { formatCurrency } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
@@ -28,6 +28,8 @@ const BooksTable = ({
   onSortChange,
   statusFilter,
   onStatusFilterChange,
+  visibilityFilter,
+  onVisibilityFilterChange,
   onAddBook,
   loading = false,
   pagination = null,
@@ -69,6 +71,12 @@ const BooksTable = ({
     { value: 'all', label: 'Tous' },
     { value: 'available', label: 'En stock' },
     { value: 'out_of_stock', label: 'Hors stock' }
+  ];
+
+  const visibilityOptions = [
+    { value: 'all', label: 'Tous' },
+    { value: 'catalog', label: 'Catalogue' },
+    { value: 'pack_only', label: 'Pack uniquement' }
   ];
 
   const sortOptions = [
@@ -171,6 +179,16 @@ const BooksTable = ({
 
             <div className="flex-1 sm:flex-none sm:min-w-[150px] min-w-0">
               <CustomSelect
+                value={visibilityFilter}
+                onChange={onVisibilityFilterChange}
+                options={visibilityOptions}
+                placeholder="Visibilité"
+                onOpen={handleFilterClick}
+              />
+            </div>
+
+            <div className="flex-1 sm:flex-none sm:min-w-[150px] min-w-0">
+              <CustomSelect
                 value={sortBy}
                 onChange={onSortChange}
                 options={sortOptions}
@@ -245,6 +263,9 @@ const BooksTable = ({
                         </th>
                         <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Statut
+                        </th>
+                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Visibilité
                         </th>
                         <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Actions
@@ -326,6 +347,19 @@ const BooksTable = ({
                               <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}>
                                 {statusLabel}
                               </span>
+                            </td>
+                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                              {book.visibleInCatalog === false ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                                  <EyeOff className="w-3 h-3" />
+                                  Pack only
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                                  <Eye className="w-3 h-3" />
+                                  Catalogue
+                                </span>
+                              )}
                             </td>
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm">
                               <div className="flex items-center gap-2">
@@ -419,9 +453,22 @@ const BooksTable = ({
                           )}
                           <p className="text-xs text-gray-600">Stock: {book.stockQuantity || 0}</p>
                         </div>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}>
-                          {statusLabel}
-                        </span>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}>
+                            {statusLabel}
+                          </span>
+                          {book.visibleInCatalog === false ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                              <EyeOff className="w-3 h-3" />
+                              Pack only
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                              <Eye className="w-3 h-3" />
+                              Catalogue
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex gap-2 pt-2 border-t border-gray-200">

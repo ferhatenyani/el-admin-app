@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2, Tag, Percent, BadgeDollarSign } from 'lucide-react';
+import { X, Loader2, Tag, Percent, BadgeDollarSign, Eye, EyeOff } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import UploadImageInput from '../common/UploadImageInput';
@@ -43,6 +43,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
     onSale: false,
     discountType: 'PERCENTAGE',
     discountValue: '',
+    visibleInCatalog: true,
   });
 
   const [authors, setAuthors] = useState([]);
@@ -133,6 +134,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         onSale: initialData.onSale || false,
         discountType: initialData.discountType || 'PERCENTAGE',
         discountValue: initialData.discountValue ?? '',
+        visibleInCatalog: initialData.visibleInCatalog ?? true,
       };
       setFormData(normalizedData);
     } else {
@@ -152,6 +154,7 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         onSale: false,
         discountType: 'PERCENTAGE',
         discountValue: '',
+        visibleInCatalog: true,
       });
     }
     setErrors({});
@@ -253,6 +256,8 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
         onSale: formData.onSale,
         discountType: formData.onSale ? formData.discountType : null,
         discountValue: formData.onSale ? parseFloat(formData.discountValue) : null,
+        // visibleInCatalog is immutable after creation — only set on create
+        ...(!initialData && { visibleInCatalog: formData.visibleInCatalog }),
       };
 
       // Add author reference if selected
@@ -672,6 +677,64 @@ const BookForm = ({ isOpen, onClose, onSubmit, initialData = null }) => {
                           </div>
                         )}
                       </div>
+                    </div>
+
+                    {/* Visibilité catalogue */}
+                    <div className="md:col-span-2">
+                      {initialData ? (
+                        /* Edit mode: read-only badge */
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">Visibilité catalogue</span>
+                          {formData.visibleInCatalog ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                              <Eye className="w-3.5 h-3.5" />
+                              Visible dans le catalogue
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                              <EyeOff className="w-3.5 h-3.5" />
+                              Pack uniquement
+                            </span>
+                          )}
+                          <span className="text-xs text-gray-400 italic">Non modifiable après création</span>
+                        </div>
+                      ) : (
+                        /* Create mode: interactive toggle */
+                        <div className={`rounded-xl border-2 transition-all duration-300 overflow-hidden ${
+                          !formData.visibleInCatalog
+                            ? 'border-gray-400 bg-gradient-to-r from-gray-50 to-slate-50'
+                            : 'border-green-400 bg-gradient-to-r from-green-50 to-emerald-50'
+                        }`}>
+                          <div className="flex items-center justify-between p-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg transition-colors duration-200 ${
+                                formData.visibleInCatalog ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
+                              }`}>
+                                {formData.visibleInCatalog ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-gray-900 uppercase tracking-wide">Visibilité catalogue</p>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  {formData.visibleInCatalog
+                                    ? 'Ce livre sera affiché dans le catalogue'
+                                    : 'Ce livre ne sera pas affiché dans le catalogue. Il peut être utilisé dans des packs uniquement.'}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, visibleInCatalog: !prev.visibleInCatalog }))}
+                              className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                formData.visibleInCatalog ? 'bg-green-500' : 'bg-gray-400'
+                              }`}
+                            >
+                              <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                formData.visibleInCatalog ? 'translate-x-5' : 'translate-x-0'
+                              }`} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Etiquette */}

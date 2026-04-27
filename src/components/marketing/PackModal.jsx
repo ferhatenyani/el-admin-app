@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Package, Search, Check, BookOpen } from 'lucide-react';
+import { X, Package, Search, Check, BookOpen, Lock, Info } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import InlineMDInput from '../common/InlineMDInput';
@@ -17,6 +17,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
     automaticDeliveryFee: false,
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('catalog');
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [failedImages, setFailedImages] = useState(new Set());
@@ -56,27 +57,38 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
     }
     setErrors({});
     setSearchQuery('');
+    setActiveTab('catalog');
     setIsSubmitting(false);
   }, [pack, isOpen]);
 
-  // Filter books based on search query
+  // Split books by visibleInCatalog
+  const catalogBooks = React.useMemo(() => {
+    if (!Array.isArray(availableBooks)) return [];
+    return availableBooks.filter(b => b && b.visibleInCatalog !== false);
+  }, [availableBooks]);
+
+  const packOnlyBooks = React.useMemo(() => {
+    if (!Array.isArray(availableBooks)) return [];
+    return availableBooks.filter(b => b && b.visibleInCatalog === false);
+  }, [availableBooks]);
+
+  // Determine what type of books are currently selected (for homogeneity enforcement)
+  const activeSelectionType = React.useMemo(() => {
+    if (formData.books.length === 0) return null;
+    return formData.books[0].visibleInCatalog === false ? 'pack_only' : 'catalog';
+  }, [formData.books]);
+
+  // Filter books based on search query within the active tab
   const filteredBooks = React.useMemo(() => {
-    if (!Array.isArray(availableBooks)) {
-      console.warn('availableBooks is not an array:', availableBooks);
-      return [];
-    }
-
-    return availableBooks.filter(book => {
-      if (!book) return false;
-
+    const pool = activeTab === 'catalog' ? catalogBooks : packOnlyBooks;
+    const searchLower = (searchQuery || '').toLowerCase();
+    if (!searchLower) return pool;
+    return pool.filter(book => {
       const title = book.title || '';
       const author = book.author?.name || book.author || '';
-      const searchLower = (searchQuery || '').toLowerCase();
-
-      return title.toLowerCase().includes(searchLower) ||
-             author.toLowerCase().includes(searchLower);
+      return title.toLowerCase().includes(searchLower) || author.toLowerCase().includes(searchLower);
     });
-  }, [availableBooks, searchQuery]);
+  }, [activeTab, catalogBooks, packOnlyBooks, searchQuery]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -333,7 +345,7 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
 
                 {/* Book Selection */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-3">
                     <label className="block text-sm font-semibold text-gray-700">
                       Sélectionner les Livres <span className="text-red-500">*</span>
                     </label>
@@ -341,6 +353,60 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                       {formData.books.length} livre(s) (min: 2)
                     </span>
                   </div>
+
+                  {/* Tabs */}
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (activeTab !== 'catalog') {
+                          setActiveTab('catalog');
+                          setFormData(prev => ({ ...prev, books: [] }));
+                          setSearchQuery('');
+                        }
+                      }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${
+                        activeTab === 'catalog'
+                          ? 'bg-green-600 text-white border-green-600 shadow-sm'
+                          : 'bg-white text-gray-600 border-gray-300 hover:border-green-400 hover:text-green-700'
+                      }`}
+                    >
+                      Livres catalogue
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'catalog' ? 'bg-white/20' : 'bg-gray-100'}`}>
+                        {catalogBooks.length}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (activeTab !== 'pack_only') {
+                          setActiveTab('pack_only');
+                          setFormData(prev => ({ ...prev, books: [] }));
+                          setSearchQuery('');
+                        }
+                      }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${
+                        activeTab === 'pack_only'
+                          ? 'bg-gray-700 text-white border-gray-700 shadow-sm'
+                          : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      Livres pack uniquement
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'pack_only' ? 'bg-white/20' : 'bg-gray-100'}`}>
+                        {packOnlyBooks.length}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Info note for pack-only tab */}
+                  {activeTab === 'pack_only' && (
+                    <div className="flex items-start gap-2 mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                      <Info className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700">
+                        Ce pack affichera uniquement le prix total — sans prix barrés ni pourcentage de réduction.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Search Bar */}
                   <div className="relative mb-3">
@@ -365,18 +431,29 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {filteredBooks.map((book) => {
                           const selected = isBookSelected(book.id);
+                          const tabType = activeTab === 'catalog' ? 'catalog' : 'pack_only';
+                          const isLocked = activeSelectionType !== null && activeSelectionType !== tabType && !selected;
                           return (
                             <div
                               key={book.id}
-                              onClick={() => handleToggleBook(book)}
-                              className={`relative cursor-pointer rounded-lg border transition-all duration-200 ${
-                                selected
-                                  ? 'border-green-500 bg-green-50 shadow-sm'
-                                  : 'border-gray-200 bg-white hover:border-green-300 hover:shadow-sm'
+                              onClick={() => !isLocked && handleToggleBook(book)}
+                              className={`relative rounded-lg border transition-all duration-200 ${
+                                isLocked
+                                  ? 'opacity-40 cursor-not-allowed'
+                                  : selected
+                                    ? 'border-green-500 bg-green-50 shadow-sm cursor-pointer'
+                                    : 'border-gray-200 bg-white hover:border-green-300 hover:shadow-sm cursor-pointer'
                               }`}
                             >
+                              {/* Lock overlay */}
+                              {isLocked && (
+                                <div className="absolute inset-0 flex items-center justify-center z-10 rounded-lg">
+                                  <Lock className="w-5 h-5 text-gray-500" />
+                                </div>
+                              )}
+
                               {/* Selection Indicator */}
-                              {selected && (
+                              {selected && !isLocked && (
                                 <div className="absolute top-1.5 right-1.5 bg-green-600 text-white rounded-full p-0.5 z-10 shadow-sm">
                                   <Check className="w-3.5 h-3.5" />
                                 </div>

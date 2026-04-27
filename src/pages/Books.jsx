@@ -28,6 +28,7 @@ const Books = () => {
   const [editingBook, setEditingBook] = useState(null);
   const [sortBy, setSortBy] = useState('date_desc');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [visibilityFilter, setVisibilityFilter] = useState('all');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState(null);
 
@@ -78,6 +79,13 @@ const Books = () => {
         params.status = statusFilter;
       }
 
+      // Add visibility filter
+      if (visibilityFilter === 'catalog') {
+        params.visibleInCatalog = true;
+      } else if (visibilityFilter === 'pack_only') {
+        params.visibleInCatalog = false;
+      }
+
       // Map frontend sortBy to backend sort format
       if (sortBy === 'title') {
         params.sort = 'title,asc';
@@ -112,7 +120,7 @@ const Books = () => {
       setLoading(false);
       setFilterLoading(false);
     }
-  }, [pagination.page, pagination.size, debouncedSearchQuery, sortBy, statusFilter]);
+  }, [pagination.page, pagination.size, debouncedSearchQuery, sortBy, statusFilter, visibilityFilter]);
 
   /**
    * Initial load and refetch when dependencies change
@@ -395,6 +403,11 @@ const Books = () => {
         onSortChange={handleSortChange}
         statusFilter={statusFilter}
         onStatusFilterChange={handleStatusFilterChange}
+        visibilityFilter={visibilityFilter}
+        onVisibilityFilterChange={(val) => {
+          setVisibilityFilter(val);
+          setPagination(prev => ({ ...prev, page: 0 }));
+        }}
         onAddBook={handleAddBook}
         loading={loading || filterLoading}
         pagination={pagination}
