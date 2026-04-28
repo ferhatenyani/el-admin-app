@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import BooksTable from '../components/books/BooksTable';
+import BookViewDrawer from '../components/books/BookViewDrawer';
 import BookForm from '../components/books/BookForm';
 import CategoriesSection from '../components/categories/CategoriesSection';
 import EtiquettesSection from '../components/etiquettes/EtiquettesSection';
@@ -31,6 +32,7 @@ const Books = () => {
   const [visibilityFilter, setVisibilityFilter] = useState('all');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState(null);
+  const [viewingBook, setViewingBook] = useState(null);
 
   // Toast notifications
   const { toasts, removeToast, success, error: showError } = useToast();
@@ -395,8 +397,7 @@ const Books = () => {
 
       <BooksTable
         books={books}
-        onEdit={handleEditBook}
-        onDelete={handleDeleteBook}
+        onView={(book) => setViewingBook(book)}
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         sortBy={sortBy}
@@ -439,6 +440,20 @@ const Books = () => {
         onConfirm={confirmDeleteBook}
         onCancel={cancelDeleteBook}
         itemName={bookToDelete?.title || "ce livre"}
+      />
+
+      <BookViewDrawer
+        book={viewingBook}
+        isOpen={!!viewingBook}
+        onClose={() => setViewingBook(null)}
+        onEdit={(book) => {
+          setViewingBook(null);
+          handleEditBook(book);
+        }}
+        onDelete={(book) => {
+          setViewingBook(null);
+          handleDeleteBook(book);
+        }}
       />
 
       <ToastContainer toasts={toasts} onClose={removeToast} />

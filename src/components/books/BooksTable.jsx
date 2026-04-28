@@ -1,27 +1,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit, Trash2, Search, ChevronDown, ChevronUp, Plus, BookOpen, Tag, Eye, EyeOff } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Plus, BookOpen, Tag, Eye, EyeOff } from 'lucide-react';
 import { formatCurrency } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
 import { useState, useEffect, useMemo } from 'react';
 import { getBookCoverUrl } from '../../services/booksApi';
 
-const statusColors = {
-  available: 'bg-green-100 text-green-800',
-  out_of_stock: 'bg-red-100 text-red-800',
-};
-
-// Language code to display name mapping
-const LANGUAGE_DISPLAY = {
-  'FR': 'Français',
-  'EN': 'English',
-  'AR': 'العربية'
-};
 
 const BooksTable = ({
   books,
-  onEdit,
-  onDelete,
+  onView,
   searchQuery,
   onSearchChange,
   sortBy,
@@ -250,19 +238,7 @@ const BooksTable = ({
                           Auteur
                         </th>
                         <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Catégorie
-                        </th>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Langue
-                        </th>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Prix
-                        </th>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Stock
-                        </th>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Statut
                         </th>
                         <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Visibilité
@@ -273,12 +249,7 @@ const BooksTable = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {displayBooks.map((book) => {
-                        // Determine status based on stock quantity
-                        const status = book.stockQuantity === 0 ? 'out_of_stock' : 'available';
-                        const statusLabel = status === 'available' ? 'Disponible' : 'Rupture de stock';
-
-                        return (
+                      {displayBooks.map((book) => (
                           <motion.tr
                             key={book.id}
                             initial={{ opacity: 0 }}
@@ -306,18 +277,20 @@ const BooksTable = ({
                                 />
                               )}
                             </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">{book.title}</div>
+                            <td className="px-4 lg:px-6 py-4 max-w-[180px]">
+                              <div
+                                className="text-sm font-medium text-gray-900 truncate"
+                                title={book.title}
+                              >
+                                {book.title}
+                              </div>
                             </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                              {book.author?.name || 'Auteur inconnu'}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                              {book.tags?.find(tag => tag.type === 'CATEGORY')?.nameFr || 'Non catégorisé'}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                              <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                                {LANGUAGE_DISPLAY[book.language] || book.language || 'Inconnue'}
+                            <td className="px-4 lg:px-6 py-4 max-w-[140px]">
+                              <span
+                                className="text-sm text-gray-600 truncate block"
+                                title={book.author?.name || 'Auteur inconnu'}
+                              >
+                                {book.author?.name || 'Auteur inconnu'}
                               </span>
                             </td>
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -340,14 +313,6 @@ const BooksTable = ({
                                 <span className="text-gray-900">{formatCurrency(book.price)}</span>
                               )}
                             </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                              {book.stockQuantity || 0}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}>
-                                {statusLabel}
-                              </span>
-                            </td>
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                               {book.visibleInCatalog === false ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
@@ -362,24 +327,16 @@ const BooksTable = ({
                               )}
                             </td>
                             <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => onEdit(book)}
-                                  className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => onDelete(book)}
-                                  className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
+                              <button
+                                onClick={() => onView(book)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-800 hover:text-white rounded-lg transition-all duration-150"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span className="hidden lg:inline">Voir</span>
+                              </button>
                             </td>
                           </motion.tr>
-                        );
-                      })}
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -389,108 +346,91 @@ const BooksTable = ({
             {/* Mobile cards */}
             {!loading && displayBooks.length > 0 && (
               <div className="md:hidden p-3 sm:p-4 space-y-3 sm:space-y-4">
-                {displayBooks.map((book) => {
-                  // Determine status based on stock quantity
-                  const status = book.stockQuantity === 0 ? 'out_of_stock' : 'available';
-                  const statusLabel = status === 'available' ? 'Disponible' : 'Rupture';
-
-                  return (
-                    <motion.div
-                      key={book.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-3"
-                    >
-                      <div className="flex gap-3 sm:gap-4">
-                        {failedImages.has(book.id) ? (
-                          <div className="w-14 h-18 sm:w-16 sm:h-20 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                            <BookOpen className="w-8 h-8 text-gray-400" />
-                          </div>
-                        ) : (
-                          <img
-                            src={failedImages.has(`${book.id}-placeholder`) ? imageUrls.get(book.id)?.placeholder : imageUrls.get(book.id)?.normal}
-                            alt={book.title}
-                            className="w-14 h-18 sm:w-16 sm:h-20 object-cover rounded flex-shrink-0"
-                            onError={(e) => {
-                              if (!failedImages.has(`${book.id}-placeholder`)) {
-                                setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
-                                e.target.src = imageUrls.get(book.id).placeholder;
-                              } else {
-                                setFailedImages(prev => new Set(prev).add(book.id));
-                              }
-                            }}
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm sm:text-base text-gray-900 truncate">{book.title}</h3>
-                          <p className="text-xs sm:text-sm text-gray-600 truncate">{book.author?.name || 'Auteur inconnu'}</p>
-                          <p className="text-xs sm:text-sm text-gray-500 truncate">
-                            {book.tags?.find(tag => tag.type === 'CATEGORY')?.nameFr || 'Non catégorisé'}
-                          </p>
-                          <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                            {LANGUAGE_DISPLAY[book.language] || book.language || 'Inconnue'}
-                          </span>
+                {displayBooks.map((book) => (
+                  <motion.div
+                    key={book.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-3"
+                  >
+                    <div className="flex gap-3 sm:gap-4">
+                      {failedImages.has(book.id) ? (
+                        <div className="w-14 h-20 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                          <BookOpen className="w-8 h-8 text-gray-400" />
                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5 sm:space-y-1">
+                      ) : (
+                        <img
+                          src={failedImages.has(`${book.id}-placeholder`) ? imageUrls.get(book.id)?.placeholder : imageUrls.get(book.id)?.normal}
+                          alt={book.title}
+                          className="w-14 h-20 object-cover rounded flex-shrink-0"
+                          onError={(e) => {
+                            if (!failedImages.has(`${book.id}-placeholder`)) {
+                              setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
+                              e.target.src = imageUrls.get(book.id).placeholder;
+                            } else {
+                              setFailedImages(prev => new Set(prev).add(book.id));
+                            }
+                          }}
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className="font-medium text-sm text-gray-900 truncate"
+                          title={book.title}
+                        >
+                          {book.title}
+                        </h3>
+                        <p
+                          className="text-xs text-gray-600 truncate mt-0.5"
+                          title={book.author?.name || 'Auteur inconnu'}
+                        >
+                          {book.author?.name || 'Auteur inconnu'}
+                        </p>
+                        <div className="mt-2">
                           {book.onSale ? (
-                            <>
-                              <p className="text-xs text-gray-400 line-through">{formatCurrency(book.price)}</p>
-                              <p className="text-sm font-bold text-orange-600">
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                              <span className="text-sm font-bold text-orange-600">
                                 {book.discountType === 'PERCENTAGE'
                                   ? formatCurrency(book.price * (1 - book.discountValue / 100))
                                   : formatCurrency(Math.max(0, book.price - book.discountValue))}
-                              </p>
+                              </span>
+                              <span className="text-xs text-gray-400 line-through">{formatCurrency(book.price)}</span>
                               <span className="inline-flex items-center gap-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                                 <Tag className="w-2.5 h-2.5" />
                                 {book.discountType === 'PERCENTAGE' ? `-${book.discountValue}%` : `-${book.discountValue} DZD`}
                               </span>
-                            </>
+                            </div>
                           ) : (
-                            <p className="text-sm font-medium text-gray-900">{formatCurrency(book.price)}</p>
+                            <span className="text-sm font-medium text-gray-900">{formatCurrency(book.price)}</span>
                           )}
-                          <p className="text-xs text-gray-600">Stock: {book.stockQuantity || 0}</p>
                         </div>
-                        <div className="flex flex-col items-end gap-1.5">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}>
-                            {statusLabel}
+                      </div>
+                      <div className="flex-shrink-0 self-start pt-0.5">
+                        {book.visibleInCatalog === false ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-full bg-gray-100 text-gray-600">
+                            <EyeOff className="w-3 h-3" />
+                            Pack
                           </span>
-                          {book.visibleInCatalog === false ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
-                              <EyeOff className="w-3 h-3" />
-                              Pack only
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                              <Eye className="w-3 h-3" />
-                              Catalogue
-                            </span>
-                          )}
-                        </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-full bg-green-100 text-green-700">
+                            <Eye className="w-3 h-3" />
+                            Catalogue
+                          </span>
+                        )}
                       </div>
+                    </div>
 
-                      <div className="flex gap-2 pt-2 border-t border-gray-200">
-                        <button
-                          onClick={() => onEdit(book)}
-                          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs sm:text-sm"
-                        >
-                          <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          <span className="hidden xs:inline">Modifier</span>
-                          <span className="xs:hidden">Éditer</span>
-                        </button>
-                        <button
-                          onClick={() => onDelete(book)}
-                          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-xs sm:text-sm"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          <span>Supprimer</span>
-                        </button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                    <div className="pt-2 border-t border-gray-200">
+                      <button
+                        onClick={() => onView(book)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-800 hover:text-white rounded-lg transition-all duration-150"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Voir les détails
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             )}
 
