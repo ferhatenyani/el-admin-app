@@ -33,7 +33,7 @@ const Topbar = ({ onMenuClick }) => {
             name: user.firstName && user.lastName
               ? `${user.firstName} ${user.lastName}`.trim()
               : user.login || 'Administrateur',
-            email: user.email || 'admin@espritlivre.fr',
+            email: user.email || 'admin@espritlivre.com',
             profileImage: '',
           });
         }
@@ -55,7 +55,7 @@ const Topbar = ({ onMenuClick }) => {
   }, [user]);
 
   const displayName = adminProfile?.name || 'Administrateur';
-  const displayEmail = adminProfile?.email || 'admin@espritlivre.fr';
+  const displayEmail = adminProfile?.email || 'admin@espritlivre.com';
   const profileImage = adminProfile?.profileImage;
 
   return (
