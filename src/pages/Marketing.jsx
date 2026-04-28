@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import BookSectionManager from '../components/marketing/BookSectionManager';
 import PackManager from '../components/marketing/PackManager';
+import PixelHealthDashboard from '../components/marketing/PixelHealthDashboard';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
 import ToastContainer from '../components/common/Toast';
 import { deletePack, getPacks } from '../services/packsApi';
@@ -124,6 +125,9 @@ const Marketing = () => {
         availableBooks={availableBooks}
         onDeleteRequest={handleDeleteRequest}
       />
+
+      {/* Pixel Health Dashboard */}
+      <PixelHealthDashboard />
 
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
