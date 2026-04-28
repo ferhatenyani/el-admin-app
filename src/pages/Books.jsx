@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import BooksTable from '../components/books/BooksTable';
-import BookViewDrawer from '../components/books/BookViewDrawer';
 import BookForm from '../components/books/BookForm';
+import BookViewModal from '../components/books/BookViewModal';
 import CategoriesSection from '../components/categories/CategoriesSection';
 import EtiquettesSection from '../components/etiquettes/EtiquettesSection';
 import AuthorsSection from '../components/authors/AuthorsSection';
@@ -187,6 +187,13 @@ const Books = () => {
    */
   const handlePageSizeChange = (newSize) => {
     setPagination(prev => ({ ...prev, size: newSize, page: 0 }));
+  };
+
+  /**
+   * Open the read-only view modal for a book
+   */
+  const handleViewBook = (book) => {
+    setViewingBook(book);
   };
 
   /**
@@ -397,7 +404,9 @@ const Books = () => {
 
       <BooksTable
         books={books}
-        onView={(book) => setViewingBook(book)}
+        onView={handleViewBook}
+        onEdit={handleEditBook}
+        onDelete={handleDeleteBook}
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         sortBy={sortBy}
@@ -425,6 +434,13 @@ const Books = () => {
       {/* Etiquettes Management Section */}
       <EtiquettesSection />
 
+      <BookViewModal
+        isOpen={viewingBook !== null}
+        book={viewingBook}
+        onClose={() => setViewingBook(null)}
+        onEdit={handleEditBook}
+      />
+
       <BookForm
         isOpen={isFormOpen}
         onClose={() => {
@@ -440,20 +456,6 @@ const Books = () => {
         onConfirm={confirmDeleteBook}
         onCancel={cancelDeleteBook}
         itemName={bookToDelete?.title || "ce livre"}
-      />
-
-      <BookViewDrawer
-        book={viewingBook}
-        isOpen={!!viewingBook}
-        onClose={() => setViewingBook(null)}
-        onEdit={(book) => {
-          setViewingBook(null);
-          handleEditBook(book);
-        }}
-        onDelete={(book) => {
-          setViewingBook(null);
-          handleDeleteBook(book);
-        }}
       />
 
       <ToastContainer toasts={toasts} onClose={removeToast} />

@@ -1,15 +1,22 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown, ChevronUp, Plus, BookOpen, Tag, Eye, EyeOff } from 'lucide-react';
+import { Edit, Trash2, Search, ChevronDown, ChevronUp, Plus, BookOpen, Tag, Eye, EyeOff } from 'lucide-react';
 import { formatCurrency } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
 import { useState, useEffect, useMemo } from 'react';
 import { getBookCoverUrl } from '../../services/booksApi';
 
+const LANGUAGE_DISPLAY = {
+  FR: 'Français',
+  EN: 'English',
+  AR: 'العربية',
+};
 
 const BooksTable = ({
   books,
   onView,
+  onEdit,
+  onDelete,
   searchQuery,
   onSearchChange,
   sortBy,
@@ -28,9 +35,6 @@ const BooksTable = ({
   const [failedImages, setFailedImages] = useState(new Set());
 
   // Compute stable image URLs once per books change — not on every render.
-  // Without this, Date.now() inside getBookCoverUrl generates a new URL on each
-  // render, forcing a fresh network request every time and breaking the onError
-  // fallback logic (each state update triggers a new failing request).
   const imageUrls = useMemo(() => {
     const map = new Map();
     (books || []).forEach(book => {
@@ -42,13 +46,12 @@ const BooksTable = ({
     return map;
   }, [books]);
 
-  // Reset failed-image tracking whenever the books list changes (e.g. after a
-  // refetch following a connection drop), so images can recover automatically.
+  // Reset failed-image tracking on books change so images can recover.
   useEffect(() => {
     setFailedImages(new Set());
   }, [books]);
 
-  // Auto-expand when search query is present
+  // Auto-expand when a search query is present.
   useEffect(() => {
     if (searchQuery && searchQuery.trim() !== '') {
       setIsExpanded(true);
@@ -58,42 +61,135 @@ const BooksTable = ({
   const statusOptions = [
     { value: 'all', label: 'Tous' },
     { value: 'available', label: 'En stock' },
-    { value: 'out_of_stock', label: 'Hors stock' }
+    { value: 'out_of_stock', label: 'Hors stock' },
   ];
 
   const visibilityOptions = [
     { value: 'all', label: 'Tous' },
     { value: 'catalog', label: 'Catalogue' },
-    { value: 'pack_only', label: 'Pack uniquement' }
+    { value: 'pack_only', label: 'Pack uniquement' },
   ];
 
   const sortOptions = [
     { value: 'date_desc', label: '+ récents' },
     { value: 'date_asc', label: '+ anciens' },
     { value: 'title', label: 'Par titre' },
-    { value: 'price', label: 'Par prix' }
+    { value: 'price', label: 'Par prix' },
   ];
 
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
+  const toggleExpand = () => setIsExpanded(prev => !prev);
 
   const handleFilterClick = () => {
-    if (!isExpanded) {
-      setIsExpanded(true);
-    }
+    if (!isExpanded) setIsExpanded(true);
   };
 
-  // Use server-side pagination if provided, otherwise show all books
   const displayBooks = books || [];
-  const totalCount = pagination?.totalElements || books.length;
+  const totalCount = pagination?.totalElements ?? books.length;
+
+  const CoverCell = ({ book }) => {
+    const urls = imageUrls.get(book.id);
+    if (failedImages.has(book.id)) {
+      return (
+        <div className="w-10 h-14 lg:w-12 lg:h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <BookOpen className="w-5 h-5 text-gray-300" />
+        </div>
+      );
+    }
+    return (
+      <img
+        src={failedImages.has(`${book.id}-placeholder`) ? urls?.placeholder : urls?.normal}
+        alt={book.title}
+        className="w-10 h-14 lg:w-12 lg:h-16 object-cover rounded-lg flex-shrink-0"
+        onError={(e) => {
+          if (!failedImages.has(`${book.id}-placeholder`)) {
+            setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
+            e.target.src = urls?.placeholder;
+          } else {
+            setFailedImages(prev => new Set(prev).add(book.id));
+          }
+        }}
+      />
+    );
+  };
+
+  const PriceCell = ({ book }) => {
+    if (!book.onSale) return <span className="text-gray-900">{formatCurrency(book.price)}</span>;
+    const discounted = book.discountType === 'PERCENTAGE'
+      ? book.price * (1 - book.discountValue / 100)
+      : Math.max(0, book.price - book.discountValue);
+    return (
+      <div className="flex flex-col gap-0.5">
+        <span className="text-gray-400 line-through text-xs">{formatCurrency(book.price)}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-orange-600 font-bold text-sm">{formatCurrency(discounted)}</span>
+          <span className="bg-orange-100 text-orange-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5">
+            <Tag className="w-2.5 h-2.5" />
+            {book.discountType === 'PERCENTAGE' ? `-${book.discountValue}%` : `-${book.discountValue} DZD`}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const VisibilityBadge = ({ book }) =>
+    book.visibleInCatalog === false ? (
+      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+        <EyeOff className="w-3 h-3" />
+        Pack only
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+        <Eye className="w-3 h-3" />
+        Catalogue
+      </span>
+    );
+
+  const ActionButtons = ({ book, layout }) => (
+    <div className={`flex items-center ${layout === 'mobile' ? 'gap-2 flex-1' : 'gap-1.5'}`}>
+      {/* View */}
+      <button
+        onClick={() => onView(book)}
+        title="Voir"
+        className={layout === 'mobile'
+          ? 'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 text-xs font-medium transition-colors'
+          : 'p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors'}
+      >
+        <Eye className="w-4 h-4" />
+        {layout === 'mobile' && <span>Voir</span>}
+      </button>
+
+      {/* Edit */}
+      <button
+        onClick={() => onEdit(book)}
+        title="Modifier"
+        className={layout === 'mobile'
+          ? 'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 text-xs font-medium transition-colors'
+          : 'p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors'}
+      >
+        <Edit className="w-4 h-4" />
+        {layout === 'mobile' && <span>Modifier</span>}
+      </button>
+
+      {/* Delete */}
+      <button
+        onClick={() => onDelete(book)}
+        title="Supprimer"
+        className={layout === 'mobile'
+          ? 'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 text-xs font-medium transition-colors'
+          : 'p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors'}
+      >
+        <Trash2 className="w-4 h-4" />
+        {layout === 'mobile' && <span>Supprimer</span>}
+      </button>
+    </div>
+  );
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-      {/* Barre d'en-tête avec gradient */}
+
+      {/* Header */}
       <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 border-b border-gray-200">
         <div className="flex items-center justify-between gap-2 sm:gap-3 p-2 sm:p-4">
-          {/* Icône et Titre */}
           <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
             <div className="p-1.5 sm:p-2.5 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg shadow-lg flex-shrink-0">
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
@@ -102,16 +198,13 @@ const BooksTable = ({
               <h2 className="text-sm sm:text-lg font-bold text-gray-900 flex items-center gap-1 flex-wrap">
                 <span className="truncate">Tous les livres</span>
                 {loading && (
-                  <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-blue-600 border-t-transparent"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-blue-600 border-t-transparent" />
                 )}
-                <span className="text-xs font-normal text-gray-500 flex-shrink-0">
-                  ({totalCount})
-                </span>
+                <span className="text-xs font-normal text-gray-500 flex-shrink-0">({totalCount})</span>
               </h2>
             </div>
           </div>
 
-          {/* Boutons d'action */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -140,7 +233,7 @@ const BooksTable = ({
         </div>
       </div>
 
-      {/* Section de filtres et recherche */}
+      {/* Filters */}
       <div className="p-3 sm:p-6 border-b border-gray-200 bg-white">
         <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-3 items-stretch sm:items-center">
           <div className="relative flex-1 sm:max-w-md">
@@ -164,7 +257,6 @@ const BooksTable = ({
                 onOpen={handleFilterClick}
               />
             </div>
-
             <div className="flex-1 sm:flex-none sm:min-w-[150px] min-w-0">
               <CustomSelect
                 value={visibilityFilter}
@@ -174,7 +266,6 @@ const BooksTable = ({
                 onOpen={handleFilterClick}
               />
             </div>
-
             <div className="flex-1 sm:flex-none sm:min-w-[150px] min-w-0">
               <CustomSelect
                 value={sortBy}
@@ -188,7 +279,7 @@ const BooksTable = ({
         </div>
       </div>
 
-      {/* Table content - Collapsible */}
+      {/* Collapsible content */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -198,25 +289,23 @@ const BooksTable = ({
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
-            {/* Loading state */}
             {loading && (
               <div className="flex items-center justify-center py-12">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
                   <p className="text-sm text-gray-500">Chargement...</p>
                 </div>
               </div>
             )}
 
-            {/* Empty state */}
             {!loading && displayBooks.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 px-4">
                 <BookOpen className="w-16 h-16 text-gray-300 mb-4" />
                 <p className="text-lg font-medium text-gray-600 mb-2">Aucun livre trouvé</p>
                 <p className="text-sm text-gray-500 text-center">
                   {searchQuery
-                    ? "Essayez de modifier vos critères de recherche"
-                    : "Commencez par ajouter votre premier livre"}
+                    ? 'Essayez de modifier vos critères de recherche'
+                    : 'Commencez par ajouter votre premier livre'}
                 </p>
               </div>
             )}
@@ -224,118 +313,49 @@ const BooksTable = ({
             {/* Desktop table */}
             {!loading && displayBooks.length > 0 && (
               <div className="hidden md:block overflow-x-auto overflow-y-hidden">
-                <div className="min-w-[800px]">
+                <div className="min-w-[640px]">
                   <table className="w-full">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 border-b border-gray-100">
                       <tr>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Couverture
-                        </th>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Titre
-                        </th>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Auteur
-                        </th>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Prix
-                        </th>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Visibilité
-                        </th>
-                        <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
+                        {['Couverture', 'Titre', 'Auteur', 'Prix', 'Visibilité', 'Actions'].map(col => (
+                          <th
+                            key={col}
+                            className="px-4 lg:px-5 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider"
+                          >
+                            {col}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {displayBooks.map((book) => (
-                          <motion.tr
-                            key={book.id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="hover:bg-gray-50 transition-colors duration-150"
-                          >
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                              {failedImages.has(book.id) ? (
-                                <div className="w-10 h-14 lg:w-12 lg:h-16 bg-gray-200 rounded flex items-center justify-center">
-                                  <BookOpen className="w-6 h-6 text-gray-400" />
-                                </div>
-                              ) : (
-                                <img
-                                  src={failedImages.has(`${book.id}-placeholder`) ? imageUrls.get(book.id)?.placeholder : imageUrls.get(book.id)?.normal}
-                                  alt={book.title}
-                                  className="w-10 h-14 lg:w-12 lg:h-16 object-cover rounded"
-                                  onError={(e) => {
-                                    if (!failedImages.has(`${book.id}-placeholder`)) {
-                                      setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
-                                      e.target.src = imageUrls.get(book.id).placeholder;
-                                    } else {
-                                      setFailedImages(prev => new Set(prev).add(book.id));
-                                    }
-                                  }}
-                                />
-                              )}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 max-w-[180px]">
-                              <div
-                                className="text-sm font-medium text-gray-900 truncate"
-                                title={book.title}
-                              >
-                                {book.title}
-                              </div>
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 max-w-[140px]">
-                              <span
-                                className="text-sm text-gray-600 truncate block"
-                                title={book.author?.name || 'Auteur inconnu'}
-                              >
-                                {book.author?.name || 'Auteur inconnu'}
-                              </span>
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              {book.onSale ? (
-                                <div className="flex flex-col gap-0.5">
-                                  <span className="text-gray-400 line-through text-xs">{formatCurrency(book.price)}</span>
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-orange-600 font-bold">
-                                      {book.discountType === 'PERCENTAGE'
-                                        ? formatCurrency(book.price * (1 - book.discountValue / 100))
-                                        : formatCurrency(Math.max(0, book.price - book.discountValue))}
-                                    </span>
-                                    <span className="bg-orange-100 text-orange-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                                      <Tag className="w-2.5 h-2.5" />
-                                      {book.discountType === 'PERCENTAGE' ? `-${book.discountValue}%` : `-${book.discountValue} DZD`}
-                                    </span>
-                                  </div>
-                                </div>
-                              ) : (
-                                <span className="text-gray-900">{formatCurrency(book.price)}</span>
-                              )}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                              {book.visibleInCatalog === false ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
-                                  <EyeOff className="w-3 h-3" />
-                                  Pack only
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                                  <Eye className="w-3 h-3" />
-                                  Catalogue
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm">
-                              <button
-                                onClick={() => onView(book)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-800 hover:text-white rounded-lg transition-all duration-150"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                <span className="hidden lg:inline">Voir</span>
-                              </button>
-                            </td>
-                          </motion.tr>
+                    <tbody className="divide-y divide-gray-100">
+                      {displayBooks.map(book => (
+                        <motion.tr
+                          key={book.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="hover:bg-gray-50/70 transition-colors duration-150"
+                        >
+                          <td className="px-4 lg:px-5 py-3.5 whitespace-nowrap">
+                            <CoverCell book={book} />
+                          </td>
+                          <td className="px-4 lg:px-5 py-3.5">
+                            <div className="text-sm font-semibold text-gray-900 max-w-[200px] truncate">
+                              {book.title}
+                            </div>
+                          </td>
+                          <td className="px-4 lg:px-5 py-3.5 whitespace-nowrap text-sm text-gray-500">
+                            {book.author?.name || '—'}
+                          </td>
+                          <td className="px-4 lg:px-5 py-3.5 whitespace-nowrap">
+                            <PriceCell book={book} />
+                          </td>
+                          <td className="px-4 lg:px-5 py-3.5 whitespace-nowrap">
+                            <VisibilityBadge book={book} />
+                          </td>
+                          <td className="px-4 lg:px-5 py-3.5 whitespace-nowrap">
+                            <ActionButtons book={book} layout="desktop" />
+                          </td>
+                        </motion.tr>
                       ))}
                     </tbody>
                   </table>
@@ -345,96 +365,37 @@ const BooksTable = ({
 
             {/* Mobile cards */}
             {!loading && displayBooks.length > 0 && (
-              <div className="md:hidden p-3 sm:p-4 space-y-3 sm:space-y-4">
-                {displayBooks.map((book) => (
+              <div className="md:hidden p-3 sm:p-4 space-y-3">
+                {displayBooks.map(book => (
                   <motion.div
                     key={book.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-3"
+                    className="bg-gray-50 rounded-xl p-3 sm:p-4 space-y-3 border border-gray-100"
                   >
-                    <div className="flex gap-3 sm:gap-4">
-                      {failedImages.has(book.id) ? (
-                        <div className="w-14 h-20 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                          <BookOpen className="w-8 h-8 text-gray-400" />
-                        </div>
-                      ) : (
-                        <img
-                          src={failedImages.has(`${book.id}-placeholder`) ? imageUrls.get(book.id)?.placeholder : imageUrls.get(book.id)?.normal}
-                          alt={book.title}
-                          className="w-14 h-20 object-cover rounded flex-shrink-0"
-                          onError={(e) => {
-                            if (!failedImages.has(`${book.id}-placeholder`)) {
-                              setFailedImages(prev => new Set(prev).add(`${book.id}-placeholder`));
-                              e.target.src = imageUrls.get(book.id).placeholder;
-                            } else {
-                              setFailedImages(prev => new Set(prev).add(book.id));
-                            }
-                          }}
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h3
-                          className="font-medium text-sm text-gray-900 truncate"
-                          title={book.title}
-                        >
-                          {book.title}
-                        </h3>
-                        <p
-                          className="text-xs text-gray-600 truncate mt-0.5"
-                          title={book.author?.name || 'Auteur inconnu'}
-                        >
-                          {book.author?.name || 'Auteur inconnu'}
-                        </p>
-                        <div className="mt-2">
-                          {book.onSale ? (
-                            <div className="flex items-baseline gap-1.5 flex-wrap">
-                              <span className="text-sm font-bold text-orange-600">
-                                {book.discountType === 'PERCENTAGE'
-                                  ? formatCurrency(book.price * (1 - book.discountValue / 100))
-                                  : formatCurrency(Math.max(0, book.price - book.discountValue))}
-                              </span>
-                              <span className="text-xs text-gray-400 line-through">{formatCurrency(book.price)}</span>
-                              <span className="inline-flex items-center gap-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                                <Tag className="w-2.5 h-2.5" />
-                                {book.discountType === 'PERCENTAGE' ? `-${book.discountValue}%` : `-${book.discountValue} DZD`}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-sm font-medium text-gray-900">{formatCurrency(book.price)}</span>
-                          )}
+                    <div className="flex gap-3">
+                      <CoverCell book={book} />
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <h3 className="font-semibold text-sm text-gray-900 truncate">{book.title}</h3>
+                        <p className="text-xs text-gray-500 truncate">{book.author?.name || '—'}</p>
+                        <div className="pt-0.5">
+                          <PriceCell book={book} />
                         </div>
                       </div>
-                      <div className="flex-shrink-0 self-start pt-0.5">
-                        {book.visibleInCatalog === false ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-full bg-gray-100 text-gray-600">
-                            <EyeOff className="w-3 h-3" />
-                            Pack
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-full bg-green-100 text-green-700">
-                            <Eye className="w-3 h-3" />
-                            Catalogue
-                          </span>
-                        )}
+                      <div className="flex-shrink-0">
+                        <VisibilityBadge book={book} />
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-gray-200">
-                      <button
-                        onClick={() => onView(book)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-800 hover:text-white rounded-lg transition-all duration-150"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Voir les détails
-                      </button>
+                    <div className="flex gap-2 pt-1 border-t border-gray-200">
+                      <ActionButtons book={book} layout="mobile" />
                     </div>
                   </motion.div>
                 ))}
               </div>
             )}
 
-            {/* Pagination - Server-side */}
+            {/* Pagination */}
             {!loading && displayBooks.length > 0 && pagination && onPageChange && (
               <Pagination
                 currentPage={pagination.page + 1}
