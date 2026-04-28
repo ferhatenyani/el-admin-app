@@ -77,6 +77,7 @@ export const getBooks = async (params = {}, signal = null) => {
       ...(params.maxPrice && { maxPrice: params.maxPrice }),
       ...(params.sort && { sort: params.sort }),
       ...(params.status && { status: params.status }),
+      ...(params.visibleInCatalog !== undefined && { visibleInCatalog: params.visibleInCatalog }),
     };
 
     const response = await api.get('/api/books', {
