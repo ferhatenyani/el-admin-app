@@ -9,7 +9,7 @@ React-based admin dashboard for an Algerian e-commerce bookstore. UI and error m
 ## Development Commands
 
 ```bash
-npm run dev       # Start dev server at localhost:5173
+npm run dev       # Start dev server at localhost:5174
 npm run build     # Production build (dist/ with sourcemaps)
 npm run lint      # ESLint
 npm run preview   # Preview production build
@@ -52,12 +52,14 @@ The factory wires: Bearer token injection, CSRF header, automatic token refresh 
 - **authorsApi.js** — Author management with image uploads
 - **ordersApi.js** — Order management and status updates; CSRF-exempt
 - **usersApi.js** — User management
-- **categoriesApi.js** / **tagsApi.js** / **etiquettesApi.js** — Taxonomy management
-- **packsApi.js** — Marketing pack management
-- **mainDisplayApi.js** — Main display section management
+- **tagsApi.js** — Base tag CRUD (type: `CATEGORY`, `ETIQUETTE`, `MAIN_DISPLAY`); includes book/pack add-remove and color-change helpers
+- **categoriesApi.js** / **etiquettesApi.js** — Thin wrappers around `tagsApi.js` that hard-code `type='CATEGORY'` / `type='ETIQUETTE'`; never call `tagsApi` directly from components
+- **packsApi.js** — Marketing pack management; maps frontend `name/image` ↔ backend `title/coverUrl`
+- **mainDisplayApi.js** — Main display section management; `getMainDisplays()` auto-fetches books & packs for every section in parallel and sorts by `displayOrder`
 - **relayPointsApi.js** — Delivery relay points (Yalidine / ZR Express providers); exports `WILAYA_ID_MAP`
-- **dashboardApi.js** — Dashboard statistics
-- **adminApi.js** — Admin-specific operations
+- **dashboardApi.js** — Dashboard statistics; maps French UI labels (`Aujourd'hui`) to backend enums (`TODAY`)
+- **adminApi.js** — Admin profile, picture (blob + token-param URL), and password change
+- **pixelApi.js** — Pixel tracking events (`getPixelEvents()`)
 
 ## Key Utilities ([src/utils/](src/utils/))
 
@@ -80,7 +82,7 @@ Dashboard, Books, Orders, Users, Marketing, Profile, Login, NotFound.
 
 Feature folders: `books/`, `authors/`, `orders/`, `users/`, `marketing/`, `categories/`, `etiquettes/`, `dashboard/`, `profile/`, `layout/`.
 
-Shared components in `common/`: Sidebar, Topbar, Pagination, Toast, ConfirmDeleteModal, CustomSelect, ColorPicker, UploadImageInput, **InlineMDInput** (inline markdown editor with bold/italic/strikethrough/code toolbar), OrderDetailsModal, StatsCard.
+Shared components in `common/`: Sidebar, Topbar, Pagination, Toast, ConfirmDeleteModal, CustomSelect, ColorPicker, UploadImageInput, **InlineMDInput** (inline markdown editor using `@uiw/react-md-editor` with bold/italic/strikethrough/code toolbar), OrderDetailsModal, StatsCard.
 
 ### Custom Hooks ([src/hooks/](src/hooks/))
 
@@ -119,6 +121,14 @@ Always use `getApiErrorMessage` from `utils/apiErrors.js` to surface backend err
 ## Tech Stack
 
 - React 19, Vite 7, Tailwind CSS 4
-- React Router v7, TanStack React Query, Axios
+- React Router v7, TanStack React Query v5, Axios
 - Framer Motion, Lucide React, Recharts, react-colorful
+- **@dnd-kit** (core + sortable + modifiers) — drag-and-drop reordering used in Marketing page sections
 - ESLint 9 — `no-unused-vars` allows uppercase identifiers (constants)
+
+## React Query Patterns
+
+React Query is used for all server state. Follow existing patterns:
+- `staleTime: 5 * 60 * 1000`, `gcTime: 10 * 60 * 1000` (10 min cache)
+- Pass `signal` from `useQuery`'s `queryFn` argument to service functions for request cancellation
+- Invalidate query keys after mutations with `queryClient.invalidateQueries`
