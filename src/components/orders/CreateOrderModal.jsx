@@ -281,9 +281,8 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       newErrors.wilaya = 'La wilaya est requise';
     }
 
-    // City validation (only for home delivery)
-    if (formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && !formData.city.trim()) {
-      newErrors.city = 'La ville est requise';
+    if (!formData.city.trim()) {
+      newErrors.city = 'La commune (ville) est requise';
     }
 
     // Street address validation (required for home delivery)
@@ -444,7 +443,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       email: formData.email.trim() || null,
       streetAddress: formData.streetAddress.trim() || null,
       wilaya: formData.wilaya,
-      city: formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY ? formData.city.trim() : null,
+      city: formData.city.trim() || null,
       shippingProvider: formData.shippingProvider,
       shippingMethod: formData.shippingMethod,
       shippingCost: parseFloat(formData.shippingCost) || 0,
@@ -632,7 +631,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
-                        Ville {formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY && <span className="text-red-500">*</span>}
+                        Commune (Ville) <span className="text-red-500">*</span>
                       </label>
                       <CustomSelect
                         value={formData.city}
