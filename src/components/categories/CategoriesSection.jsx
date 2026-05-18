@@ -30,6 +30,7 @@ const CategoriesSection = memo(() => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const {
     currentPage,
@@ -113,6 +114,7 @@ const CategoriesSection = memo(() => {
 
   const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
+    setIsDeleting(true);
     try {
       await categoriesApi.deleteCategory(categoryToDelete.id);
       await fetchCategories(); // Refresh list after deletion
@@ -123,6 +125,8 @@ const CategoriesSection = memo(() => {
       setError(getApiErrorMessage(err, 'Échec de la suppression de la catégorie.'));
       setDeleteConfirmOpen(false);
       setCategoryToDelete(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -296,6 +300,7 @@ const CategoriesSection = memo(() => {
         onConfirm={confirmDeleteCategory}
         onCancel={cancelDeleteCategory}
         itemName={categoryToDelete?.nameEn || "cette catégorie"}
+        isLoading={isDeleting}
       />
     </div>
   );

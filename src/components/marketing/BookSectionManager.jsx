@@ -25,6 +25,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   const [reorderingSection, setReorderingSection] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, sectionId: null, book: null });
+  const [isRemoving, setIsRemoving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -170,7 +171,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
 
   const confirmRemoveItem = async () => {
     const { sectionId, book: item, type } = confirmDelete;
-
+    setIsRemoving(true);
     try {
       if (type === 'pack') {
         await removePacksFromMainDisplay(sectionId, [item.id]);
@@ -184,6 +185,8 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
       console.error('Error removing item from section:', error);
       showError(getApiErrorMessage(error), 'Erreur lors de la suppression');
       setConfirmDelete({ isOpen: false, sectionId: null, book: null, type: null });
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -457,6 +460,7 @@ const BookSectionManager = ({ availableBooks, availablePacks, onDeleteRequest })
         onConfirm={confirmRemoveItem}
         onCancel={cancelRemoveBook}
         itemName={confirmDelete.book ? `"${confirmDelete.book.title}"` : 'cet élément'}
+        isLoading={isRemoving}
       />
     </div>
   );

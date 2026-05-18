@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, X, Loader2 } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
 
-const ConfirmDeleteModal = ({ isOpen, onConfirm, onCancel, itemName = "cet élément" }) => {
+const ConfirmDeleteModal = ({ isOpen, onConfirm, onCancel, itemName = "cet élément", isLoading = false }) => {
   // Lock background scroll when modal is open
   useScrollLock(isOpen);
 
@@ -17,7 +17,7 @@ const ConfirmDeleteModal = ({ isOpen, onConfirm, onCancel, itemName = "cet élé
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onCancel}
+            onClick={isLoading ? undefined : onCancel}
             className="fixed top-0 left-0 w-screen h-screen bg-black/60 z-[100]"
             style={{ margin: 0, padding: 0 }}
           />
@@ -25,7 +25,7 @@ const ConfirmDeleteModal = ({ isOpen, onConfirm, onCancel, itemName = "cet élé
           {/* Modal Container */}
           <div
             className="fixed top-0 left-0 w-screen h-screen z-[101] flex items-center justify-center px-3 py-4 sm:p-4"
-            onClick={onCancel}
+            onClick={isLoading ? undefined : onCancel}
             style={{ margin: 0 }}
           >
             <motion.div
@@ -54,21 +54,24 @@ const ConfirmDeleteModal = ({ isOpen, onConfirm, onCancel, itemName = "cet élé
               {/* Actions */}
               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-end gap-2 sm:gap-3">
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
                   onClick={onCancel}
-                  className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors text-sm sm:text-base"
+                  disabled={isLoading}
+                  className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Annuler
                 </motion.button>
 
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
                   onClick={onConfirm}
-                  className="px-3 py-2 sm:px-5 sm:py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm text-sm sm:text-base"
+                  disabled={isLoading}
+                  className="px-3 py-2 sm:px-5 sm:py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Confirmer
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isLoading ? 'Suppression...' : 'Confirmer'}
                 </motion.button>
               </div>
             </motion.div>

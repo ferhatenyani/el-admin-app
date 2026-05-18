@@ -29,6 +29,7 @@ const EtiquettesSection = memo(() => {
   const [editingEtiquette, setEditingEtiquette] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [etiquetteToDelete, setEtiquetteToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const {
     currentPage,
@@ -111,6 +112,7 @@ const EtiquettesSection = memo(() => {
 
   const confirmDeleteEtiquette = async () => {
     if (!etiquetteToDelete) return;
+    setIsDeleting(true);
     try {
       await etiquettesApi.deleteEtiquette(etiquetteToDelete.id);
       await fetchEtiquettes(); // Refresh list after deletion
@@ -121,6 +123,8 @@ const EtiquettesSection = memo(() => {
       setError(getApiErrorMessage(err, "Échec de la suppression de l'étiquette."));
       setDeleteConfirmOpen(false);
       setEtiquetteToDelete(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -293,6 +297,7 @@ const EtiquettesSection = memo(() => {
         onConfirm={confirmDeleteEtiquette}
         onCancel={cancelDeleteEtiquette}
         itemName={etiquetteToDelete?.nameFr || "cette étiquette"}
+        isLoading={isDeleting}
       />
     </div>
   );

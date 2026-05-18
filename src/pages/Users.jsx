@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import UsersTable from '../components/users/UsersTable';
 import UserDetailsModal from '../components/users/UserDetailsModal';
@@ -25,6 +25,7 @@ const Users = () => {
   const [sortBy, setSortBy] = useState('createdDate,desc'); // Format: "field,direction"
   const [statusFilter, setStatusFilter] = useState('all');
   const [error, setError] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Ref for request cancellation
   const abortControllerRef = useRef(null);
@@ -197,6 +198,7 @@ const Users = () => {
   };
 
   const handleExport = async () => {
+    setIsExporting(true);
     try {
       const response = await exportUsers();
 
@@ -226,6 +228,8 @@ const Users = () => {
     } catch (error) {
       console.error('Error exporting users:', error);
       showError(getApiErrorMessage(error), "Erreur lors de l'export");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -270,13 +274,16 @@ const Users = () => {
         </div>
 
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: isExporting ? 1 : 1.02 }}
+          whileTap={{ scale: isExporting ? 1 : 0.98 }}
           onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm"
+          disabled={isExporting}
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <Download className="w-5 h-5" />
-          Exporter
+          {isExporting
+            ? <Loader2 className="w-5 h-5 animate-spin" />
+            : <Download className="w-5 h-5" />}
+          {isExporting ? 'Export...' : 'Exporter'}
         </motion.button>
       </div>
 

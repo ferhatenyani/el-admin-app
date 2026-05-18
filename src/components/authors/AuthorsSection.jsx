@@ -29,6 +29,7 @@ const AuthorsSection = memo(() => {
   const [editingAuthor, setEditingAuthor] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [authorToDelete, setAuthorToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const {
     currentPage,
@@ -120,6 +121,7 @@ const AuthorsSection = memo(() => {
 
   const confirmDeleteAuthor = async () => {
     if (!authorToDelete) return;
+    setIsDeleting(true);
     try {
       await authorsApi.deleteAuthor(authorToDelete.id);
       await fetchAuthors(); // Refresh list after deletion
@@ -130,6 +132,8 @@ const AuthorsSection = memo(() => {
       setError(getApiErrorMessage(err, "Échec de la suppression de l'auteur."));
       setDeleteConfirmOpen(false);
       setAuthorToDelete(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -303,6 +307,7 @@ const AuthorsSection = memo(() => {
         onConfirm={confirmDeleteAuthor}
         onCancel={cancelDeleteAuthor}
         itemName={authorToDelete?.name || "cet auteur"}
+        isLoading={isDeleting}
       />
     </div>
   );

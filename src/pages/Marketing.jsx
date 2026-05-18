@@ -21,6 +21,7 @@ const Marketing = () => {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [deleteType, setDeleteType] = useState(null); // 'section' or 'pack'
   const [onDeleteSuccess, setOnDeleteSuccess] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Toast notifications
   const { toasts, removeToast, success, error } = useToast();
@@ -61,7 +62,7 @@ const Marketing = () => {
 
   const confirmDelete = async () => {
     if (!itemToDelete) return;
-
+    setIsDeleting(true);
     try {
       if (deleteType === 'section') {
         // Call API to delete main display section
@@ -77,16 +78,17 @@ const Marketing = () => {
       if (onDeleteSuccess) {
         onDeleteSuccess();
       }
+
+      setDeleteConfirmOpen(false);
+      setItemToDelete(null);
+      setDeleteType(null);
+      setOnDeleteSuccess(null);
     } catch (err) {
       console.error('Error deleting item:', err);
       error(getApiErrorMessage(err), 'Erreur lors de la suppression');
-      return;
+    } finally {
+      setIsDeleting(false);
     }
-
-    setDeleteConfirmOpen(false);
-    setItemToDelete(null);
-    setDeleteType(null);
-    setOnDeleteSuccess(null);
   };
 
   const cancelDelete = () => {
@@ -135,6 +137,7 @@ const Marketing = () => {
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
         itemName={getItemName()}
+        isLoading={isDeleting}
       />
 
       <ToastContainer toasts={toasts} onClose={removeToast} />

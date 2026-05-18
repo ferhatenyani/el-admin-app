@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Download, Plus } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Download, Plus, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import OrdersTable from '../components/orders/OrdersTable';
 import OrderDetailsModal from '../components/common/OrderDetailsModal';
@@ -29,17 +29,11 @@ const Orders = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Toast notifications
   const { toasts, removeToast, success, error } = useToast();
-
-  // Ref to track pagination without causing re-renders
-  const paginationRef = useRef(pagination);
-
-  // Update ref when pagination changes
-  useEffect(() => {
-    paginationRef.current = pagination;
-  }, [pagination]);
 
   // Debounce search query to reduce API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -61,8 +55,8 @@ const Orders = () => {
         : `totalAmount,${sortDirection}`;
 
       const params = {
-        page: paginationRef.current.page,
-        size: paginationRef.current.size,
+        page: pagination.page,
+        size: pagination.size,
         sort: sortParam,
       };
 
@@ -95,10 +89,13 @@ const Orders = () => {
       // Update pagination info from response - only update if values changed
       setPagination(prev => {
         const newPagination = {
-          page: response.number ?? response.page ?? prev.page,
-          size: response.size ?? prev.size,
-          totalElements: response.totalElements ?? data.length,
-          totalPages: response.totalPages ?? 1,
+          // Guard against response.page being a metadata object (Spring Data REST 3 format)
+          page: Number.isInteger(response.number) ? response.number
+              : Number.isInteger(response.page) ? response.page
+              : prev.page,
+          size: Number.isInteger(response.size) ? response.size : prev.size,
+          totalElements: Number.isInteger(response.totalElements) ? response.totalElements : data.length,
+          totalPages: Number.isInteger(response.totalPages) ? response.totalPages : 1,
         };
 
         // Only update if values actually changed to prevent unnecessary re-renders
@@ -134,7 +131,7 @@ const Orders = () => {
       setLoading(false);
       setInitialLoad(false);
     }
-  }, [debouncedSearchQuery, statusFilter, sortBy, success]);
+  }, [pagination.page, pagination.size, debouncedSearchQuery, statusFilter, sortBy, success]);
 
   useEffect(() => {
     fetchOrders();
@@ -284,7 +281,7 @@ const Orders = () => {
 
   const handleConfirmDelete = async () => {
     if (!orderToDelete) return;
-
+    setIsDeleting(true);
     try {
       await ordersApi.deleteOrder(orderToDelete.id);
       setIsDeleteModalOpen(false);
@@ -294,6 +291,8 @@ const Orders = () => {
     } catch (err) {
       console.error('Error deleting order:', err);
       error(getApiErrorMessage(err), 'Erreur lors de la suppression');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -303,6 +302,7 @@ const Orders = () => {
   };
 
   const handleExport = async () => {
+    setIsExporting(true);
     try {
       const response = await ordersApi.exportOrders();
 
@@ -333,6 +333,8 @@ const Orders = () => {
     } catch (err) {
       console.error('Error exporting orders:', err);
       error(getApiErrorMessage(err), "Erreur lors de l'export");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -364,13 +366,16 @@ const Orders = () => {
           </motion.button>
 
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: isExporting ? 1 : 1.02 }}
+            whileTap={{ scale: isExporting ? 1 : 0.98 }}
             onClick={handleExport}
-            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm whitespace-nowrap text-sm sm:text-base"
+            disabled={isExporting}
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm whitespace-nowrap text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-            <span>Exporter</span>
+            {isExporting
+              ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 animate-spin" />
+              : <Download className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />}
+            <span>{isExporting ? 'Export...' : 'Exporter'}</span>
           </motion.button>
         </div>
       </div>
@@ -412,6 +417,7 @@ const Orders = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         itemName={orderToDelete ? `la commande ${orderToDelete.orderNumber}` : 'cet élément'}
+        isLoading={isDeleting}
       />
 
       <ToastContainer toasts={toasts} onClose={removeToast} />

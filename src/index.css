@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 
+button {
+  cursor: pointer;
+}
+
 /* Prevent iOS Safari from zooming in when tapping on input fields.
    iOS zooms when font-size < 16px. This targets iOS only via a feature query. */
 @supports (-webkit-touch-callout: none) {
