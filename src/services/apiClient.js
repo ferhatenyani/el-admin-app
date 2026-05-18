@@ -61,6 +61,11 @@ export const createApiClient = ({ csrfExempt = [] } = {}) => {
   api.interceptors.response.use(
     (response) => response,
     async (error) => {
+      // Aborted requests are not auth failures — skip the refresh/redirect logic
+      if (axios.isCancel(error)) {
+        return Promise.reject(error);
+      }
+
       const originalRequest = error.config;
       const status = error.response?.status;
       const hasToken = !!localStorage.getItem('access_token');

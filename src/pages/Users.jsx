@@ -47,44 +47,33 @@ const Users = () => {
    * Uses AbortController to cancel in-flight requests
    */
   const fetchUsers = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    setLoading(true);
+    setError(null);
+
+    const params = {
+      page: pagination.page,
+      size: pagination.size,
+    };
+
+    if (debouncedSearchQuery) {
+      params.search = debouncedSearchQuery;
+    }
+    if (statusFilter === 'active') {
+      params.active = true;
+    } else if (statusFilter === 'inactive') {
+      params.active = false;
+    }
+    if (sortBy) {
+      params.sort = sortBy;
+    }
+
     try {
-      // Cancel any pending request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      // Create new abort controller for this request
-      abortControllerRef.current = new AbortController();
-
-      setLoading(true);
-      setError(null);
-
-      // Build query parameters
-      const params = {
-        page: pagination.page,
-        size: pagination.size,
-      };
-
-      // Add search query if present
-      if (debouncedSearchQuery) {
-        params.search = debouncedSearchQuery;
-      }
-
-      // Apply server-side active filter if not 'all'
-      if (statusFilter === 'active') {
-        params.active = true;
-      } else if (statusFilter === 'inactive') {
-        params.active = false;
-      }
-
-      // Add sort parameter (format: "field,direction")
-      if (sortBy) {
-        params.sort = sortBy;
-      }
-
       const response = await getUsers(params, abortControllerRef.current.signal);
-
-      // Handle Spring Data Page response
       const usersData = response.content || [];
       setUsers(usersData);
       setPagination({
@@ -93,16 +82,16 @@ const Users = () => {
         totalElements: response.totalElements || 0,
         totalPages: response.totalPages || 0,
       });
+      setLoading(false);
+      setInitialLoad(false);
     } catch (err) {
-      // Ignore cancelled requests
       if (err.message === 'REQUEST_CANCELLED') {
+        // Another request is already in flight — leave loading state alone
         return;
       }
-
       console.error('Error fetching users:', err);
       setError(getApiErrorMessage(err, 'Failed to load users. Please try again.'));
       setUsers([]);
-    } finally {
       setLoading(false);
       setInitialLoad(false);
     }
