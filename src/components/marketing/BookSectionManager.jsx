@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, BookOpen, Loader, Search, ChevronDown, ChevronUp, GripVertical, Save, Package, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import InlineMDPreview from '../common/InlineMDPreview';
+import { stripMarkdown } from '../../utils/markdownUtils';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
@@ -774,8 +776,8 @@ const SectionCard = ({ section, onEdit, onReorder, onDelete, onRemoveBook, onRem
                     </div>
 
                     <div className="p-2.5">
-                      <h4 className="font-semibold text-gray-900 text-xs sm:text-sm line-clamp-2 mb-0.5 leading-snug" title={book.title}>
-                        {book.title}
+                      <h4 className="font-semibold text-gray-900 text-xs sm:text-sm line-clamp-2 mb-0.5 leading-snug" title={stripMarkdown(book.title)}>
+                        <InlineMDPreview>{book.title}</InlineMDPreview>
                       </h4>
                       <p className="text-gray-600 text-xs truncate" title={book.author}>
                         {book.author}
@@ -840,8 +842,8 @@ const SectionCard = ({ section, onEdit, onReorder, onDelete, onRemoveBook, onRem
                     </div>
 
                     <div className="p-2.5">
-                      <h4 className="font-semibold text-gray-900 text-xs sm:text-sm line-clamp-2 mb-0.5 leading-snug" title={pack.title}>
-                        {pack.title}
+                      <h4 className="font-semibold text-gray-900 text-xs sm:text-sm line-clamp-2 mb-0.5 leading-snug" title={stripMarkdown(pack.title)}>
+                        <InlineMDPreview>{pack.title}</InlineMDPreview>
                       </h4>
                       <p className="text-purple-600 text-xs truncate font-medium">
                         {(pack.books || []).length} livres · Pack

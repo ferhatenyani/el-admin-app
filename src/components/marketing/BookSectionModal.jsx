@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, BookOpen, Search, Check, ChevronLeft, ChevronRight, Loader, Package } from 'lucide-react';
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
+import InlineMDPreview from '../common/InlineMDPreview';
+import { stripMarkdown } from '../../utils/markdownUtils';
 
 const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, availablePacks, saving, totalSections = 0 }) => {
   const [nameEn, setNameEn] = useState('');
@@ -447,8 +449,8 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                                       />
                                     )}
                                     <div className="p-2.5">
-                                      <h4 className="font-semibold text-xs text-gray-800 truncate mb-0.5" title={book.title}>
-                                        {book.title}
+                                      <h4 className="font-semibold text-xs text-gray-800 line-clamp-1 mb-0.5" title={stripMarkdown(book.title)}>
+                                        <InlineMDPreview>{book.title}</InlineMDPreview>
                                       </h4>
                                       <p className="text-xs text-gray-500 truncate mb-1" title={book.author?.name || book.author}>
                                         {book.author?.name || book.author}
@@ -573,11 +575,13 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                           key={`book-${book.id}`}
                           className="flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800 px-2.5 py-1.5 rounded-lg text-xs"
                         >
-                          <span className="truncate max-w-[120px] sm:max-w-[160px] font-medium">{book.title}</span>
+                          <span className="line-clamp-1 max-w-[120px] sm:max-w-[160px] font-medium">
+                            <InlineMDPreview>{book.title}</InlineMDPreview>
+                          </span>
                           <button
                             onClick={() => handleToggleBook(book)}
                             className="hover:bg-blue-100 rounded-full p-0.5 transition-colors"
-                            aria-label={`Retirer ${book.title}`}
+                            aria-label={`Retirer ${stripMarkdown(book.title)}`}
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -592,11 +596,13 @@ const BookSectionModal = ({ isOpen, onClose, onSave, section, availableBooks, av
                             <Package className="w-2.5 h-2.5" />
                             Pack
                           </span>
-                          <span className="truncate max-w-[120px] sm:max-w-[160px] font-medium">{pack.title || pack.name}</span>
+                          <span className="line-clamp-1 max-w-[120px] sm:max-w-[160px] font-medium">
+                            <InlineMDPreview>{pack.title || pack.name}</InlineMDPreview>
+                          </span>
                           <button
                             onClick={() => handleTogglePack(pack)}
                             className="hover:bg-purple-100 rounded-full p-0.5 transition-colors"
-                            aria-label={`Retirer ${pack.title || pack.name}`}
+                            aria-label={`Retirer ${stripMarkdown(pack.title || pack.name)}`}
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>

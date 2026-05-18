@@ -5,6 +5,7 @@ import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
 import { useState, useEffect, useMemo } from 'react';
 import { getBookCoverUrl } from '../../services/booksApi';
+import InlineMDPreview from '../common/InlineMDPreview';
 
 const LANGUAGE_DISPLAY = {
   FR: 'Français',
@@ -339,8 +340,8 @@ const BooksTable = ({
                             <CoverCell book={book} />
                           </td>
                           <td className="px-4 lg:px-5 py-3.5">
-                            <div className="text-sm font-semibold text-gray-900 max-w-[200px] truncate">
-                              {book.title}
+                            <div className="text-sm font-semibold text-gray-900 max-w-[200px] line-clamp-1">
+                              <InlineMDPreview>{book.title}</InlineMDPreview>
                             </div>
                           </td>
                           <td className="px-4 lg:px-5 py-3.5 whitespace-nowrap text-sm text-gray-500">
@@ -376,7 +377,7 @@ const BooksTable = ({
                     <div className="flex gap-3">
                       <CoverCell book={book} />
                       <div className="flex-1 min-w-0 space-y-1">
-                        <h3 className="font-semibold text-sm text-gray-900 truncate">{book.title}</h3>
+                        <h3 className="font-semibold text-sm text-gray-900 line-clamp-1"><InlineMDPreview>{book.title}</InlineMDPreview></h3>
                         <p className="text-xs text-gray-500 truncate">{book.author?.name || '—'}</p>
                         <div className="pt-0.5">
                           <PriceCell book={book} />

@@ -1,4 +1,8 @@
 import { Edit2, Trash2, Package } from 'lucide-react';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-md-editor/markdown-editor.css';
+import InlineMDPreview from '../common/InlineMDPreview';
+import { stripMarkdown } from '../../utils/markdownUtils';
 
 const PackCard = ({ pack, onEdit, onDelete }) => {
   return (
@@ -8,7 +12,7 @@ const PackCard = ({ pack, onEdit, onDelete }) => {
         <div className="flex items-start justify-between gap-3 mb-3">
           {/* Pack Name */}
           <h3 className="text-base font-semibold text-white line-clamp-1 flex-1">
-            {pack.name}
+            <InlineMDPreview>{pack.name}</InlineMDPreview>
           </h3>
 
           {/* Action Buttons */}
@@ -50,9 +54,16 @@ const PackCard = ({ pack, onEdit, onDelete }) => {
       {/* Pack Content */}
       <div className="px-4 py-4 flex flex-col flex-1 min-h-0">
         {/* Description */}
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2 min-h-[2.5rem] flex-shrink-0">
-          {pack.description}
-        </p>
+        {pack.description ? (
+          <div
+            data-color-mode="light"
+            className="mb-3 min-h-[2.5rem] flex-shrink-0 overflow-hidden line-clamp-2 text-sm text-gray-600 [&_.wmde-markdown]:!text-sm [&_.wmde-markdown]:!text-gray-600 [&_.wmde-markdown_p]:!m-0 [&_.wmde-markdown_h1]:!text-sm [&_.wmde-markdown_h2]:!text-sm [&_.wmde-markdown_h3]:!text-sm [&_.wmde-markdown_ul]:!my-0 [&_.wmde-markdown_ol]:!my-0"
+          >
+            <MDEditor.Markdown source={pack.description} />
+          </div>
+        ) : (
+          <div className="mb-3 min-h-[2.5rem] flex-shrink-0" />
+        )}
 
         {/* Books Preview */}
         <div className="flex-1 min-h-0 flex flex-col">
@@ -66,10 +77,10 @@ const PackCard = ({ pack, onEdit, onDelete }) => {
                 className="flex items-center justify-between bg-gray-50 rounded-md p-2 border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors flex-shrink-0"
               >
                 <span
-                  className="text-xs text-gray-800 font-medium truncate max-w-[140px] sm:max-w-[180px]"
-                  title={book.title}
+                  className="text-xs text-gray-800 font-medium line-clamp-1 max-w-[140px] sm:max-w-[180px]"
+                  title={stripMarkdown(book.title)}
                 >
-                  {book.title}
+                  <InlineMDPreview>{book.title}</InlineMDPreview>
                 </span>
                 <span className="px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded flex-shrink-0 ml-2">
                   {book.language || 'N/A'}

@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
 import { formatCurrency } from '../../utils/format';
+import InlineMDPreview from '../common/InlineMDPreview';
 
 const LANGUAGE_DISPLAY = {
   FR: 'Français',
@@ -82,7 +83,7 @@ const BookViewModal = ({ isOpen, book, onClose, onEdit }) => {
                       Fiche livre
                     </p>
                     <h2 className="text-lg font-bold text-white leading-snug line-clamp-2">
-                      {book.title}
+                      <InlineMDPreview>{book.title}</InlineMDPreview>
                     </h2>
                     {book.author?.name && (
                       <p className="text-slate-300 text-sm mt-1">{book.author.name}</p>

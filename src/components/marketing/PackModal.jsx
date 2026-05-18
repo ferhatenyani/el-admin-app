@@ -4,8 +4,10 @@ import { X, Package, Search, Check, BookOpen, Lock, Info } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import InlineMDInput from '../common/InlineMDInput';
+import InlineMDPreview from '../common/InlineMDPreview';
 import useScrollLock from '../../hooks/useScrollLock';
 import { getBookCoverUrl } from '../../services/booksApi';
+import { stripMarkdown } from '../../utils/markdownUtils';
 
 const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving = false }) => {
   const [formData, setFormData] = useState({
@@ -480,8 +482,8 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                                 />
                               )}
                               <div className="p-2.5">
-                                <h4 className="font-semibold text-xs text-gray-800 truncate mb-0.5" title={book.title}>
-                                  {book.title}
+                                <h4 className="font-semibold text-xs text-gray-800 line-clamp-1 mb-0.5" title={stripMarkdown(book.title)}>
+                                  <InlineMDPreview>{book.title}</InlineMDPreview>
                                 </h4>
                                 <p className="text-xs text-gray-500 truncate mb-1" title={book.author?.name || book.author || 'Auteur inconnu'}>
                                   {book.author?.name || book.author || 'Auteur inconnu'}
@@ -525,11 +527,13 @@ const PackModal = ({ isOpen, onClose, onSave, pack, availableBooks = [], saving 
                           key={book.id}
                           className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 px-2.5 py-1.5 rounded-lg text-xs"
                         >
-                          <span className="truncate max-w-[120px] sm:max-w-[160px] font-medium">{book.title}</span>
+                          <span className="line-clamp-1 max-w-[120px] sm:max-w-[160px] font-medium">
+                            <InlineMDPreview>{book.title}</InlineMDPreview>
+                          </span>
                           <button
                             onClick={() => handleToggleBook(book)}
                             className="hover:bg-green-100 rounded-full p-0.5 transition-colors"
-                            aria-label={`Retirer ${book.title}`}
+                            aria-label={`Retirer ${stripMarkdown(book.title)}`}
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>

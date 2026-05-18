@@ -9,6 +9,7 @@ import CustomSelect from '../common/CustomSelect';
 import wilayaData from '../../utils/wilayaData';
 import RelayPointSelect from './RelayPointSelect';
 import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE, calculateDeliveryFee } from '../../services/ordersApi';
+import { stripMarkdown } from '../../utils/markdownUtils';
 
 /**
  * Wilaya options (69 wilayas of Algeria)
@@ -898,7 +899,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                                   onChange={(value) => handleOrderItemChange(index, 'itemId', value)}
                                   options={books.map((book) => ({
                                     value: book.id,
-                                    label: `${book.title} - ${book.price} DZD`
+                                    label: `${stripMarkdown(book.title)} - ${book.price} DZD`
                                   }))}
                                   placeholder="Rechercher un livre..."
                                   alwaysVisibleSearch={true}
@@ -909,7 +910,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                                   onChange={(value) => handleOrderItemChange(index, 'itemId', value)}
                                   options={packs.map((pack) => ({
                                     value: pack.id,
-                                    label: `${pack.name} - ${pack.price} DZD`
+                                    label: `${stripMarkdown(pack.name)} - ${pack.price} DZD`
                                   }))}
                                   placeholder="Rechercher un pack..."
                                   alwaysVisibleSearch={true}
