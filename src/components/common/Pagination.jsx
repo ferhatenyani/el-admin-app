@@ -176,7 +176,7 @@ const Pagination = ({
         </div>
 
         {/* Mobile page indicator */}
-        <div className="sm:hidden px-3 py-1.5 text-sm font-medium">
+        <div className="sm:hidden px-3 py-1.5 text-sm font-medium whitespace-nowrap">
           Page {currentPage} / {totalPages}
         </div>
 
