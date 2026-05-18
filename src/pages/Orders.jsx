@@ -87,15 +87,18 @@ const Orders = () => {
       setOrders(transformedData);
 
       // Update pagination info from response - only update if values changed
+      // toPageInt: accepts numbers and numeric strings, rejects objects/null/NaN
+      const toPageInt = (v) => {
+        if (v === null || v === undefined || typeof v === 'object') return null;
+        const n = Math.floor(Number(v));
+        return Number.isFinite(n) ? n : null;
+      };
       setPagination(prev => {
         const newPagination = {
-          // Guard against response.page being a metadata object (Spring Data REST 3 format)
-          page: Number.isInteger(response.number) ? response.number
-              : Number.isInteger(response.page) ? response.page
-              : prev.page,
-          size: Number.isInteger(response.size) ? response.size : prev.size,
-          totalElements: Number.isInteger(response.totalElements) ? response.totalElements : data.length,
-          totalPages: Number.isInteger(response.totalPages) ? response.totalPages : 1,
+          page: toPageInt(response.number) ?? toPageInt(response.page) ?? prev.page,
+          size: toPageInt(response.size) ?? prev.size,
+          totalElements: toPageInt(response.totalElements) ?? data.length,
+          totalPages: toPageInt(response.totalPages) ?? 1,
         };
 
         // Only update if values actually changed to prevent unnecessary re-renders
