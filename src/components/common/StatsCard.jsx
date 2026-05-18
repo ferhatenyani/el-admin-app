@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, ChevronDown, Check, Info, AlertCircle } from 
 import { useState, useRef, useEffect, memo } from 'react';
 import useScrollLock from '../../hooks/useScrollLock';
 import { formatCurrency } from '../../utils/format';
+import InlineMDPreview from './InlineMDPreview';
 
 /**
  * Modern StatsCard component with isolated data fetching
@@ -382,9 +383,9 @@ const StatsCard = memo(({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.15 }}
-                className="text-3xl font-bold text-gray-900 tracking-tight truncate"
+                className="text-3xl font-bold text-gray-900 tracking-tight line-clamp-1"
               >
-                {grossValue ? (activeView === 'net' ? value : grossValue) : value}
+                <InlineMDPreview>{grossValue ? (activeView === 'net' ? value : grossValue) : value}</InlineMDPreview>
               </motion.p>
             </AnimatePresence>
           </div>
