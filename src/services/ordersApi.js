@@ -40,16 +40,22 @@ export const getOrders = async (params = {}, signal = null) => {
 
     const data = response.data;
 
-    // Handle new response structure: { page: {...}, statusRefreshInfo: {...} }
-    // Also maintain backwards compatibility with old structure
+    // Response: { page: { content: [...], page: { size, number, totalElements, totalPages } }, statusRefreshInfo }
+    // Spring Data REST 3 nests pagination metadata in a second 'page' field inside the wrapper.
     if (data.page) {
+      const pageData = data.page;
+      const meta = pageData.page || pageData; // nested metadata (Spring Data REST 3) or flat (older format)
       return {
-        ...data.page,
+        content: pageData.content || [],
+        number: meta.number ?? 0,
+        size: meta.size ?? 20,
+        totalElements: meta.totalElements ?? pageData.content?.length ?? 0,
+        totalPages: meta.totalPages ?? 1,
         statusRefreshInfo: data.statusRefreshInfo || null,
       };
     }
 
-    // Fallback for old response structure
+    // Fallback for flat response structure
     return data;
   } catch (error) {
     if (axios.isCancel(error)) {
