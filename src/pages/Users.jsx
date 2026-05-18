@@ -76,11 +76,12 @@ const Users = () => {
       const response = await getUsers(params, abortControllerRef.current.signal);
       const usersData = response.content || [];
       setUsers(usersData);
+      const pageData = response.page ?? {};
       setPagination({
-        page: response.number || response.page || 0,
-        size: response.size || 20,
-        totalElements: response.totalElements || 0,
-        totalPages: response.totalPages || 0,
+        page: pageData.number ?? response.number ?? 0,
+        size: pageData.size ?? response.size ?? 20,
+        totalElements: pageData.totalElements ?? response.totalElements ?? 0,
+        totalPages: pageData.totalPages ?? response.totalPages ?? 0,
       });
       setLoading(false);
       setInitialLoad(false);

@@ -48,77 +48,63 @@ const Books = () => {
    * Uses AbortController to cancel in-flight requests
    */
   const fetchBooks = useCallback(async (showFilterLoading = false) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    if (showFilterLoading) {
+      setFilterLoading(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
+
+    const params = {
+      page: pagination.page,
+      size: pagination.size,
+    };
+
+    if (debouncedSearchQuery) {
+      params.search = debouncedSearchQuery;
+    }
+    if (statusFilter && statusFilter !== 'all') {
+      params.status = statusFilter;
+    }
+    if (visibilityFilter === 'catalog') {
+      params.visibleInCatalog = true;
+    } else if (visibilityFilter === 'pack_only') {
+      params.visibleInCatalog = false;
+    }
+    if (sortBy === 'title') {
+      params.sort = 'title,asc';
+    } else if (sortBy === 'price') {
+      params.sort = 'price,desc';
+    } else if (sortBy === 'date_asc') {
+      params.sort = 'createdAt,asc';
+    } else if (sortBy === 'date_desc') {
+      params.sort = 'createdAt,desc';
+    }
+
     try {
-      // Cancel any pending request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      // Create new abort controller for this request
-      abortControllerRef.current = new AbortController();
-
-      // Show appropriate loading state
-      if (showFilterLoading) {
-        setFilterLoading(true);
-      } else {
-        setLoading(true);
-      }
-      setError(null);
-
-      // Build query parameters
-      const params = {
-        page: pagination.page,
-        size: pagination.size,
-      };
-
-      // Add search query if present
-      if (debouncedSearchQuery) {
-        params.search = debouncedSearchQuery;
-      }
-
-      // Add status filter if not 'all'
-      if (statusFilter && statusFilter !== 'all') {
-        params.status = statusFilter;
-      }
-
-      // Add visibility filter
-      if (visibilityFilter === 'catalog') {
-        params.visibleInCatalog = true;
-      } else if (visibilityFilter === 'pack_only') {
-        params.visibleInCatalog = false;
-      }
-
-      // Map frontend sortBy to backend sort format
-      if (sortBy === 'title') {
-        params.sort = 'title,asc';
-      } else if (sortBy === 'price') {
-        params.sort = 'price,desc';
-      } else if (sortBy === 'date_asc') {
-        params.sort = 'createdAt,asc';
-      } else if (sortBy === 'date_desc') {
-        params.sort = 'createdAt,desc';
-      }
-
       const response = await booksApi.getBooks(params, abortControllerRef.current.signal);
-
-      // Update state with response data
+      const pageData = response.page ?? {};
       setBooks(response.content || response.data || []);
       setPagination({
-        page: response.number || response.page || 0,
-        size: response.size || 20,
-        totalElements: response.totalElements || response.total || 0,
-        totalPages: response.totalPages || 1,
+        page: pageData.number ?? response.number ?? 0,
+        size: pageData.size ?? response.size ?? 20,
+        totalElements: pageData.totalElements ?? response.totalElements ?? response.total ?? 0,
+        totalPages: pageData.totalPages ?? response.totalPages ?? 1,
       });
+      setLoading(false);
+      setFilterLoading(false);
     } catch (err) {
-      // Ignore cancelled requests
       if (err.message === 'REQUEST_CANCELLED') {
         return;
       }
-
       console.error('Error fetching books:', err);
       setError(getApiErrorMessage(err, 'Failed to load books. Please try again.'));
       setBooks([]);
-    } finally {
       setLoading(false);
       setFilterLoading(false);
     }
