@@ -90,8 +90,7 @@ const WILAYA_OPTIONS = [
 ];
 
 const SHIPPING_PROVIDER_OPTIONS = [
-  { value: SHIPPING_PROVIDER.YALIDINE, label: 'Yalidine' },
-  { value: SHIPPING_PROVIDER.ZR, label: 'ZR Express' }
+  { value: SHIPPING_PROVIDER.YALIDINE, label: 'Yalidine' }
 ];
 
 const SHIPPING_METHOD_OPTIONS = [
@@ -693,9 +692,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                           stopDeskId: value === SHIPPING_METHOD.SHIPPING_PROVIDER ? prev.stopDeskId : null,
                           isStopDesk: value === SHIPPING_METHOD.SHIPPING_PROVIDER,
                           // Clear street address when switching to point de retrait (city stays for fee calculation)
-                          ...(value === SHIPPING_METHOD.SHIPPING_PROVIDER && { streetAddress: '' }),
-                          // Auto-select ZR Express for home delivery
-                          ...(value === SHIPPING_METHOD.HOME_DELIVERY && { shippingProvider: SHIPPING_PROVIDER.ZR })
+                          ...(value === SHIPPING_METHOD.SHIPPING_PROVIDER && { streetAddress: '' })
                         }))}
                         options={SHIPPING_METHOD_OPTIONS}
                         placeholder="Sélectionnez une méthode"

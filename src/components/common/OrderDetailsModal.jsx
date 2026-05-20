@@ -131,7 +131,6 @@ const WILAYA_OPTIONS = [
 
 const SHIPPING_PROVIDER_OPTIONS = [
   { value: SHIPPING_PROVIDER.YALIDINE, label: 'Yalidine' },
-  { value: SHIPPING_PROVIDER.ZR, label: 'ZR Express' },
 ];
 
 const SHIPPING_METHOD_OPTIONS = [
