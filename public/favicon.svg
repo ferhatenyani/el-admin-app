@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#00417a"/>
+  <text
+    x="16" y="13.5"
+    text-anchor="middle"
+    fill="white"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="11"
+    font-weight="300"
+    letter-spacing="1.5"
+  >E</text>
+  <line x1="10" y1="16.5" x2="22" y2="16.5" stroke="rgba(255,255,255,0.25)" stroke-width="0.5"/>
+  <text
+    x="16" y="25"
+    text-anchor="middle"
+    fill="white"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="11"
+    font-weight="700"
+    letter-spacing="1.5"
+  >L</text>
+</svg>
