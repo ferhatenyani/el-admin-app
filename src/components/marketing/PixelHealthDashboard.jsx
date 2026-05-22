@@ -34,6 +34,12 @@ const SHORT_LABELS = {
   Contact: 'Contact',
 };
 
+const PERIODS = [
+  { value: '24h', label: '24h', long: '24 dernières heures' },
+  { value: '7d',  label: '7j',  long: '7 derniers jours' },
+  { value: '30d', label: '30j', long: '30 derniers jours' },
+];
+
 function deriveStatus(events) {
   if (!events || events.length === 0) return 'unknown';
   const totalEvents = events.reduce((s, e) => s + e.count24h, 0);
@@ -43,12 +49,15 @@ function deriveStatus(events) {
   return 'yellow';
 }
 
-const STATUS_CONFIG = {
-  green:   { label: 'Pixel actif — achat détecté',   color: 'text-emerald-700', bg: 'bg-emerald-50',   border: 'border-emerald-200', dot: 'bg-emerald-500' },
-  yellow:  { label: 'Actif — aucun achat récent',    color: 'text-amber-700',   bg: 'bg-amber-50',     border: 'border-amber-200',   dot: 'bg-amber-400' },
-  red:     { label: 'Aucun événement CAPI (24h)',     color: 'text-red-700',     bg: 'bg-red-50',       border: 'border-red-200',     dot: 'bg-red-500' },
-  unknown: { label: 'Statut inconnu',                 color: 'text-gray-500',    bg: 'bg-gray-50',      border: 'border-gray-200',    dot: 'bg-gray-400' },
-};
+function getStatusConfig(period) {
+  const short = PERIODS.find(p => p.value === period)?.label ?? '24h';
+  return {
+    green:   { label: 'Pixel actif — achat détecté',              color: 'text-emerald-700', bg: 'bg-emerald-50',   border: 'border-emerald-200', dot: 'bg-emerald-500' },
+    yellow:  { label: 'Actif — aucun achat récent',               color: 'text-amber-700',   bg: 'bg-amber-50',     border: 'border-amber-200',   dot: 'bg-amber-400' },
+    red:     { label: `Aucun événement CAPI (${short})`,          color: 'text-red-700',     bg: 'bg-red-50',       border: 'border-red-200',     dot: 'bg-red-500' },
+    unknown: { label: 'Statut inconnu',                            color: 'text-gray-500',    bg: 'bg-gray-50',      border: 'border-gray-200',    dot: 'bg-gray-400' },
+  };
+}
 
 function SkeletonRow() {
   return (
@@ -61,15 +70,16 @@ function SkeletonRow() {
   );
 }
 
-function CustomBarTooltip({ active, payload }) {
+function CustomBarTooltip({ active, payload, period }) {
   if (!active || !payload?.length) return null;
   const { eventName, count24h } = payload[0].payload;
   const meta = EVENT_META[eventName] || {};
+  const short = PERIODS.find(p => p.value === period)?.label ?? '24h';
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-xl px-4 py-3 text-sm">
       <p className="font-semibold text-gray-800">{meta.label || eventName}</p>
       <p className="text-gray-500 mt-0.5">
-        <span className="font-bold text-gray-900">{count24h}</span> événement{count24h !== 1 ? 's' : ''} (24h)
+        <span className="font-bold text-gray-900">{count24h}</span> événement{count24h !== 1 ? 's' : ''} ({short})
       </p>
     </div>
   );
@@ -81,13 +91,14 @@ export default function PixelHealthDashboard() {
   const [error, setError] = useState(null);
   const [lastFetch, setLastFetch] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [period, setPeriod] = useState('24h');
 
   const fetchEvents = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
     try {
-      const data = await getPixelEvents();
+      const data = await getPixelEvents(period);
       setEvents(data);
       setLastFetch(new Date());
     } catch {
@@ -96,12 +107,13 @@ export default function PixelHealthDashboard() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [period]);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   const status = deriveStatus(events);
-  const statusCfg = STATUS_CONFIG[status];
+  const statusCfg = getStatusConfig(period)[status];
+  const currentPeriod = PERIODS.find(p => p.value === period);
   const chartData = events
     ? events.map(e => ({ ...e, shortLabel: SHORT_LABELS[e.eventName] || e.eventName }))
     : [];
@@ -122,11 +134,28 @@ export default function PixelHealthDashboard() {
           </div>
           <div>
             <h2 className="text-white font-bold text-lg leading-tight">Suivi Pixel Meta</h2>
-            <p className="text-slate-400 text-xs mt-0.5">Événements CAPI · 24 dernières heures</p>
+            <p className="text-slate-400 text-xs mt-0.5">Événements CAPI · {currentPeriod.long}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          {/* Period selector */}
+          <div className="flex items-center bg-white/10 rounded-lg p-0.5 gap-0.5">
+            {PERIODS.map(p => (
+              <button
+                key={p.value}
+                onClick={() => setPeriod(p.value)}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                  period === p.value
+                    ? 'bg-white text-slate-800 shadow-sm'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
           {/* Status pill */}
           {!loading && !error && (
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium ${statusCfg.bg} ${statusCfg.border} ${statusCfg.color}`}>
@@ -197,11 +226,11 @@ export default function PixelHealthDashboard() {
               {/* Summary strip */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-                  <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-1">Total événements (24h)</p>
+                  <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-1">Total événements ({currentPeriod.label})</p>
                   <p className="text-3xl font-bold text-blue-700">{totalCount}</p>
                 </div>
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-100">
-                  <p className="text-xs text-emerald-600 font-medium uppercase tracking-wide mb-1">Achats CAPI (24h)</p>
+                  <p className="text-xs text-emerald-600 font-medium uppercase tracking-wide mb-1">Achats CAPI ({currentPeriod.label})</p>
                   <p className="text-3xl font-bold text-emerald-700">
                     {events.find(e => e.eventName === 'Purchase')?.count24h ?? 0}
                   </p>
@@ -211,7 +240,7 @@ export default function PixelHealthDashboard() {
               {/* Bar chart */}
               {totalCount > 0 ? (
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Répartition des événements</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Répartition des événements · {currentPeriod.long}</p>
                   <ResponsiveContainer width="100%" height={160}>
                     <BarChart data={chartData} barSize={28} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
                       <CartesianGrid vertical={false} stroke="#e5e7eb" strokeDasharray="3 3" />
@@ -227,7 +256,7 @@ export default function PixelHealthDashboard() {
                         axisLine={false}
                         tickLine={false}
                       />
-                      <Tooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
+                      <Tooltip content={<CustomBarTooltip period={period} />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
                       <Bar dataKey="count24h" radius={[5, 5, 0, 0]}>
                         {chartData.map(entry => (
                           <Cell
@@ -242,7 +271,7 @@ export default function PixelHealthDashboard() {
               ) : (
                 <div className="flex flex-col items-center gap-3 py-8 bg-gray-50 rounded-xl border border-gray-100">
                   <Zap className="w-9 h-9 text-gray-300" />
-                  <p className="text-sm text-gray-500 font-medium">Aucun événement CAPI dans les dernières 24h</p>
+                  <p className="text-sm text-gray-500 font-medium">Aucun événement CAPI — {currentPeriod.long}</p>
                   <p className="text-xs text-gray-400 text-center max-w-xs">
                     Les événements apparaissent ici dès qu&apos;un achat est traité par le serveur avec META_ENABLED=true.
                   </p>
@@ -255,7 +284,7 @@ export default function PixelHealthDashboard() {
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100">
                       <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Événement</th>
-                      <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">24h</th>
+                      <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">{currentPeriod.label}</th>
                       <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Dernier vu</th>
                     </tr>
                   </thead>
