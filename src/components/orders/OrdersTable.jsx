@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, RefreshCw, Search, Trash2, Truck } from 'lucide-react';
+import OrderOriginBadge from './OrderOriginBadge';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import CustomSelect from '../common/CustomSelect';
 import Pagination from '../common/Pagination';
@@ -225,6 +226,9 @@ const OrdersTable = ({
                   Total
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Origine
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Statut
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -252,6 +256,9 @@ const OrdersTable = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {formatCurrency(order.total)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <OrderOriginBadge origin={order.orderOrigin} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <StatusBadge order={order} onClick={() => handleOpenStatusModal(order)} />
@@ -315,8 +322,11 @@ const OrdersTable = ({
             >
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-gray-900">{order.orderNumber}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{order.customer}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-medium text-gray-900">{order.orderNumber}</h3>
+                    <OrderOriginBadge origin={order.orderOrigin} />
+                  </div>
+                  <p className="text-sm text-gray-600">{order.customer}</p>
                   <p className="text-xs text-gray-500">{order.customerEmail}</p>
                 </div>
                 <MobileStatusSelect order={order} onUpdateStatus={onUpdateStatus} />

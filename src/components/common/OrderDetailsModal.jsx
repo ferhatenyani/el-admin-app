@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Pencil, Save, Loader2, RotateCcw } from 'lucide-react';
+import OrderOriginBadge from '../orders/OrderOriginBadge';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import useScrollLock from '../../hooks/useScrollLock';
 import CustomSelect from './CustomSelect';
@@ -414,6 +415,15 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onSaveOrder }) => {
                       )}
                       <div className="border-t border-gray-200" />
                       <ViewRow label="Date de commande" value={formatDateTime(order.date || order.createdAt)} valueClass="font-bold text-gray-900" />
+                      {order.orderOrigin && (
+                        <>
+                          <div className="border-t border-gray-200" />
+                          <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center gap-1 xs:gap-4">
+                            <span className="text-sm text-gray-500 flex-shrink-0">Origine</span>
+                            <OrderOriginBadge origin={order.orderOrigin} />
+                          </div>
+                        </>
+                      )}
                       {order.user && (
                         <>
                           <div className="border-t border-gray-200" />
