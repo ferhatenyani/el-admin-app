@@ -42,10 +42,10 @@ const PERIODS = [
 
 function deriveStatus(events) {
   if (!events || events.length === 0) return 'unknown';
-  const totalEvents = events.reduce((s, e) => s + e.count24h, 0);
+  const totalEvents = events.reduce((s, e) => s + e.count, 0);
   if (totalEvents === 0) return 'red';
   const purchase = events.find(e => e.eventName === 'Purchase');
-  if (purchase && purchase.count24h > 0) return 'green';
+  if (purchase && purchase.count > 0) return 'green';
   return 'yellow';
 }
 
@@ -72,14 +72,14 @@ function SkeletonRow() {
 
 function CustomBarTooltip({ active, payload, period }) {
   if (!active || !payload?.length) return null;
-  const { eventName, count24h } = payload[0].payload;
+  const { eventName, count } = payload[0].payload;
   const meta = EVENT_META[eventName] || {};
   const short = PERIODS.find(p => p.value === period)?.label ?? '24h';
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-xl px-4 py-3 text-sm">
       <p className="font-semibold text-gray-800">{meta.label || eventName}</p>
       <p className="text-gray-500 mt-0.5">
-        <span className="font-bold text-gray-900">{count24h}</span> événement{count24h !== 1 ? 's' : ''} ({short})
+        <span className="font-bold text-gray-900">{count}</span> événement{count !== 1 ? 's' : ''} ({short})
       </p>
     </div>
   );
@@ -117,7 +117,7 @@ export default function PixelHealthDashboard() {
   const chartData = events
     ? events.map(e => ({ ...e, shortLabel: SHORT_LABELS[e.eventName] || e.eventName }))
     : [];
-  const totalCount = events ? events.reduce((s, e) => s + e.count24h, 0) : 0;
+  const totalCount = events ? events.reduce((s, e) => s + e.count, 0) : 0;
 
   return (
     <motion.div
@@ -232,7 +232,7 @@ export default function PixelHealthDashboard() {
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-100">
                   <p className="text-xs text-emerald-600 font-medium uppercase tracking-wide mb-1">Achats CAPI ({currentPeriod.label})</p>
                   <p className="text-3xl font-bold text-emerald-700">
-                    {events.find(e => e.eventName === 'Purchase')?.count24h ?? 0}
+                    {events.find(e => e.eventName === 'Purchase')?.count ?? 0}
                   </p>
                 </div>
               </div>
@@ -257,11 +257,11 @@ export default function PixelHealthDashboard() {
                         tickLine={false}
                       />
                       <Tooltip content={<CustomBarTooltip period={period} />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
-                      <Bar dataKey="count24h" radius={[5, 5, 0, 0]}>
+                      <Bar dataKey="count" radius={[5, 5, 0, 0]}>
                         {chartData.map(entry => (
                           <Cell
                             key={entry.eventName}
-                            fill={entry.count24h > 0 ? (EVENT_META[entry.eventName]?.color ?? '#6366f1') : '#e5e7eb'}
+                            fill={entry.count > 0 ? (EVENT_META[entry.eventName]?.color ?? '#6366f1') : '#e5e7eb'}
                           />
                         ))}
                       </Bar>
@@ -292,7 +292,7 @@ export default function PixelHealthDashboard() {
                     {events.map((evt, i) => {
                       const meta = EVENT_META[evt.eventName] || { label: evt.eventName, icon: Activity, color: '#6b7280' };
                       const Icon = meta.icon;
-                      const hasActivity = evt.count24h > 0;
+                      const hasActivity = evt.count > 0;
                       return (
                         <motion.tr
                           key={evt.eventName}
@@ -321,7 +321,7 @@ export default function PixelHealthDashboard() {
                                 className="inline-flex items-center justify-center min-w-[2rem] px-2.5 py-1 rounded-full text-xs font-bold"
                                 style={{ backgroundColor: `${meta.color}18`, color: meta.color }}
                               >
-                                {evt.count24h}
+                                {evt.count}
                               </span>
                             ) : (
                               <span className="inline-flex items-center justify-center min-w-[2rem] px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
