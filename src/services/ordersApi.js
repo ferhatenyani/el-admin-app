@@ -219,6 +219,38 @@ export const ORDER_ITEM_TYPE = {
   PACK: 'PACK',
 };
 
+/**
+ * Wilayas that ZR Express does not serve at all (no territory in their system).
+ */
+export const ZR_UNSUPPORTED_WILAYAS = ['Illizi', 'Tindouf', 'Djanet', 'Bordj Badji Mokhtar'];
+
+const normalizeWilaya = (w) =>
+  (w || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+const ZR_UNSUPPORTED_NORMALIZED = ZR_UNSUPPORTED_WILAYAS.map(normalizeWilaya);
+
+/**
+ * Whether ZR Express can be used for the given wilaya.
+ */
+export const isZrAvailableForWilaya = (wilaya) =>
+  !ZR_UNSUPPORTED_NORMALIZED.includes(normalizeWilaya(wilaya));
+
+/**
+ * Shipping provider <select> options for a wilaya. ZR is excluded for the wilayas
+ * ZR Express does not serve.
+ */
+export const getShippingProviderOptions = (wilaya) => {
+  const options = [
+    { value: SHIPPING_PROVIDER.YALIDINE, label: 'Yalidine' },
+    { value: SHIPPING_PROVIDER.ZR, label: 'ZRexpress' },
+  ];
+  return isZrAvailableForWilaya(wilaya) ? options : options.filter((o) => o.value !== SHIPPING_PROVIDER.ZR);
+};
+
 export default {
   getOrders,
   getOrderById,

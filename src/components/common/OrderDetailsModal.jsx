@@ -9,7 +9,7 @@ import CustomSelect from './CustomSelect';
 import { getStopDeskById } from '../../services/relayPointsApi';
 import RelayPointSelect from '../orders/RelayPointSelect';
 import wilayaData from '../../utils/wilayaData';
-import { SHIPPING_PROVIDER, SHIPPING_METHOD, calculateDeliveryFee } from '../../services/ordersApi';
+import { SHIPPING_PROVIDER, SHIPPING_METHOD, calculateDeliveryFee, getShippingProviderOptions, isZrAvailableForWilaya } from '../../services/ordersApi';
 
 // Status configuration
 const statusConfig = {
@@ -130,10 +130,6 @@ const WILAYA_OPTIONS = [
   { value: 'El Aricha', label: '69 - El Aricha' },
 ];
 
-const SHIPPING_PROVIDER_OPTIONS = [
-  { value: SHIPPING_PROVIDER.YALIDINE, label: 'Yalidine' },
-];
-
 const SHIPPING_METHOD_OPTIONS = [
   { value: SHIPPING_METHOD.HOME_DELIVERY, label: 'Livraison à domicile' },
   { value: SHIPPING_METHOD.SHIPPING_PROVIDER, label: 'Point de retrait' },
@@ -240,6 +236,13 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onSaveOrder }) => {
   const updateField = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
+
+  // ZR Express does not serve some wilayas — fall back to Yalidine if needed.
+  useEffect(() => {
+    if (form.shippingProvider === SHIPPING_PROVIDER.ZR && !isZrAvailableForWilaya(form.wilaya)) {
+      setForm(prev => ({ ...prev, shippingProvider: SHIPPING_PROVIDER.YALIDINE }));
+    }
+  }, [form.wilaya, form.shippingProvider]);
 
   const handleCancel = () => {
     initForm(order);
@@ -468,7 +471,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onSaveOrder }) => {
                             <CustomSelect
                               value={form.shippingProvider}
                               onChange={val => updateField('shippingProvider', val)}
-                              options={SHIPPING_PROVIDER_OPTIONS}
+                              options={getShippingProviderOptions(form.wilaya)}
                               placeholder="Fournisseur"
                             />
                           </EditRow>

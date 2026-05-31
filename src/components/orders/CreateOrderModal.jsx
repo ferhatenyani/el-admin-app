@@ -8,7 +8,7 @@ import * as packsApi from '../../services/packsApi';
 import CustomSelect from '../common/CustomSelect';
 import wilayaData from '../../utils/wilayaData';
 import RelayPointSelect from './RelayPointSelect';
-import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE, calculateDeliveryFee } from '../../services/ordersApi';
+import { ORDER_STATUS, SHIPPING_PROVIDER, SHIPPING_METHOD, ORDER_ITEM_TYPE, calculateDeliveryFee, getShippingProviderOptions, isZrAvailableForWilaya } from '../../services/ordersApi';
 import { stripMarkdown } from '../../utils/markdownUtils';
 
 /**
@@ -87,10 +87,6 @@ const WILAYA_OPTIONS = [
   { value: 'Bir El Ater', label: '67 - Bir El Ater' },
   { value: 'Ksar El Boukhari', label: '68 - Ksar El Boukhari' },
   { value: 'El Aricha', label: '69 - El Aricha' },
-];
-
-const SHIPPING_PROVIDER_OPTIONS = [
-  { value: SHIPPING_PROVIDER.YALIDINE, label: 'Yalidine' }
 ];
 
 const SHIPPING_METHOD_OPTIONS = [
@@ -231,6 +227,13 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
       setAutoFeeLoading(false);
     };
   }, [formData.wilaya, formData.city, formData.shippingProvider, formData.shippingMethod, formData.orderItems]);
+
+  // ZR Express does not serve some wilayas — fall back to Yalidine if needed.
+  useEffect(() => {
+    if (formData.shippingProvider === SHIPPING_PROVIDER.ZR && !isZrAvailableForWilaya(formData.wilaya)) {
+      setFormData((prev) => ({ ...prev, shippingProvider: SHIPPING_PROVIDER.YALIDINE, stopDeskId: null }));
+    }
+  }, [formData.wilaya, formData.shippingProvider]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -673,7 +676,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSubmit }) => {
                       <CustomSelect
                         value={formData.shippingProvider}
                         onChange={(value) => setFormData((prev) => ({ ...prev, shippingProvider: value }))}
-                        options={SHIPPING_PROVIDER_OPTIONS}
+                        options={getShippingProviderOptions(formData.wilaya)}
                         placeholder="Sélectionnez un fournisseur"
                         disabled={formData.shippingMethod === SHIPPING_METHOD.HOME_DELIVERY}
                       />
