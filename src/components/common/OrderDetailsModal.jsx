@@ -231,18 +231,20 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onSaveOrder }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing, form.wilaya]);
 
-  if (!order) return null;
-
-  const updateField = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
-
   // ZR Express does not serve some wilayas — fall back to Yalidine if needed.
+  // NOTE: must stay BEFORE the early return below, or hook order changes between
+  // renders (Rules of Hooks) and the modal crashes when an order is selected.
   useEffect(() => {
     if (form.shippingProvider === SHIPPING_PROVIDER.ZR && !isZrAvailableForWilaya(form.wilaya)) {
       setForm(prev => ({ ...prev, shippingProvider: SHIPPING_PROVIDER.YALIDINE }));
     }
   }, [form.wilaya, form.shippingProvider]);
+
+  if (!order) return null;
+
+  const updateField = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleCancel = () => {
     initForm(order);
