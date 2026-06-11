@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, ShoppingCart, Users, X, LogOut, Megaphone } from 'lucide-react';
+import { LayoutDashboard, BookOpen, ShoppingCart, Users, X, LogOut, Megaphone, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,6 +13,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { to: '/admin/orders', icon: ShoppingCart, label: 'Commandes' },
     { to: '/admin/users', icon: Users, label: 'Utilisateurs' },
     { to: '/admin/marketing', icon: Megaphone, label: 'Marketing' },
+    { to: '/admin/recherches', icon: Search, label: 'Recherches' },
   ];
 
   // Lock body scroll when mobile sidebar is open
