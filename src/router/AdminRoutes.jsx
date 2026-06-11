@@ -6,6 +6,7 @@ import Orders from '../pages/Orders';
 import Users from '../pages/Users';
 import Profile from '../pages/Profile';
 import Marketing from '../pages/Marketing';
+import SearchAnalytics from '../pages/SearchAnalytics';
 import Login from '../pages/Login';
 import NotFound from '../pages/NotFound';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -29,6 +30,7 @@ const AdminRoutes = () => {
           <Route path="orders" element={<Orders />} />
           <Route path="users" element={<Users />} />
           <Route path="marketing" element={<Marketing />} />
+          <Route path="recherches" element={<SearchAnalytics />} />
           <Route path="profile" element={<Profile />} />
         </Route>
         <Route path="/" element={<Navigate to="/admin/login" replace />} />
