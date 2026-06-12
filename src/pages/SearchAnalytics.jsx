@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -151,11 +152,29 @@ const SearchAnalytics = () => {
   const maxTopCount = topTerms.length > 0 ? topTerms[0].count : 1;
   const zeroResultRatePct = stats ? (stats.zeroResultRate * 100).toFixed(1).replace('.', ',') : '0';
 
-  const clientLabel = (log) => {
-    // 'anonymousUser' is Spring Security's anonymous principal, not a real login
-    if (log.userLogin && log.userLogin !== 'anonymousUser') return log.userLogin;
-    if (log.visitorId) return `Visiteur ${log.visitorId.slice(0, 8)}`;
-    return 'Anonyme';
+  // 'anonymousUser' is Spring Security's anonymous principal, not a real login
+  const realLogin = (log) => (log.userLogin && log.userLogin !== 'anonymousUser' ? log.userLogin : null);
+
+  const clientCell = (log) => {
+    const login = realLogin(log);
+    if (login) {
+      return (
+        <Link
+          to={`/admin/users?login=${encodeURIComponent(login)}`}
+          className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline"
+          title={`Voir la fiche de ${login}`}
+        >
+          <User className="w-3.5 h-3.5 text-blue-300" />
+          {login}
+        </Link>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 text-gray-500">
+        <User className="w-3.5 h-3.5 text-gray-300" />
+        {log.visitorId ? `Visiteur ${log.visitorId.slice(0, 8)}` : 'Anonyme'}
+      </span>
+    );
   };
 
   return (
@@ -409,12 +428,7 @@ const SearchAnalytics = () => {
                           {formatNumber(log.resultsCount)}
                         </span>
                       </td>
-                      <td className="py-3 pr-4 hidden md:table-cell">
-                        <span className="inline-flex items-center gap-1.5 text-gray-500">
-                          <User className="w-3.5 h-3.5 text-gray-300" />
-                          {clientLabel(log)}
-                        </span>
-                      </td>
+                      <td className="py-3 pr-4 hidden md:table-cell">{clientCell(log)}</td>
                       <td className="py-3 text-right text-gray-500 whitespace-nowrap">{formatDateTime(log.searchedAt)}</td>
                     </tr>
                   ))}

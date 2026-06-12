@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Download, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import UsersTable from '../components/users/UsersTable';
@@ -10,6 +11,11 @@ import { useToast } from '../hooks/useToast';
 import { getApiErrorMessage } from '../utils/apiErrors';
 
 const Users = () => {
+  // Deep link from other pages (e.g. /admin/users?login=xyz from Recherches):
+  // pre-filter the table on the login and auto-open the matching user's modal.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pendingLoginRef = useRef(searchParams.get('login'));
+
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({
     page: 0,
@@ -17,7 +23,7 @@ const Users = () => {
     totalElements: 0,
     totalPages: 0,
   });
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('login') || '');
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -115,6 +121,21 @@ const Users = () => {
       }
     };
   }, []);
+
+  /**
+   * Auto-open the user modal when arriving via ?login= deep link,
+   * once the (login-filtered) results are in. One-shot: the param is
+   * cleared so closing the modal doesn't reopen it.
+   */
+  useEffect(() => {
+    if (!pendingLoginRef.current || loading) return;
+    const match = users.find((u) => u.login === pendingLoginRef.current) || (users.length === 1 ? users[0] : null);
+    pendingLoginRef.current = null;
+    setSearchParams({}, { replace: true });
+    if (match) {
+      handleViewUser(match);
+    }
+  }, [users, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Handle search query changes
