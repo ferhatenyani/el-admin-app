@@ -152,7 +152,8 @@ const SearchAnalytics = () => {
   const zeroResultRatePct = stats ? (stats.zeroResultRate * 100).toFixed(1).replace('.', ',') : '0';
 
   const clientLabel = (log) => {
-    if (log.userLogin) return log.userLogin;
+    // 'anonymousUser' is Spring Security's anonymous principal, not a real login
+    if (log.userLogin && log.userLogin !== 'anonymousUser') return log.userLogin;
     if (log.visitorId) return `Visiteur ${log.visitorId.slice(0, 8)}`;
     return 'Anonyme';
   };
