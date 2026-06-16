@@ -212,7 +212,18 @@ const Users = () => {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const response = await exportUsers();
+      // Export the currently filtered view (same active/search filters as the table)
+      const exportParams = {};
+      if (debouncedSearchQuery) {
+        exportParams.search = debouncedSearchQuery;
+      }
+      if (statusFilter === 'active') {
+        exportParams.active = true;
+      } else if (statusFilter === 'inactive') {
+        exportParams.active = false;
+      }
+
+      const response = await exportUsers(exportParams);
 
       // Create a download link for the blob
       const blob = new Blob([response.data], {

@@ -9,7 +9,7 @@ const api = createApiClient();
  * @param {number} params.page - Page number (0-indexed)
  * @param {number} params.size - Page size (default: 20)
  * @param {boolean} params.active - Filter by activation status (optional)
- * @param {string} params.search - Search query (searches name, email) - for future backend implementation
+ * @param {string} params.search - Search query (searches login, firstName, lastName, email, phone)
  * @param {string} params.sort - Sort parameter in format "field,direction" (e.g., "createdDate,desc", "lastName,asc")
  * @param {AbortSignal} signal - Abort signal for cancellation
  * @returns {Promise} Response with users data
@@ -60,11 +60,24 @@ export const toggleUserActivation = async (userId) => {
 };
 
 /**
- * Export all non-admin users to Excel (admin only)
+ * Export non-admin users to Excel (admin only).
+ * Honors the same filters as the listing so the file matches the current view.
+ * @param {Object} params - Optional filters
+ * @param {boolean} params.active - Filter by activation status (optional)
+ * @param {string} params.search - Free-text search (optional)
  * @returns {Promise} Blob response containing the Excel file
  */
-export const exportUsers = async () => {
+export const exportUsers = async (params = {}) => {
+  const queryParams = {};
+  if (params.active !== undefined && params.active !== null) {
+    queryParams.active = params.active;
+  }
+  if (params.search) {
+    queryParams.search = params.search;
+  }
+
   const response = await api.get('/api/admin/users/export', {
+    params: queryParams,
     responseType: 'blob',
   });
   return response;
