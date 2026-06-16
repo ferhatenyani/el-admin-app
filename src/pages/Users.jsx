@@ -189,8 +189,9 @@ const Users = () => {
       name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.login || user.email,
       joinedDate: user.createdDate,
       active: user.activated !== false,
-      totalOrders: 0, // Default values as backend doesn't provide these yet
-      totalSpent: 0,
+      // Order stats come from the backend (active + DELIVERED orders).
+      totalOrders: user.totalOrders ?? 0,
+      totalSpent: user.totalSpent ?? 0,
     };
 
     setSelectedUser(transformedUser);
