@@ -1,16 +1,19 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, ShoppingCart, Users, X, LogOut, Megaphone, Search } from 'lucide-react';
+import { LayoutDashboard, BookOpen, ShoppingCart, Users, X, LogOut, Megaphone, Search, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUnreadCount } from '../../hooks/useWhatsapp';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { logout } = useAuth();
+  const { data: unread = 0 } = useUnreadCount();
 
   const navItems = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
     { to: '/admin/books', icon: BookOpen, label: 'Livres' },
     { to: '/admin/orders', icon: ShoppingCart, label: 'Commandes' },
+    { to: '/admin/whatsapp', icon: MessageCircle, label: 'WhatsApp' },
     { to: '/admin/users', icon: Users, label: 'Utilisateurs' },
     { to: '/admin/marketing', icon: Megaphone, label: 'Marketing' },
     { to: '/admin/recherches', icon: Search, label: 'Recherches' },
@@ -71,6 +74,11 @@ const Sidebar = ({ isOpen, onClose }) => {
             >
               <Icon className="w-5 h-5" />
               <span>{label}</span>
+              {to === '/admin/whatsapp' && unread > 0 && (
+                <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-semibold text-white">
+                  {unread > 99 ? '99+' : unread}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -129,6 +137,11 @@ const Sidebar = ({ isOpen, onClose }) => {
             >
               <Icon className="w-5 h-5" />
               <span>{label}</span>
+              {to === '/admin/whatsapp' && unread > 0 && (
+                <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-semibold text-white">
+                  {unread > 99 ? '99+' : unread}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

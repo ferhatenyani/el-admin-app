@@ -7,6 +7,7 @@ import Users from '../pages/Users';
 import Profile from '../pages/Profile';
 import Marketing from '../pages/Marketing';
 import SearchAnalytics from '../pages/SearchAnalytics';
+import Whatsapp from '../pages/Whatsapp';
 import Login from '../pages/Login';
 import NotFound from '../pages/NotFound';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -28,6 +29,7 @@ const AdminRoutes = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="books" element={<Books />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="whatsapp" element={<Whatsapp />} />
           <Route path="users" element={<Users />} />
           <Route path="marketing" element={<Marketing />} />
           <Route path="recherches" element={<SearchAnalytics />} />
